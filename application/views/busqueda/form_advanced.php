@@ -64,17 +64,20 @@
                     </div>
                     <div class="row">
                         <div class="col-md-8">
+                            <label>Rango de Fechas</label>
                             <div class="input-daterange input-group" id="demo-date-range">
+                                <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
                                 <div class="input-group-content">
-                                    <input type="text" class="form-control" name="start" value="<?php echo Arr::get($_GET, 'start', '') ?>" />
+                                    <input type="text" class="form-control" name="start" placeholder="dd-mm-aaaa" value="<?php echo Arr::get($_GET, 'start', '') ?>" />
 
                                 </div>
                                 <span class="input-group-addon">A</span>
                                 <div class="input-group-content">
-                                    <input type="text" class="form-control" name="end" value="<?php echo Arr::get($_GET, 'end', '') ?>" />
+                                    <input type="text" class="form-control" name="end" placeholder="dd-mm-aaaa" value="<?php echo Arr::get($_GET, 'end', '') ?>" />
 
                                     <div class="form-control-line"></div>
                                 </div>
+                                <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
                             </div>
                         </div>
                         <div class="col-md-4">
