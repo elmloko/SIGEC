@@ -359,8 +359,7 @@ class Kohana_Response implements Http_Response, Serializable {
 		// Handle the set cookie calls
 		if (is_array($key))
 		{
-			reset($key);
-			while (list($_key, $_value) = each($key))
+			foreach ($key as $_key => $_value)
 			{
 				$this->cookie($_key, $_value);
 			}

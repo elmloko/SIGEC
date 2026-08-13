@@ -325,7 +325,9 @@ class Kohana_Core {
 		}
 
 		// Determine if the extremely evil magic quotes are enabled
-		Kohana::$magic_quotes = (bool) get_magic_quotes_gpc();
+		// get_magic_quotes_gpc() was removed in PHP 8.0; magic quotes have been
+		// disabled by default since PHP 5.4, so this is always false on modern PHP
+		Kohana::$magic_quotes = function_exists('get_magic_quotes_gpc') ? (bool) get_magic_quotes_gpc() : FALSE;
 
 		// Sanitize all request variables
 		$_GET    = Kohana::sanitize($_GET);
