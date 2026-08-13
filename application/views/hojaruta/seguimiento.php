@@ -571,7 +571,7 @@
                                         <?php else: ?>
                                             <?php foreach ($archivos_paso as $af): ?>
                                                 <a href="/download/?file=<?php echo $af->id; ?>" title="Descargar adjunto">
-                                                    <span class="badge"><?php echo substr($af->nombre_archivo, 13); ?></span>
+                                                    <span class="badge badge-adjunto"><?php echo substr($af->nombre_archivo, 13); ?></span>
                                                 </a><br/>
                                             <?php endforeach; ?>
                                         <?php endif; ?>

@@ -66,3 +66,4 @@ table#theTable tbody td a:hover,table#seguimiento tbody tr td a:hover{text-decor
 td a.asignar:hover,table#theTable tbody td a.hs:hover{border-bottom:1px dotted;}
 td.oficial2,td#pasos{background:transparent url(../images/goto.png) no-repeat right top;}
 table#seguimiento tbody tr td{ padding:3px;}
+.badge-adjunto{white-space:normal;word-break:break-all;display:inline-block;max-width:100%;text-align:left;}
