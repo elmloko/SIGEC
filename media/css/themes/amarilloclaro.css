@@ -1,0 +1,27 @@
+@CHARSET "UTF-8";
+#modx-topbar{border-bottom: 2px solid #FFF600;}
+#bos-main-blocks h2 a,h2.titulo v,.colorcito {color: #FFF600;}
+
+#menu-left ul li a:hover,#menu-left ul li:hover {color:#111; background: #FFF600; font-weight: bold; }
+html #modx-topnav ul.modx-subnav li a:hover {background-color: #FFF600; color: #666;}
+input#searchsubmit:hover {background-color: #FFF600;}
+#modx-logo a.nombre{background: url("/media/images/user_amarillo.png") left no-repeat; padding-left: 18px;  }
+.button2{
+    color:#111;
+    border: 1px solid #DFD705;
+    text-shadow: 0 1px 1px #EEE613;
+    background:#DFD705;
+   background: -webkit-linear-gradient(top, #DFD705, #EEE613);
+   background:    -moz-linear-gradient(top, #DFD705, #EEE613);
+   background:     -ms-linear-gradient(top, #DFD705, #EEE613);
+   background:      -o-linear-gradient(top, #DFD705, #EEE613);
+}
+.button2:hover, .button2:focus {
+    color:#111;
+    border-color: #EEE613;
+   background:#DFD705;
+    background: -webkit-linear-gradient(top, #DFD705, #EEE613);
+   background:    -moz-linear-gradient(top, #DFD705, #EEE613);
+   background:     -ms-linear-gradient(top, #DFD705, #EEE613);
+   background:      -o-linear-gradient(top, #DFD705, #EEE613);
+}

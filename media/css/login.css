@@ -1,0 +1,27 @@
+html{border-top: 1px solid #0072C6;background:#fff url("/media/images/fondo_login.png") repeat-x;}
+body{font-family: Arial,Helvetica,sans-serif;margin: 0 auto;text-align: center; padding: 0; width: 980px;  }
+a{ text-decoration: none; color:#666; }
+#top{width: 100%; height: 100px; display: block; clear: both;  }
+#login{width:450px; float: right; text-align:left;  }
+#copy{clear:both; width: 1000px; margin-bottom: 10px; padding-top: 20px; position: fixed; bottom: 0;  display: block;     }
+fieldset{border: none;}
+div#error{position: absolute; right:0; color: #fff; top: 120px; background: #FF4926; border: 1px solid #DAC8BA;  padding: 10px;  vertical-align: central;   }
+.login-panel{background: transparent;     font-size: 12px;font-weight: bold;color: #666;padding-left: 5px;   -moz-border-radius: 5px; margin-bottom: 50px; }
+.login-panel h2{ font-size: 24px;color:#0072C6; font-weight: 600;  }
+.login-panel input[type="text"],.login-panel input[type="password"]{height: 25px;border: 1px solid #bbb;  font-weight: normal; background:#fcfcfc;width: 230px;   }
+.login-panel input[type="text"]:focus,.login-panel input[type="password"]:focus{border: 1px solid #0072C6; }
+.login-panel input[type="submit"]{height: 30px; background-color: #0072C6; color: #f2f2f2;  width: 80px; border: 1px solid #3079ED; cursor: pointer; font-weight: bold;   }
+.login-panel input[type="submit"]:hover{ background-color: #4B8EFB;}
+.login-copyright{font-size: 11px;font-weight: normal;color: #666; text-align: center;  }
+label.error{color: #FF4926; font-weight: normal;  font-size: 11px; margin-left: 2px; font-style: italic; display: block;  }
+.login-logo {background: url("/media/images/logo_sigec_mopsv.png") no-repeat scroll left 0 transparent;   height: 90px;position: relative;top: 16px;width:100%;text-align: left; display: block;    }
+.login-logo h2{ font-size: 18px; font-weight: normal;  }
+#informacion{width: 450px; float:  left; }
+#bos-main-blocks {font-size: 14px;}
+#bos-main-blocks h2 a {color: #999;display: block;font-size: 16px;margin-bottom: 8px;}
+#bos-main-blocks ul li.block:first-child {background: none repeat scroll 0 0 transparent;}
+#bos-main-blocks ul li.block {float: left;height: 112px;padding: 10px;width: 300px;list-style: none;border-bottom: 1px solid #c2c2c2;}
+#bos-main-blocks .content {float: right;padding: 0px 5px 0;width: 190px; text-align: left;}
+#bos-main-blocks .content p {margin-bottom: 0; color: #999;}
+#bos-main-blocks .content ul li {background: url("/media/images/puces-main-blocks-front.png") no-repeat scroll left center transparent;padding-left: 15px;}
+#bos-main-blocks img {margin-left: 5px;}

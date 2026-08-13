@@ -1,0 +1,27 @@
+@CHARSET "UTF-8";
+#modx-topbar{border-bottom: 2px solid #D302A9;}
+#bos-main-blocks h2 a,h2.titulo v,.colorcito {color: #D302A9;}
+#menu-left ul li a:hover,#menu-left ul li:hover {color:#fff; background: #D302A9; font-weight: bold; }
+html #modx-topnav ul.modx-subnav li a:hover {background-color: #D302A9;}
+input#searchsubmit:hover {background-color: #D302A9;}
+#modx-logo a.nombre{background: url("/media/images/user_violeta.png") left no-repeat; padding-left: 18px;  }
+.button2{
+    border: 1px solid #D302A9;
+    text-shadow: 0 1px 1px #D302A9;
+    background:#D302A9;
+   background: -webkit-linear-gradient(top, #D302A9, #D90BB0);
+   background:    -moz-linear-gradient(top, #D302A9, #D90BB0);
+   background:     -ms-linear-gradient(top, #D302A9, #D90BB0);
+   background:      -o-linear-gradient(top, #D302A9, #D90BB0);
+}
+.button2:hover, .button2:focus {
+    border-color: #D90BB0;
+   background:#D302A9;
+    background: -webkit-linear-gradient(top, #D302A9, #D90BB0);
+   background:    -moz-linear-gradient(top, #D302A9, #D90BB0);
+   background:     -ms-linear-gradient(top, #D302A9, #D90BB0);
+   background:      -o-linear-gradient(top, #D302A9, #D90BB0);
+}
+.jOrgChart .node {
+  background-color 	: #D302A9;
+}

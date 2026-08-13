@@ -1,0 +1,27 @@
+@CHARSET "UTF-8";
+/*#modx-topbar{border-bottom: 2px solid #3487E3;}
+#bos-main-blocks h2 a,h2.titulo v,.colorcito {color: #3487E3;}
+#menu-left ul li a:hover,#menu-left ul li:hover {color:#fff; background: #3186E1; font-weight: bold; }
+html #modx-topnav ul.modx-subnav li a:hover {background-color: #3487E3;}
+input#searchsubmit:hover {background-color: #3487E3;}
+#modx-logo a.nombre{background: url("/media/images/user.png") left no-repeat; padding-left: 18px;  }
+.button2{
+    border: 1px solid #1D6ABB;
+    text-shadow: 0 1px 1px #1D6ABB;
+    background:#3A8BE8;
+   background: -webkit-linear-gradient(top, #3A8BE8, #267FD9);
+   background:    -moz-linear-gradient(top, #3A8BE8, #267FD9);
+   background:     -ms-linear-gradient(top, #3A8BE8, #267FD9);
+   background:      -o-linear-gradient(top, #3A8BE8, #267FD9);
+}
+.button2:hover, .button2:focus {
+    border-color: #1D6ABB;
+   background:#267FD9;
+    background: -webkit-linear-gradient(top, #3A8BE8, #267FD9);
+   background:    -moz-linear-gradient(top, #3A8BE8, #267FD9);
+   background:     -ms-linear-gradient(top, #3A8BE8, #267FD9);
+   background:      -o-linear-gradient(top, #3A8BE8, #267FD9);
+}
+.jOrgChart .node {
+  background-color 	: #3487E3;
+}*/

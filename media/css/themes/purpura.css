@@ -1,0 +1,24 @@
+@CHARSET "UTF-8";
+#modx-topbar{border-bottom: 2px solid #9102D3;}
+#bos-main-blocks h2 a,h2.titulo v,.colorcito {color: #9102D3;}
+#menu-left ul li a:hover,#menu-left ul li:hover {color:#fff; background: #9102D3; font-weight: bold; }
+html #modx-topnav ul.modx-subnav li a:hover {background-color: #9102D3;}
+input#searchsubmit:hover {background-color: #9102D3;}
+#modx-logo a.nombre{background: url("/media/images/user_purpura.png") left no-repeat; padding-left: 18px;  }
+.button2{
+    border: 1px solid #9102D3;
+    text-shadow: 0 1px 1px #9102D3;
+    background:#9102D3;
+   background: -webkit-linear-gradient(top, #9102D3, #9E14DD);
+   background:    -moz-linear-gradient(top, #9102D3, #9E14DD);
+   background:     -ms-linear-gradient(top, #9102D3, #9E14DD);
+   background:      -o-linear-gradient(top, #9102D3, #9E14DD);
+}
+.button2:hover, .button2:focus {
+    border-color: #9E14DD;
+   background:#9102D3;
+    background: -webkit-linear-gradient(top, #9102D3, #9E14DD);
+   background:    -moz-linear-gradient(top, #9102D3, #9E14DD);
+   background:     -ms-linear-gradient(top, #9102D3, #9E14DD);
+   background:      -o-linear-gradient(top, #9102D3, #9E14DD);
+}

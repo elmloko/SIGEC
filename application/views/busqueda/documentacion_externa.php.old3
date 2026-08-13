@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!--[if IE]>
+    <script> (function () {
+        var html5 = ("abbr,article,aside,audio,canvas,datalist,details," + "figure,footer,header,hgroup,mark,menu,meter,nav,output," + "progress,section,time,video").split(',');
+        for (var i = 0; i < html5.length; i++) {
+            document.createElement(html5[i]);
+        }
+    })(); </script> <![endif]-->
+    <meta http-equiv="Content-Language" content="es"/>
+    <link rel="shortcut icon" href="/media/images/icon.png"/>
+    <title>SIGEC / Busqueda avanzada</title>
+    <meta name="keywords" content=""/>
+    <meta name="description" content=""/>
+    <meta name="copyright" content=""/>
+    <link type="text/css" href="/media/css/style.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/media/css/print.css" rel="stylesheet" media="print"/>
+    <link type="text/css" href="/static/css/theme-1/bootstrap.css" rel="stylesheet" media="all"/>
+    <link type="text/css" href="/static/css/theme-1/materialadmin.css" rel="stylesheet" media="all"/>
+    <link type="text/css" href="/static/css/theme-1/font-awesome.min.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/theme-1/material-design-iconic-font.min.css" rel="stylesheet"
+          media="screen"/>
+    <link type="text/css" href="/static/css/theme-1/libs/rickshaw/rickshaw.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/theme-1/libs/morris/morris.core.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/animate.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/theme-3/libs/select2/select2.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/theme-3/libs/bootstrap-datepicker/datepicker3.css" rel="stylesheet"
+          media="screen"/>
+    <script type="text/javascript" src="/static/js/libs/jquery/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/bootstrap/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/spin.js/spin.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/autosize/jquery.autosize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/nanoscroller/jquery.nanoscroller.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/d3/d3.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/d3/d3.v3.js"></script>
+    <script type="text/javascript" src="/static/js/libs/rickshaw/rickshaw.min.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/App.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppNavigation.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppOffcanvas.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppCard.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppForm.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppNavSearch.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppVendor.js"></script>
+    <script type="text/javascript" src="/static/js/libs/select2/select2.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/bootstrap-datepicker/bootstrap-datepicker.js"></script>
+    <link type="text/css" href="/media/css/style.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/media/css/print.css" rel="stylesheet" media="print"/>
+    <link type="text/css" href="/static/css/theme-1/bootstrap.css" rel="stylesheet" media="all"/>
+    <link type="text/css" href="/static/css/theme-1/materialadmin.css" rel="stylesheet" media="all"/>
+    <link type="text/css" href="/static/css/theme-1/font-awesome.min.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/theme-1/material-design-iconic-font.min.css" rel="stylesheet"
+          media="screen"/>
+    <link type="text/css" href="/static/css/theme-1/libs/rickshaw/rickshaw.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/theme-1/libs/morris/morris.core.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/animate.css" rel="stylesheet" media="screen"/>
+    <link type="text/css" href="/static/css/select2.min.css" rel="stylesheet" media="screen"/>
+    <script type="text/javascript" src="/static/js/libs/jquery/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/bootstrap/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/spin.js/spin.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/autosize/jquery.autosize.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/moment/moment.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/nanoscroller/jquery.nanoscroller.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/d3/d3.min.js"></script>
+    <script type="text/javascript" src="/static/js/libs/d3/d3.v3.js"></script>
+    <script type="text/javascript" src="/static/js/libs/rickshaw/rickshaw.min.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/App.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppNavigation.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppOffcanvas.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppCard.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppForm.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppNavSearch.js"></script>
+    <script type="text/javascript" src="/static/js/core/source/AppVendor.js"></script>
+    <script type="text/javascript" src="/static/js/eModal.min.js"></script>
+    <script type="text/javascript" src="/static/js/select2.full.js"></script>
+    <style type="text/css">
+        #modx-topbar {
+            border-bottom: 2px solid #2c8fd8;
+        }
+
+        #bos-main-blocks h2 a, h2.titulo v, .colorcito {
+            color: #2c8fd8;
+        }
+
+        #menu-left ul li a:hover, #menu-left ul li:hover {
+            color: #fff;
+            background: #2c8fd8;
+            font-weight: bold;
+        }
+
+        html #modx-topnav ul.modx-subnav li a:hover {
+            background-color: #2c8fd8;
+        }
+
+        input#searchsubmit:hover {
+            background-color: #2c8fd8;
+        }
+
+        #icon-logo {
+            background: #2c8fd8 url(/media/images/icon_user.png) scroll left no-repeat;
+        }
+
+        .button2 {
+            border: 1px solid #2c8fd8;
+            background-color: #2c8fd8;
+        }
+
+        .button2:hover, .button2:focus {
+            background: #2c8fd8;
+        }
+
+        .jOrgChart .node {
+            background-color: #2c8fd8;
+        }
+
+        .widget .title {
+            background: none repeat scroll 0 0 #2c8fd8;
+        }
+
+        legend {
+            border: 1px solid #2c8fd8;
+        }
+
+        fieldset {
+            border: 2px solid #2c8fd8;
+        }
+
+        .proveido {
+            color: #2c8fd8;
+        }
+
+        span.dias4 {
+            background: #2c8fd8 url("/media/images/fondo_transparente.png") no-repeat top left;
+        } </style>
+</head>
+<body>
+<div>
+    <!-- BEGIN HEADER-->
+    <header id="header">
+        <div class="headerbar">
+            <img height="50px" src="/media/logo-transparente.png"/>
+            <span class="text-lg text-bold text-primary">CORRESPONDENCIA - MOPSV</span>
+        </div>
+    </header>
+</div>
+
+<div>
+    <input id="param_id_entidad" type="hidden" value="<?php echo $param_id_entidad; ?>">
+</div>
+
+<!-- BEGIN CONTENT-->
+<div id="content">
+    <section class="bg1">
+        <div class="section-body">
+            <div class="row">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-underline">
+                            <div class="card-head">
+                                <header>Busqueda Avanzada</header>
+                            </div>
+                            <div class="card-body">
+                                <form class="form" id="form-search">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div id="wait"
+                                                 style="display: none; width: 100%; height: 100%; top: 100px; left: 0px; position: fixed; z-index: 10000; text-align: center;">
+                                                <img src="/media/loading_blue2.gif" width="45" height="45"
+                                                     alt="Loading..." style="position: fixed; top: 50%; left: 50%;"/>
+                                            </div>
+                                            <header class="text-md" style="color: red;">INGRESE SU HOJA DE RUTA (Ej:
+                                                E/2017-00001)
+                                            </header>
+                                            <div>
+                                                <span id="prefijo-hoja-de-ruta" class="text-xl">E/2017-</span>
+                                                <input class="text-xl" type="number" name="hoja-de-ruta"
+                                                       id="hoja-de-ruta"
+                                                       value="1">
+                                            </div>
+                                        </div>
+
+                                        <!--
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <select id="entidades" name="entidades" class="select2-search">
+                                                    <?php foreach ($entidades as $row): ?>
+                                                        <option value="<?php echo $row['id']; ?>"
+                                                                prefijo="<?php echo $row['nur_externo']; ?>"><?php echo $row['entidad']; ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <label for="entidad">ENTIDAD</label>
+                                            </div>
+                                        </div>
+                                        -->
+                                        <div class="col-md-1">
+                                            <div class="form-group">
+                                                <select id="gestiones" name="gestiones" class="select2-search">
+                                                    <?php foreach ($gestiones as $row): ?>
+                                                        <option value="<?php echo $row; ?>"><?php echo $row; ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <label for="entidad">GESTIÓN</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <input onclick="onclickButtonBuscar()" name="buscar"
+                                                       value="Buscar"
+                                                       class="btn btn-primary-dark">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-head">
+                                <header id="cantidad-de-resultados">Resultados: <?php echo $count; ?></header>
+                            </div>
+                            <div class="card">
+                                <div class="table-responsive">
+                                    <table id="table-resultados"
+                                           class="table table-bordered no-padding table-striped text-lg">
+                                        <thead>
+                                        <tr>
+                                            <th width="auto">HOJA DE RUTA</th>
+                                            <th width="auto">DESTINATARIO</th>
+                                            <th width="auto">REMITENTE</th>
+                                            <th width="auto">REFERENCIA</th>
+                                            <th width="auto">FECHA</th>
+                                            <th width="auto">ESTADO</th>
+                                            <th>ACCIÓN</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <?php foreach ($lista_hojas_de_ruta_externas as $row): ?>
+                                            <tr>
+                                                <td class="codigo" align="center">
+                                                    <a href="/route/trace/?hr=<?php echo $row['nur']; ?>"><?php echo $row['nur']; ?></a>
+                                                </td>
+                                                <td>
+                                                    <b><?php echo $row['nombre_destinatario']; ?></b>
+                                                    <br><?php echo $row['cargo_destinatario']; ?>
+                                                </td>
+                                                <td>
+                                                    <b><?php echo $row['nombre_remitente']; ?></b>
+                                                    <br><?php echo $row['cargo_remitente']; ?>
+                                                </td>
+                                                <td>
+                                                    <?php echo $row['referencia']; ?>
+                                                </td>
+                                                <td>
+                                                    <?php echo $row['fecha_creacion']; ?>
+                                                </td>
+                                                <td>
+                                                    <a href="/externo/seguimientoExterno/?hr=<?php echo $row['nur']; ?>"
+                                                       title="Ver seguimiento"
+                                                       class="text-success text-xl">
+                                                        <i class="md md- md-verified-user "></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!--end .row -->
+        </div><!--end .section-body -->
+    </section>
+</div><!--end #content-->
+<!-- END CONTENT -->
+<script>
+    $(document).ready(function () {
+
+        $("#form").submit(function (event) {
+            event.preventDefault();
+        });
+    });
+
+    /*
+     $('#entidades').on('change', function () {
+
+     var prefijo_externo_entidad = $(this).find(':selected').attr('prefijo');
+     var gestion_seleccionada = $('#gestiones option:selected').val();
+
+     var prefijo_hoja_de_ruta = prefijo_externo_entidad + gestion_seleccionada + '-';
+     $('#prefijo-hoja-de-ruta').text(prefijo_hoja_de_ruta);
+     });
+     */
+
+    $('#gestiones').on('change', function () {
+
+        //var prefijo_externo_entidad = $('#entidades option:selected').attr('prefijo');
+        var prefijo_externo_entidad = 'E/';
+        var gestion_seleccionada = $(this).val();
+
+        var prefijo_hoja_de_ruta = prefijo_externo_entidad + gestion_seleccionada + '-';
+        $('#prefijo-hoja-de-ruta').text(prefijo_hoja_de_ruta);
+    });
+
+    function onclickButtonBuscar() {
+
+        var prefijo_hoja_de_ruta = $('#prefijo-hoja-de-ruta').text();
+        var nro_hoja_de_ruta = $('#hoja-de-ruta').val();
+        var hoja_de_ruta = prefijo_hoja_de_ruta + nro_hoja_de_ruta;
+        hoja_de_ruta = ("00000" + nro_hoja_de_ruta).slice(-5);
+        //var id_entidad_seleccionada = $('#entidades option:selected').val();
+        var id_entidad_seleccionada = $('#param_id_entidad').val();
+        var gestion_seleccionada = $('#gestiones option:selected').val();
+
+        //var prefijo_externo_entidad = $('#entidades option:selected').attr('prefijo');
+
+        //console.log('prefijo_externo_entidad: ' + prefijo_externo_entidad);
+        //console.log('prefijo_hoja_de_ruta: ' + prefijo_hoja_de_ruta);
+        //console.log('nro_hoja_de_ruta: ' + nro_hoja_de_ruta);
+        console.log('hoja_de_ruta: ' + hoja_de_ruta);
+        console.log('entidad_seleccionada: ' + id_entidad_seleccionada);
+        console.log('gestion_seleccionada: ' + gestion_seleccionada);
+
+        // ProgressDialog
+        $(document).ready(function () {
+            $(document).ajaxStart(function () {
+                $('#wait').show();
+            });
+            $(document).ajaxStop(function () {
+                $('#wait').hide();
+            });
+            $(document).ajaxError(function () {
+                $('#wait').hide();
+            });
+        });
+
+        $.ajax({
+            url: '/externo/buscarHojaDeRuta',
+            data: {
+                hoja_de_ruta: hoja_de_ruta,
+                id_entidad_seleccionada: id_entidad_seleccionada,
+                gestion_seleccionada: gestion_seleccionada
+            },
+            type: 'POST',
+            dataType: 'json',
+            success: function (data) {
+                var json = JSON.parse(JSON.stringify(data));
+
+                var trHTML = '';
+                $.each(json, function (i, item) {
+                    trHTML +=
+                        '<tr>' +
+                        '<td><a href="/externo/seguimientoExterno/?hr=' + item.nur + '">' + item.nur + '</a></td>' +
+                        '<td><b>' + item.nombre_destinatario + '</b><br>' + item.cargo_destinatario + '</td>' +
+                        '<td><b>' + item.nombre_remitente + '</b><br>' + item.cargo_remitente + '</td>' +
+                        '<td>' + item.referencia + '</td>' +
+                        '<td>' + item.fecha_creacion + '</td>' +
+                        '<td>' + item.estado + '</td>' +
+                        '<td><a href="/externo/seguimientoExterno/?hr=' + item.nur + '" title="Ver seguimiento" class="text-success text-xl"><i class="md md- md-verified-user "></i></a></td>' +
+                        '</tr>';
+                });
+                $('#table-resultados > tbody').append(trHTML);
+
+                var cantidad_de_resultados = Object.keys(json).length;
+                $('#cantidad-de-resultados').text('Resultados: ' + cantidad_de_resultados);
+
+                //console.log("json: " + JSON.stringify(json));
+                //console.log("json.rows: " + json.rows);
+                //console.log("resultado: " + json.resultado);
+            },
+            error: function (xhr, status) {
+                //alert(status);
+                console.log("status: " + status);
+                console.log("xhr: " + xhr);
+            }
+        });
+
+        $('#table-resultados tbody > tr').remove();
+    }
+</script>
+</body>
+</html>

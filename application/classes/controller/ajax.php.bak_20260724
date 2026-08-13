@@ -1,0 +1,2279 @@
+<?php
+defined('SYSPATH') or die('No direct script access.');
+
+class Controller_Ajax extends Controller
+{
+
+    protected $user;
+
+    public function before()
+    {
+        $auth = Auth::instance();
+        //si el usuario esta logeado entocnes mostramos el menu
+        if ($auth->logged_in()) {
+            //$session = Session::instance();
+            //$this->user = $session->get('auth_user');
+            $this->user = $auth->get_user();
+            parent::before();
+        } else {
+            $this->request->redirect('/login');
+        }
+    }
+
+    //grafica documentos generados por el usuario
+    public function action_misdocumentos()
+    {
+        $user = $this->user->id;
+        $mDocumentos = new Model_Documentos();
+        $documentos = $mDocumentos->generados($user);
+        echo json_encode($documentos, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_grafica()
+    {
+        $user = $this->user->id;
+        $mDocumentos = new Model_Documentos();
+        $actividad = $mDocumentos->actividad($user);
+        $derivados = $mDocumentos->derivados($user);
+        $result = array();
+        $data1 = array();
+        $data2 = array();
+        foreach ($actividad as $a) {
+            $data1[] = array(
+                $a['time'],
+                $a['cantidad']
+            );
+        }
+        foreach ($derivados as $a) {
+            $data2[] = array(
+                $a['time'],
+                $a['cantidad']
+            );
+        }
+        $result[] = array(
+            "label" => "Correspondencia Derivada",
+            "data" => array_values($data2),
+            "last" => true
+        );
+        $result[] = array(
+            "label" => "Documentos Generados",
+            "data" => array_values($data1),
+            "last" => true
+        );
+
+        echo json_encode($result, JSON_NUMERIC_CHECK);
+    }
+
+    //hojas de ruta
+    public function action_hojaruta()
+    {
+        $like = $_GET['q'];
+        $mHojaruta = new Model_Hojasruta();
+        $hrs = $mHojaruta->hojaruta($like);
+        $result = array();
+        foreach ($hrs as $h) {
+            $result[] = array(
+                'id' => $h['nur'],
+                'text' => $h['nur'],
+                //'data'=>$h['nur']
+            );
+        }
+        echo json_encode(array('items' => $result), JSON_NUMERIC_CHECK);
+    }
+
+//recibir correspondencia
+    public function action_recibir()
+    {
+        if ($this->request->is_ajax()) {
+            $id = $_POST['id'];
+            $seguimiento = ORM::factory('seguimiento')
+                ->where('id', '=', $id)
+                ->and_where('derivado_a', '=', $this->user->id)
+                ->and_where('estado', '=', 1)
+                ->find();
+            if ($seguimiento->loaded()) {
+                $seguimiento->fecha_recepcion = date('Y-m-d H:i:s');
+                $seguimiento->estado = 2; //2=pendiente oficial
+                if ($seguimiento->save()) {
+                    $result = array(
+                        'estado' => 'ok'
+                    );
+                } else {
+                    $result = array(
+                        'estado' => '',
+                        'error' => 'Ocurrio un error al intentar recibir la correspondencia'
+                    );
+                }
+                //guardamos en vitacora
+                //$this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' | <b>' . $this->user->cargo . '</b> Recepciono la hoja de ruta ' . $seguimiento->nur);
+            } else {
+                $result = array(
+                    'estado' => '',
+                    'error' => 'Ocurrio un error al intentar recibir la correspondencia'
+                );
+            }
+            echo json_encode($result);
+        }
+    }
+
+    public function action_documentosjson()
+    {
+        $session = Session::instance();
+        $user = $session->get('auth_user');
+        $xTable = $_POST['x-table'];
+        $data = array();
+        /// set order
+        if (isset($xTable['order_column']) && isset($xTable['order_type'])) {
+            $order = " ORDER BY " . mysql_real_escape_string($xTable['order_column']) . " " . mysql_real_escape_string($xTable['order_type']);
+        }
+        // row per page
+        $rowPerPage = (isset($xTable['record_per_page'])) ? (int)$xTable['record_per_page'] : 20;
+        // page index
+        $pageIndex = ((int)$xTable['page_index'] > 0) ? (int)$xTable['page_index'] : 1;
+        // offset
+        $offset = ($pageIndex - 1) * $rowPerPage;
+        // limit
+        $limit = " LIMIT " . $offset . "," . $rowPerPage;
+
+        $where_ini = " WHERE d.id_user='" . $user->id . "'";
+        $strAnd = '';
+
+        $conditions = $_POST['x-table']['conditions'];
+
+        // create sql conditions
+        if (isset($conditions['cite_original']) && strlen(trim($conditions['cite_original'])) > 0) {
+            $where .= $strAnd . " d.cite_original = '" . mysql_real_escape_string($conditions['cite_original']) . "' ";
+            $strAnd = " AND ";
+        }
+        if (isset($conditions['nur']) && strlen(trim($conditions['nur'])) > 0) {
+            $where .= $strAnd . " nur = '" . mysql_real_escape_string($conditions['rating']) . "' ";
+            $strAnd = " AND ";
+        }
+        if (isset($conditions['nombre_destinatario']) && strlen(trim($conditions['nombre_destinatario'])) > 0) {
+            $where .= $strAnd . " nombre_destinatario like '%" . mysql_real_escape_string($conditions['nombre_destinatario']) . "%' ";
+            $strAnd = " AND ";
+        }
+        if (isset($conditions['referencia']) && strlen(trim($conditions['referencia'])) > 0) {
+            $where .= $strAnd . " referencia = '" . mysql_real_escape_string($conditions['referencia']) . "' ";
+            $strAnd = " AND ";
+        }
+        if (isset($conditions['tipo']) && strlen(trim($conditions['tipo'])) > 0) {
+            $where .= $strAnd . " t.tipo = '" . mysql_real_escape_string($conditions['tipo']) . "' ";
+            $strAnd = " AND ";
+        }
+
+        if (strlen($where) > 0) {
+            $where_ini = $where_ini . $where;
+        }
+        $sql = "SELECT "
+            . "d.cite_original,CONCAT(d.nombre_destinatario,'<br/><b> ',d.cargo_destinatario,'</b>') as nombre_destinatario,d.nur,d.referencia,d.estado, t.tipo,d.fecha_creacion  "
+            . "FROM documentos d "
+            . "INNER JOIN tipos t ON d.id_tipo=t.id " . $where . $order . $limit;
+
+        $mDocumentos = new Model_Documentos();
+        $result = $mDocumentos->ejecutarsql_object($sql);
+        //echo json_encode($result);
+
+
+        $data = array();
+        $sql2 = 'SELECT COUNT(*) AS total FROM documentos d' . $where_ini;
+        $result_total = $mDocumentos->ejecutarsql_array($sql2);
+        $total = $result_total[0]['total'];
+        foreach ($result as $row) {
+            $data[] = array(
+                'cite_original' => '<b>' . $row->cite_original . '</b>',
+                'nur' => $row->nur,
+                'id_tipo' => $row->tipo,
+                'nombre_destinatario' => $row->nombre_destinatario,
+                'referencia' => $row->referencia,
+                'estado' => utf8_encode($row->estado)
+            );
+        }
+        $totalPage = ceil($total / $rowPerPage);
+
+// build return data to x-table
+        $var = array();
+        $var['rows'] = $data;
+        $var['total_page'] = $totalPage;
+        $var['total_row'] = $total;
+        $var['page_index'] = $pageIndex;
+        $var['offset'] = $offset + 1;
+        $var['row_per_page'] = $rowPerPage;
+        header('Content-Type: application/json');
+// json encode return data
+//var_dump($var);
+        echo json_encode($var, JSON_FORCE_OBJECT);
+    }
+
+    public function action_historial()
+    {
+        $o_reports = New Model_documentos();
+        $documentos = $o_reports->historial();
+        $result = array();
+        foreach ($documentos as $d) {
+            $result[] = array($d['fecha'], $d['a']);
+        }
+        echo json_encode($result, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonpendientes()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->pendientesTodo();
+        $aPendientes = array();
+        $aPendientes[0]['suma'] = 0;
+        $aPendientes[0]['id'] = 0;
+        $aPendientes[0]['oficina'] = '[TODAS LAS OFICINAS DE LA ENTIDAD]';
+        $aPendientes[0]['no_recibido'] = 0;
+        $aPendientes[0]['pendiente'] = 0;
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        echo json_encode(array_values($aPendientes));
+    }
+
+    public function action_jsonTotalPendientesAgrupadoPorOficina()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonTotalPendientesAgrupadoPorOficina();
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array_values($aPendientes));
+    }
+
+    public function action_jsonPendientesDeUsuariosAgrupadoPorOficinaId($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonPendientesDeUsuariosAgrupadoPorOficinaId($id);
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonpusers()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->pendientesUsersTodo();
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array_values($aPendientes));
+    }
+
+    public function action_jsonTotalPendientesDespacho()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->totalPendientesDespacho();
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array_values($aPendientes));
+    }
+
+    public function action_jsonPendientesDespachoUser($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonPendientesDespachoUser($id);
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonPendientesPorUsuarioId($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonPendientesPorUsuarioId($id);
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonTodosLosPendientesFueraDePlazo()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonTodosLosPendientesFueraDePlazo();
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonTotalPendientesFueraDePlazo()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->totalPendientesFueraDePlazo();
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array_values($aPendientes));
+    }
+
+    public function action_jsonTotalFueraDePlazoPorOficina()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonTotalFueraDePlazoPorOficina();
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array_values($aPendientes));
+    }
+
+    public function action_jsonFueraDePlazoPorOficinaId($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonFueraDePlazoPorOficinaId($id);
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonpusersId($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonpendientesUser($id);
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }
+
+    public function action_jsonpusers_old($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        if ($id != 0) {
+            $pendientes = $mSeguimiento->pendientesUsers($id);
+        } else {
+            $pendientes = $mSeguimiento->pendientesUsersTodo($id);
+        }
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        echo json_encode(array_values($aPendientes));
+    }
+
+
+    // Pendientes con Retraso
+    public function action_jsonPendientesConRetraso()
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->pendientesConRetrasoUsersTodo();
+        $aPendientes = array();
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']]['suma'] = 1;
+            $aPendientes[$p['id']]['id'] = $p['id'];
+            $aPendientes[$p['id']]['nombre'] = $p['nombre'];
+            $aPendientes[$p['id']]['cargo'] = $p['cargo'];
+            $aPendientes[$p['id']]['ultimo_ingreso'] = $p['ultimo_ingreso'];
+            $aPendientes[$p['id']]['oficina'] = $p['oficina'];
+            $aPendientes[$p['id']]['no_recibido'] = 0;
+            $aPendientes[$p['id']]['pendiente'] = 0;
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        foreach ($pendientes as $p) {
+            $aPendientes[$p['id']][$p['estado']] = $p['cantidad'];
+        }
+        header('Content-Type: application/json');
+        echo json_encode(array_values($aPendientes));
+    }
+
+    // Detalle Pendientes con Retraso
+    public function action_jsonPendientesConRetrasoUserId($id)
+    {
+        $mSeguimiento = new Model_Seguimiento();
+        $pendientes = $mSeguimiento->jsonPendientesConRetrasoUserId($id);
+        header('Content-Type: application/json');
+        echo json_encode($pendientes, JSON_NUMERIC_CHECK);
+    }    
+
+//documentos generados por oficina
+
+
+    public function action_jsondocumentos()
+    {
+        $oficina = $_GET['oficina'];
+        $oDocumentos = new Model_Documentos();
+        $documentos = $oDocumentos->tdocumentos($oficina);
+        echo json_encode($documentos);
+    }
+
+    public function action_jqwdocumentos()
+    {
+        $oficina = $_GET['oficina'];
+        $tipo = $_GET['tipo'];
+        $query = "SELECT * FROM (
+                SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
+                d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
+                FROM documentos d INNER JOIN users u ON d.id_user=u.id
+                WHERE d.id_oficina='$oficina'
+                AND d.id_tipo='$tipo'
+                ) as d";
+
+
+        $pagenum = $_GET['pagenum'];
+        $pagesize = $_GET['pagesize'];
+        $start = $pagenum * $pagesize;
+        $query = "SELECT SQL_CALC_FOUND_ROWS * FROM (
+                     SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
+                d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
+                FROM documentos d INNER JOIN users u ON d.id_user=u.id
+                WHERE d.id_oficina='$oficina'
+                AND d.id_tipo='$tipo'
+                ) as d LIMIT $start, $pagesize";
+        $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $sql = "SELECT FOUND_ROWS() AS found_rows;";
+        $rows = mysql_query($sql);
+        $rows = mysql_fetch_assoc($rows);
+        $total_rows = $rows['found_rows'];
+        $filterquery = "";
+
+        // filter data.
+        if (isset($_GET['filterscount'])) {
+            $filterscount = $_GET['filterscount'];
+
+            if ($filterscount > 0) {
+                $where = " WHERE (";
+                $tmpdatafield = "";
+                $tmpfilteroperator = "";
+                for ($i = 0; $i < $filterscount; $i++) {
+                    // get the filter's value.
+                    $filtervalue = $_GET["filtervalue" . $i];
+                    // get the filter's condition.
+                    $filtercondition = $_GET["filtercondition" . $i];
+                    // get the filter's column.
+                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    // get the filter's operator.
+                    $filteroperator = $_GET["filteroperator" . $i];
+
+                    if ($tmpdatafield == "") {
+                        $tmpdatafield = $filterdatafield;
+                    } else if ($tmpdatafield <> $filterdatafield) {
+                        $where .= ")AND(";
+                    } else if ($tmpdatafield == $filterdatafield) {
+                        if ($tmpfilteroperator == 0) {
+                            $where .= " AND ";
+                        } else
+                            $where .= " OR ";
+                    }
+
+                    // build the "WHERE" clause depending on the filter's condition, value and datafield.
+                    switch ($filtercondition) {
+                        case "NOT_EMPTY":
+                        case "NOT_NULL":
+                            $where .= " " . $filterdatafield . " NOT LIKE '" . "" . "'";
+                            break;
+                        case "EMPTY":
+                        case "NULL":
+                            $where .= " " . $filterdatafield . " LIKE '" . "" . "'";
+                            break;
+                        case "CONTAINS_CASE_SENSITIVE":
+                            $where .= " BINARY  " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "CONTAINS":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN":
+                            $where .= " " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "EQUAL":
+                            $where .= " " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL":
+                            $where .= " " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN":
+                            $where .= " " . $filterdatafield . " > '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN":
+                            $where .= " " . $filterdatafield . " < '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " >= '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " <= '" . $filtervalue . "'";
+                            break;
+                        case "STARTS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "STARTS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "ENDS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                        case "ENDS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                    }
+
+                    if ($i == $filterscount - 1) {
+                        $where .= ")";
+                    }
+
+                    $tmpfilteroperator = $filteroperator;
+                    $tmpdatafield = $filterdatafield;
+                }
+                // build the query.
+                $query = "SELECT * FROM (
+                     SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
+                d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
+                FROM documentos d INNER JOIN users u ON d.id_user=u.id
+                WHERE d.id_oficina='$oficina'
+                AND d.id_tipo='$tipo'
+                ) as d " . $where;
+                $filterquery = $query;
+                $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+                $sql = "SELECT FOUND_ROWS() AS found_rows;";
+                $rows = mysql_query($sql);
+                $rows = mysql_fetch_assoc($rows);
+                $new_total_rows = $rows['found_rows'];
+                $query = "SELECT * FROM (
+                    SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
+                d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
+                FROM documentos d INNER JOIN users u ON d.id_user=u.id
+                WHERE d.id_oficina='$oficina'
+                AND d.id_tipo='$tipo'
+                ) as d " . $where . " LIMIT $start, $pagesize";
+                $total_rows = $new_total_rows;
+            }
+        }
+
+        if (isset($_GET['sortdatafield'])) {
+
+            $sortfield = $_GET['sortdatafield'];
+            $sortorder = $_GET['sortorder'];
+
+            if ($sortorder != '') {
+                if ($_GET['filterscount'] == 0) {
+                    if ($sortorder == "desc") {
+                        $query = "SELECT * FROM (
+                     SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
+                d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
+                FROM documentos d INNER JOIN users u ON d.id_user=u.id
+                WHERE d.id_oficina='$oficina'
+                AND d.id_tipo='$tipo'
+                ) as d ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $query = "SELECT * FROM (
+                     SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
+                d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
+                FROM documentos d INNER JOIN users u ON d.id_user=u.id
+                WHERE d.id_oficina='$oficina'
+                AND d.id_tipo='$tipo'
+                ) as d ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                } else {
+                    if ($sortorder == "desc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                    $query = $filterquery;
+                }
+            }
+        }
+        //conexion
+        $mDocumentos = new Model_Documentos();
+        $result = $mDocumentos->ejecutarsql($query);
+        // echo json_encode($documentos);
+        //$result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $orders = null;
+
+        //  echo $query;
+        // get data and store in a json array
+        foreach ($result as $row) {
+            $orders[] = array(
+                'nur' => $row['nur'],
+                'cite_original' => $row['cite_original'],
+                'nombre_destinatario' => $row['nombre_destinatario'],
+                'cargo_destinatario' => $row['cargo_destinatario'],
+                // 'institucion_destinatario' => $row['institucion_destinatario'],
+                // 'institucion_remitente' => $row['institucion_remitente'],
+                'nombre_remitente' => $row['nombre_remitente'],
+                'cargo_remitente' => $row['cargo_remitente'],
+                'referencia' => $row['referencia'],
+                'fecha_creacion' => $row['fecha_creacion'],
+                // 'estado' => $row['estado'],
+                'nombre' => $row['nombre'] . ' / ' . $row['cargo'],
+                'cargo' => $row['cargo'],
+            );
+        }
+        $data[] = array(
+            'TotalRows' => $total_rows,
+            'Rows' => $orders
+        );
+        echo json_encode($data);
+    }
+
+    public function action_vitacora()
+    {
+        $query = "SELECT v.id,u.username,u.nombre,u.cargo,v.accion_realizada,v.ip_usuario,v.fecha_hora,u.logins,u.habilitado FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id";
+
+
+        $pagenum = $_GET['pagenum'];
+        $pagesize = $_GET['pagesize'];
+        $start = $pagenum * $pagesize;
+        $query = "SELECT SQL_CALC_FOUND_ROWS * FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id LIMIT $start, $pagesize";
+        $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $sql = "SELECT FOUND_ROWS() AS found_rows;";
+        $rows = mysql_query($sql);
+        $rows = mysql_fetch_assoc($rows);
+        $total_rows = $rows['found_rows'];
+        $filterquery = "";
+
+        // filter data.
+        if (isset($_GET['filterscount'])) {
+            $filterscount = $_GET['filterscount'];
+
+            if ($filterscount > 0) {
+                $where = " WHERE (";
+                $tmpdatafield = "";
+                $tmpfilteroperator = "";
+                for ($i = 0; $i < $filterscount; $i++) {
+                    // get the filter's value.
+                    $filtervalue = $_GET["filtervalue" . $i];
+                    // get the filter's condition.
+                    $filtercondition = $_GET["filtercondition" . $i];
+                    // get the filter's column.
+                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    // get the filter's operator.
+                    $filteroperator = $_GET["filteroperator" . $i];
+
+                    if ($tmpdatafield == "") {
+                        $tmpdatafield = $filterdatafield;
+                    } else if ($tmpdatafield <> $filterdatafield) {
+                        $where .= ")AND(";
+                    } else if ($tmpdatafield == $filterdatafield) {
+                        if ($tmpfilteroperator == 0) {
+                            $where .= " AND ";
+                        } else
+                            $where .= " OR ";
+                    }
+
+                    // build the "WHERE" clause depending on the filter's condition, value and datafield.
+                    switch ($filtercondition) {
+                        case "NOT_EMPTY":
+                        case "NOT_NULL":
+                            $where .= " " . $filterdatafield . " NOT LIKE '" . "" . "'";
+                            break;
+                        case "EMPTY":
+                        case "NULL":
+                            $where .= " " . $filterdatafield . " LIKE '" . "" . "'";
+                            break;
+                        case "CONTAINS_CASE_SENSITIVE":
+                            $where .= " BINARY  " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "CONTAINS":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN":
+                            $where .= " " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "EQUAL":
+                            $where .= " " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL":
+                            $where .= " " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN":
+                            $where .= " " . $filterdatafield . " > '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN":
+                            $where .= " " . $filterdatafield . " < '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " >= '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " <= '" . $filtervalue . "'";
+                            break;
+                        case "STARTS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "STARTS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "ENDS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                        case "ENDS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                    }
+
+                    if ($i == $filterscount - 1) {
+                        $where .= ")";
+                    }
+
+                    $tmpfilteroperator = $filteroperator;
+                    $tmpdatafield = $filterdatafield;
+                }
+                // build the query.
+                $query = "SELECT v.id,u.username,u.nombre,u.cargo,v.accion_realizada,v.ip_usuario,v.fecha_hora,u.logins,u.habilitado FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id " . $where;
+                $filterquery = $query;
+                $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+                $sql = "SELECT FOUND_ROWS() AS found_rows;";
+                $rows = mysql_query($sql);
+                $rows = mysql_fetch_assoc($rows);
+                $new_total_rows = $rows['found_rows'];
+                $query = "SELECT v.id,u.username,u.nombre,u.cargo,v.accion_realizada,v.ip_usuario,v.fecha_hora,u.logins,u.habilitado FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id " . $where . " LIMIT $start, $pagesize";
+                $total_rows = $new_total_rows;
+            }
+        }
+
+        if (isset($_GET['sortdatafield'])) {
+
+            $sortfield = $_GET['sortdatafield'];
+            $sortorder = $_GET['sortorder'];
+
+            if ($sortorder != '') {
+                if ($_GET['filterscount'] == 0) {
+                    if ($sortorder == "desc") {
+                        $query = "SELECT v.id,u.username,u.nombre,u.cargo,v.accion_realizada,v.ip_usuario,v.fecha_hora,u.logins,u.habilitado FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $query = "SELECT v.id,u.username,u.nombre,u.cargo,v.accion_realizada,v.ip_usuario,v.fecha_hora,u.logins,u.habilitado FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                } else {
+                    if ($sortorder == "desc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                    $query = $filterquery;
+                }
+            }
+        }
+        //conexion
+        $mDocumentos = new Model_Documentos();
+        $result = $mDocumentos->ejecutarsql($query)->as_array();
+        // echo json_encode($documentos);
+        //$result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        /*  $orders = null;
+
+          //  echo $query;
+          // get data and store in a json array
+          foreach ($result as $row) {
+          $orders[] = array(
+          'nur' => $row['nur'],
+          'cite_original' => $row['cite_original'],
+          'nombre_destinatario' => $row['nombre_destinatario'],
+          'cargo_destinatario' => $row['cargo_destinatario'],
+          // 'institucion_destinatario' => $row['institucion_destinatario'],
+          // 'institucion_remitente' => $row['institucion_remitente'],
+          'nombre_remitente' => $row['nombre_remitente'],
+          'cargo_remitente' => $row['cargo_remitente'],
+          'referencia' => $row['referencia'],
+          'fecha_creacion' => $row['fecha_creacion'],
+          // 'estado' => $row['estado'],
+          'nombre' => $row['nombre'] . ' / ' . $row['cargo'],
+          'cargo' => $row['cargo'],
+          );
+          } */
+        $data[] = array(
+            'TotalRows' => $total_rows,
+            'Rows' => $result
+        );
+        echo json_encode($data);
+    }
+
+    public function action_explosion()
+    {
+        $oficina = $_GET['oficina'];
+        $query = "SELECT * FROM (
+                SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
+                d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
+                 FROM documentos d INNER JOIN (
+                SELECT n.nur FROM nurs n
+                INNER JOIN users u ON n.id_user=u.id
+                WHERE u.id_oficina='$oficina' ) AS n ON  d.nur=n.nur
+                INNER JOIN seguimiento s ON s.nur=d.nur
+                INNER JOIN estados e ON s.estado=e.id
+                WHERE s.oficial='1'
+                AND s.estado IN (1,2,10)
+                AND d.original='1'
+                AND d.id_seguimiento='0'
+                ) as d";
+
+
+        $pagenum = $_GET['pagenum'];
+        $pagesize = $_GET['pagesize'];
+        $start = $pagenum * $pagesize;
+        $query = "SELECT SQL_CALC_FOUND_ROWS * FROM (
+                SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
+                d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
+                 FROM documentos d INNER JOIN (
+                SELECT n.nur FROM nurs n
+                INNER JOIN users u ON n.id_user=u.id
+                WHERE u.id_oficina='$oficina' ) AS n ON  d.nur=n.nur
+                INNER JOIN seguimiento s ON s.nur=d.nur
+                INNER JOIN estados e ON s.estado=e.id
+                WHERE s.oficial='1'
+                AND s.estado IN (1,2,10)
+                AND d.original='1'
+                AND d.id_seguimiento='0'
+                ) as d LIMIT $start, $pagesize";
+        $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $sql = "SELECT FOUND_ROWS() AS found_rows;";
+        $rows = mysql_query($sql);
+        $rows = mysql_fetch_assoc($rows);
+        $total_rows = $rows['found_rows'];
+        $filterquery = "";
+
+        // filter data.
+        if (isset($_GET['filterscount'])) {
+            $filterscount = $_GET['filterscount'];
+
+            if ($filterscount > 0) {
+                $where = " WHERE (";
+                $tmpdatafield = "";
+                $tmpfilteroperator = "";
+                for ($i = 0; $i < $filterscount; $i++) {
+                    // get the filter's value.
+                    $filtervalue = $_GET["filtervalue" . $i];
+                    // get the filter's condition.
+                    $filtercondition = $_GET["filtercondition" . $i];
+                    // get the filter's column.
+                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    // get the filter's operator.
+                    $filteroperator = $_GET["filteroperator" . $i];
+
+                    if ($tmpdatafield == "") {
+                        $tmpdatafield = $filterdatafield;
+                    } else if ($tmpdatafield <> $filterdatafield) {
+                        $where .= ")AND(";
+                    } else if ($tmpdatafield == $filterdatafield) {
+                        if ($tmpfilteroperator == 0) {
+                            $where .= " AND ";
+                        } else
+                            $where .= " OR ";
+                    }
+
+                    // build the "WHERE" clause depending on the filter's condition, value and datafield.
+                    switch ($filtercondition) {
+                        case "NOT_EMPTY":
+                        case "NOT_NULL":
+                            $where .= " " . $filterdatafield . " NOT LIKE '" . "" . "'";
+                            break;
+                        case "EMPTY":
+                        case "NULL":
+                            $where .= " " . $filterdatafield . " LIKE '" . "" . "'";
+                            break;
+                        case "CONTAINS_CASE_SENSITIVE":
+                            $where .= " BINARY  " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "CONTAINS":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN":
+                            $where .= " " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "EQUAL":
+                            $where .= " " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL":
+                            $where .= " " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN":
+                            $where .= " " . $filterdatafield . " > '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN":
+                            $where .= " " . $filterdatafield . " < '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " >= '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " <= '" . $filtervalue . "'";
+                            break;
+                        case "STARTS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "STARTS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "ENDS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                        case "ENDS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                    }
+
+                    if ($i == $filterscount - 1) {
+                        $where .= ")";
+                    }
+
+                    $tmpfilteroperator = $filteroperator;
+                    $tmpdatafield = $filterdatafield;
+                }
+                // build the query.
+                $query = "SELECT * FROM (
+                SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
+                d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
+                 FROM documentos d INNER JOIN (
+                SELECT n.nur FROM nurs n
+                INNER JOIN users u ON n.id_user=u.id
+                WHERE u.id_oficina='$oficina' ) AS n ON  d.nur=n.nur
+                INNER JOIN seguimiento s ON s.nur=d.nur
+                INNER JOIN estados e ON s.estado=e.id
+                WHERE s.oficial='1'
+                AND s.estado IN (1,2,10)
+                AND d.original='1'
+                AND d.id_seguimiento='0'
+                ) as d " . $where;
+                $filterquery = $query;
+                $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+                $sql = "SELECT FOUND_ROWS() AS found_rows;";
+                $rows = mysql_query($sql);
+                $rows = mysql_fetch_assoc($rows);
+                $new_total_rows = $rows['found_rows'];
+                $query = "SELECT * FROM (
+                SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
+                d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
+                 FROM documentos d INNER JOIN (
+                SELECT n.nur FROM nurs n
+                INNER JOIN users u ON n.id_user=u.id
+                WHERE u.id_oficina='$oficina' ) AS n ON  d.nur=n.nur
+                INNER JOIN seguimiento s ON s.nur=d.nur
+                INNER JOIN estados e ON s.estado=e.id
+                WHERE s.oficial='1'
+                AND s.estado IN (1,2,10)
+                AND d.original='1'
+                AND d.id_seguimiento='0'
+                ) as d " . $where . " LIMIT $start, $pagesize";
+                $total_rows = $new_total_rows;
+            }
+        }
+
+        if (isset($_GET['sortdatafield'])) {
+
+            $sortfield = $_GET['sortdatafield'];
+            $sortorder = $_GET['sortorder'];
+
+            if ($sortorder != '') {
+                if ($_GET['filterscount'] == 0) {
+                    if ($sortorder == "desc") {
+                        $query = "SELECT * FROM (
+                SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
+                d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
+                 FROM documentos d INNER JOIN (
+                SELECT n.nur FROM nurs n
+                INNER JOIN users u ON n.id_user=u.id
+                WHERE u.id_oficina='$oficina' ) AS n ON  d.nur=n.nur
+                INNER JOIN seguimiento s ON s.nur=d.nur
+                INNER JOIN estados e ON s.estado=e.id
+                WHERE s.oficial='1'
+                AND s.estado IN (1,2,10)
+                AND d.original='1'
+                AND d.id_seguimiento='0'
+                ) as d ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $query = "SELECT * FROM (
+                SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
+                d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
+                 FROM documentos d INNER JOIN (
+                SELECT n.nur FROM nurs n
+                INNER JOIN users u ON n.id_user=u.id
+                WHERE u.id_oficina='$oficina' ) AS n ON  d.nur=n.nur
+                INNER JOIN seguimiento s ON s.nur=d.nur
+                INNER JOIN estados e ON s.estado=e.id
+                WHERE s.oficial='1'
+                AND s.estado IN (1,2,10)
+                AND d.original='1'
+                AND d.id_seguimiento='0'
+                ) as d ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                } else {
+                    if ($sortorder == "desc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                    $query = $filterquery;
+                }
+            }
+        }
+        //conexion
+        $mDocumentos = new Model_Documentos();
+        $result = $mDocumentos->ejecutarsql($query);
+        // echo json_encode($documentos);
+        //$result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $orders = null;
+
+        //  echo $query;
+        // get data and store in a json array
+        foreach ($result as $row) {
+            $orders[] = array(
+                'nur' => $row['nur'],
+                'cite_original' => $row['cite_original'],
+                'nombre_destinatario' => $row['nombre_destinatario'],
+                'cargo_destinatario' => $row['cargo_destinatario'],
+                // 'institucion_destinatario' => $row['institucion_destinatario'],
+                // 'institucion_remitente' => $row['institucion_remitente'],
+                'nombre_remitente' => $row['nombre_remitente'],
+                'cargo_remitente' => $row['cargo_remitente'],
+                'referencia' => $row['referencia'],
+                'fecha_creacion' => $row['fecha_creacion'],
+                'estado' => $row['estado'],
+                'nombre_receptor' => $row['nombre_receptor'] . ' / ' . $row['cargo_receptor'],
+                'cargo_receptor' => $row['cargo_receptor'],
+                'fecha_recepcion' => $row['fecha_recepcion'],
+                'd1' => $row['d1'],
+                'd2' => $row['d2'],
+                'd3' => $row['d3'],
+            );
+        }
+        $data[] = array(
+            'TotalRows' => $total_rows,
+            'Rows' => $orders
+        );
+        echo json_encode($data);
+    }
+
+    public function action_gauges()
+    {
+
+        $oficina = $_GET['oficina'];
+        $gestion = $_GET['gestion'];
+        $mes = $_GET['mes'];
+        $sql_generado = "SELECT COUNT(*) as generada FROM nurs n INNER JOIN users u ON n.id_user=u.id";
+        $sql_generado2 = $sql_generado;
+        $sql_generado3 = $sql_generado;
+        $sql_concluido = "SELECT COUNT(*) as archivada FROM seguimiento s INNER JOIN (
+                          SELECT n.nur FROM nurs n INNER JOIN users u ON n.id_user=u.id ";
+        $sql_concluido2 = $sql_concluido;
+        $sql_concluido3 = $sql_concluido;
+        $where = "";
+        $where2 = "";
+        $where3 = "";
+        if ($oficina > 0) {
+            $where .= " WHERE u.id_oficina='$oficina' ";
+            $where2 .= " WHERE u.id_oficina='$oficina' ";
+            $where3 .= " WHERE u.id_oficina='$oficina' ";
+        }
+        if ($gestion > 0) {
+            if (strlen($where) > 0) {
+                $where .= " AND YEAR(n.fecha_creacion)='$gestion'";
+                $where2 .= " AND YEAR(n.fecha_creacion)='$gestion'";
+                $where3 .= " AND YEAR(n.fecha_creacion)='$gestion'";
+            } else {
+                $where .= " WHERE YEAR(n.fecha_creacion)='$gestion'";
+                $where2 .= " WHERE YEAR(n.fecha_creacion)='$gestion'";
+                $where3 .= " WHERE YEAR(n.fecha_creacion)='$gestion'";
+            }
+        }
+        if ($mes > 0) {
+            if (strlen($where) > 0) {
+                $where .= " AND MONTH(n.fecha_creacion)='$mes'";
+                $where2 .= " AND MONTH(n.fecha_creacion)<='$mes'";
+                // $where3.=" AND MONTH(n.fecha_creacion)<='$mes'";
+            } else {
+                $where .= " WHERE MONTH(n.fecha_creacion)='$mes'";
+                $where2 .= " WHERE MONTH(n.fecha_creacion)='$mes'";
+                // $where3.=" WHERE MONTH(n.fecha_creacion)='$mes'";
+            }
+        }
+        //procesos generados
+        $sql_generado .= $where;
+        $sql_generado2 .= $where2;
+        $sql_generado3 .= $where3;
+        $mSeguimiento = new Model_seguimiento();
+        $generados = $mSeguimiento->sql($sql_generado);
+        $generados = $generados[0]['generada'];
+
+        $generados2 = $mSeguimiento->sql($sql_generado2);
+        $generados2 = $generados2[0]['generada'];
+
+        $generados3 = $mSeguimiento->sql($sql_generado3);
+        $generados3 = $generados3[0]['generada'];
+        //procesos conluidos
+        $sql_concluido .= $where . " ) AS g ON g.nur=s.nur
+                WHERE s.estado='10'
+                AND s.oficial='1'";
+        $sql_concluido2 .= $where2 . " ) AS g ON g.nur=s.nur
+                WHERE s.estado='10'
+                AND s.oficial='1'";
+        $sql_concluido3 .= $where3 . " ) AS g ON g.nur=s.nur
+                WHERE s.estado='10'
+                AND s.oficial='1'";
+        $concluidos = $mSeguimiento->sql($sql_concluido);
+        $concluidos = $concluidos[0]['archivada'];
+
+        $concluidos2 = $mSeguimiento->sql($sql_concluido2);
+        $concluidos2 = $concluidos2[0]['archivada'];
+
+        $concluidos3 = $mSeguimiento->sql($sql_concluido3);
+        $concluidos3 = $concluidos3[0]['archivada'];
+        $g1 = 0;
+        if ($generados > 0) {
+            $g1 = round(($concluidos / $generados) * 100, 2);
+        }
+        $g2 = 0;
+        if ($generados2 > 0) {
+            $g2 = round(($concluidos2 / $generados2) * 100, 2);
+        }
+        $g3 = 0;
+        if ($generados3 > 0) {
+            $g3 = round(($concluidos3 / $generados3) * 100, 2);
+        }
+        $mes = array(
+            'generadosMes' => (int)$generados,
+            'concluidosMes' => (int)$concluidos,
+            'g1' => $g1,
+            'generadosAcumulado' => (int)$generados2,
+            'concluidosAcumulado' => (int)$concluidos2,
+            'g2' => $g2,
+            'generadosAnio' => (int)$generados3,
+            'concluidosAnio' => (int)$concluidos3,
+            'g3' => $g3
+        );
+        echo json_encode($mes);
+    }
+
+    //torta de documentos
+    public function action_tDocumentos()
+    {
+        $oficina = $_GET['oficina'];
+        $gestion = $_GET['gestion'];
+        $mes = $_GET['mes'];
+        $sql = "SELECT  COUNT(*) as cantidad, UPPER(t.plural) as documento, t.id FROM documentos d INNER JOIN tipos t ON t.id=d.id_tipo"
+            . " WHERE t.abreviatura IS NOT NULL";
+        $where = "";
+        if ($oficina > 0) {
+            $where .= " AND d.id_oficina='$oficina' ";
+        }
+        if ($gestion > 0) {
+            $where .= " AND YEAR(d.fecha_creacion)='$gestion'";
+        }
+        if ($mes > 0) {
+            $where .= " AND MONTH(d.fecha_creacion)='$mes'";
+        }
+        $sql .= $where . " GROUP BY t.id";
+        $mSeguimiento = new Model_Seguimiento();
+        $documentos = $mSeguimiento->sql($sql);
+        echo json_encode($documentos);
+    }
+
+    //jqw documentos
+    public function action_jDocumentos($id)
+    {
+
+    }
+
+    //nuevo cambio
+
+    public function action_jreporte()
+    {
+
+        $pagenum = $_GET['pagenum'];
+        $pagesize = $_GET['pagesize'];
+        $start = $pagenum * $pagesize;
+        $query = "SELECT SQL_CALC_FOUND_ROWS * FROM documentos LIMIT $start, $pagesize";
+        $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $sql = "SELECT FOUND_ROWS() AS found_rows;";
+        $rows = mysql_query($sql);
+        $rows = mysql_fetch_assoc($rows);
+        $total_rows = $rows['found_rows'];
+        $filterquery = "";
+
+        // filter data.
+        if (isset($_GET['filterscount'])) {
+            $filterscount = $_GET['filterscount'];
+
+            if ($filterscount > 0) {
+                $where = " WHERE (";
+                $tmpdatafield = "";
+                $tmpfilteroperator = "";
+                for ($i = 0; $i < $filterscount; $i++) {
+                    // get the filter's value.
+                    $filtervalue = $_GET["filtervalue" . $i];
+                    // get the filter's condition.
+                    $filtercondition = $_GET["filtercondition" . $i];
+                    // get the filter's column.
+                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    // get the filter's operator.
+                    $filteroperator = $_GET["filteroperator" . $i];
+
+                    if ($tmpdatafield == "") {
+                        $tmpdatafield = $filterdatafield;
+                    } else if ($tmpdatafield <> $filterdatafield) {
+                        $where .= ")AND(";
+                    } else if ($tmpdatafield == $filterdatafield) {
+                        if ($tmpfilteroperator == 0) {
+                            $where .= " AND ";
+                        } else
+                            $where .= " OR ";
+                    }
+
+                    // build the "WHERE" clause depending on the filter's condition, value and datafield.
+                    switch ($filtercondition) {
+                        case "NOT_EMPTY":
+                        case "NOT_NULL":
+                            $where .= " " . $filterdatafield . " NOT LIKE '" . "" . "'";
+                            break;
+                        case "EMPTY":
+                        case "NULL":
+                            $where .= " " . $filterdatafield . " LIKE '" . "" . "'";
+                            break;
+                        case "CONTAINS_CASE_SENSITIVE":
+                            $where .= " BINARY  " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "CONTAINS":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "DOES_NOT_CONTAIN":
+                            $where .= " " . $filterdatafield . " NOT LIKE '%" . $filtervalue . "%'";
+                            break;
+                        case "EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "EQUAL":
+                            $where .= " " . $filterdatafield . " = '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "NOT_EQUAL":
+                            $where .= " " . $filterdatafield . " <> '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN":
+                            $where .= " " . $filterdatafield . " > '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN":
+                            $where .= " " . $filterdatafield . " < '" . $filtervalue . "'";
+                            break;
+                        case "GREATER_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " >= '" . $filtervalue . "'";
+                            break;
+                        case "LESS_THAN_OR_EQUAL":
+                            $where .= " " . $filterdatafield . " <= '" . $filtervalue . "'";
+                            break;
+                        case "STARTS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "STARTS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '" . $filtervalue . "%'";
+                            break;
+                        case "ENDS_WITH_CASE_SENSITIVE":
+                            $where .= " BINARY " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                        case "ENDS_WITH":
+                            $where .= " " . $filterdatafield . " LIKE '%" . $filtervalue . "'";
+                            break;
+                    }
+
+                    if ($i == $filterscount - 1) {
+                        $where .= ")";
+                    }
+
+                    $tmpfilteroperator = $filteroperator;
+                    $tmpdatafield = $filterdatafield;
+                }
+                // build the query.
+                $query = "SELECT id,nur,cite_original,nombre_destinatario,cargo_destinatario,nombre_remitente,cargo_remitente,referencia, fecha_creacion"
+                    . ",institucion_remitente,institucion_destinatario FROM documentos " . $where;
+                $filterquery = $query;
+                $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+                $sql = "SELECT FOUND_ROWS() AS found_rows;";
+                $rows = mysql_query($sql);
+                $rows = mysql_fetch_assoc($rows);
+                $new_total_rows = $rows['found_rows'];
+                $query = "SELECT id,nur,cite_original,nombre_destinatario,cargo_destinatario,nombre_remitente,cargo_remitente,referencia, fecha_creacion"
+                    . ",institucion_remitente,institucion_destinatario FROM documentos " . $where . " LIMIT $start, $pagesize";
+                $total_rows = $new_total_rows;
+            }
+        }
+
+        if (isset($_GET['sortdatafield'])) {
+
+            $sortfield = $_GET['sortdatafield'];
+            $sortorder = $_GET['sortorder'];
+
+            if ($sortorder != '') {
+                if ($_GET['filterscount'] == 0) {
+                    if ($sortorder == "desc") {
+                        $query = "SELECT id,nur,cite_original,nombre_destinatario,cargo_destinatario,nombre_remitente,cargo_remitente,referencia, fecha_creacion"
+                            . ",institucion_remitente,institucion_destinatario FROM documentos ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $query = "SELECT id,nur,cite_original,nombre_destinatario,cargo_destinatario,nombre_remitente,cargo_remitente,referencia,fecha_creacion"
+                            . ",institucion_remitente,institucion_destinatario FROM documentos ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                } else {
+                    if ($sortorder == "desc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " DESC LIMIT $start, $pagesize";
+                    } else if ($sortorder == "asc") {
+                        $filterquery .= " ORDER BY" . " " . $sortfield . " ASC LIMIT $start, $pagesize";
+                    }
+                    $query = $filterquery;
+                }
+            }
+        }
+        //conexion
+        $mDocumentos = new Model_Documentos();
+        $result = $mDocumentos->ejecutarsql($query);
+        // echo json_encode($documentos);
+        //$result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
+        $orders = null;
+
+        //  echo $query;
+        // get data and store in a json array
+        foreach ($result as $row) {
+            $orders[] = array(
+                'nur' => $row['nur'],
+                'cite_original' => $row['cite_original'],
+                'nombre_destinatario' => $row['nombre_destinatario'],
+                'cargo_destinatario' => $row['cargo_destinatario'],
+                'institucion_destinatario' => $row['institucion_destinatario'],
+                'institucion_remitente' => $row['institucion_remitente'],
+                'nombre_remitente' => $row['nombre_remitente'],
+                'cargo_remitente' => $row['cargo_remitente'],
+                'referencia' => $row['referencia'],
+                'fecha_creacion' => $row['fecha_creacion']
+            );
+        }
+        $data[] = array(
+            'TotalRows' => $total_rows,
+            'Rows' => $orders
+        );
+        echo json_encode($data);
+    }
+
+    public function action_seguimiento($nur)
+    {
+        $mDocumentos = new Model_Documentos();
+        $seguimiento = $mDocumentos->seguimiento($nur);
+        echo json_encode($seguimiento);
+    }
+
+//nuevo
+    public function action_documentosTipo()
+    {
+        $oficina = $this->user->id_oficina;
+        $mDocumento = new Model_Documentos();
+        $documentos = $mDocumento->documentosTipo($oficina);
+        $data = array();
+        foreach ($documentos as $d) {
+            // $data[$d['documento']][]=(int)$d['cantidad'];
+            $data[$d['fecha']][$d['documento']][] = (int)$d['cantidad'];
+        }
+        $categoria = array();
+        foreach ($data as $k => $v) {
+            $categoria[] = $k;
+        }
+        echo json_encode($data);
+        echo json_encode($categoria);
+        //echo '<br/><b>'.$this->user->id_oficina.'</b>';
+    }
+
+    public function action_addUser()
+    {
+        $id_user = $_POST['id'];
+        $destinos = explode(';', $_POST['destinos']);
+        foreach ($destinos as $k => $v) {
+            if ($v != '') {
+                $destino = ORM::factory('destinatarios');
+                $destino->id_usuario = $id_user;
+                $destino->id_destino = $v;
+                $destino->save();
+            }
+        }
+        echo true;
+    }
+
+    public function action_theme()
+    {
+        $auth = Auth::instance();
+        if ($auth->logged_in()) {
+            $usuario = ORM::factory('user', $auth->get_user());
+            $usuario->theme = $_POST['theme'];
+            $usuario->save();
+        }
+    }
+
+    //function para saber si alguien le derivo algo
+    public function action_mensaje2()
+    {
+        $session = Session::instance();
+        $user = $session->get('auth_user');
+        $a_enviados = array();
+        $date = time() - 17;
+        $model = New Model_Seguimiento();
+        $enviados = $model->por_recibir($user->id, date('Y-m-d H:i:s', $date));
+        $i = 0;
+        foreach ($enviados as $e):
+            $a_enviados[$i]['hr'] = $e['nur'];
+            $a_enviados[$i]['remitente'] = $e['nombre_emisor'];
+            $a_enviados[$i]['cargo'] = $e['cargo_emisor'];
+            $a_enviados[$i]['de_oficina'] = $e['de_oficina'];
+            $i++;
+        endforeach;
+        echo json_encode($a_enviados);
+    }
+
+    public function action_eventos()
+    {
+        // $date=date('Y-m-d H:i:s');
+        $fecha_inicio = date('Y-01-01', time());
+        $fecha_final = date('Y-12-31', time());
+        $o_eventos = New Model_Eventos();
+        $eventos = $o_eventos->lista($fecha_inicio, $fecha_final);
+        $a_eventos = array();
+        foreach ($eventos as $e) {
+            $id = $e['id'];
+            $fecha = strtotime($e['fecha_inicio']);
+            $a_eventos[$id]['anio'] = date('Y', $fecha);
+            $a_eventos[$id]['mes'] = date('m', $fecha);
+            $a_eventos[$id]['dia'] = date('d', $fecha);
+            $a_eventos[$id]['hora'] = date('H', $fecha);
+            $a_eventos[$id]['minuto'] = date('i', $fecha);
+            $a_eventos[$id]['anio2'] = date('Y', $fecha);
+            $a_eventos[$id]['mes2'] = date('m', $fecha);
+            $a_eventos[$id]['dia2'] = date('d', $fecha);
+            $a_eventos[$id]['titulo'] = $e['titulo'];
+            $a_eventos[$id]['descripcion'] = $e['descripcion'];
+            $a_eventos[$id]['prioridad'] = $e['prioridad'];
+            $a_eventos[$id]['frecuencia'] = $e['frecuencia'];
+        }
+        echo json_encode($a_eventos);
+    }
+
+    public function action_derivar()
+    {
+        if (isset($_POST['tipo'])) {
+            $tipo = $_POST['tipo'];
+            $oficial = $_POST['oficial'];
+            $id_seg = $_POST['id_seg'];
+            $destino = $_POST['destino'];
+            $id_destino = $_POST['destino'];
+            $accion = $_POST['accion'];
+            $proveido = $_POST['proveido'];
+            $nur = $_POST['nur'];
+            $date = $_POST['fecha'];
+            $user = $_POST['user'];
+            $id_user = $_POST['user'];
+            $id_doc = $_POST['document'];
+            $hijo = $_POST['hijo'];
+            $prioridad = $_POST['urgente'];
+            $session = Session::instance();
+            if ($session->get('destino')) {
+                $usuario = $session->get('destino');
+                //verificamos que el usuario no estee en destinatarios ya enviados
+                if (array_key_exists($destino, $session->get('destino'))) {
+                    $error = array('error' => 'Ya se envio la hoja de ruta' . $nur . ' la usuario.');
+                    echo json_encode($error);
+                    exit;
+                }
+                //verificamos que solo se envie un oficial
+                if (isset($usuario['oficial'])) {
+                    if ($usuario['oficial'] == $oficial) {
+                        $error = array('error' => 'Solo puede enviar un oficial');
+                        //$session->delete('destino');
+                        echo json_encode($error);
+                        exit;
+                    }
+                }
+            }
+            $usuario[$destino] = $destino;
+
+            if ($oficial > 0)
+                $usuario['oficial'] = $oficial;
+
+            $session->set('destino', $usuario);
+
+            $adjunto = $_POST['adjunto'];
+            if ($adjunto == 0)
+                $adjunto = json_encode(array());
+            else
+                $adjunto = json_encode($adjunto);
+
+            //$destino = ORM::factory('users', $destino);
+            $destino = DB::select('*')->from("users")->where('id', '=', $id_destino)->as_object()->execute()->current();
+            $oficina_destino = ORM::factory('oficinas', $destino->id_oficina);
+            //$remite = ORM::factory('users', $user);
+            $remite = DB::select('*')->from("users")->where('id', '=', $id_user)->as_object()->execute()->current();
+
+            $oficina_remite = ORM::factory('oficinas', $remite->id_oficina);
+
+            $seguimiento = ORM::factory('seguimiento');
+            if (($id_seg > 0) && ($oficial == $tipo)) {
+                $seguimiento_actual = ORM::factory('seguimiento')
+                    ->where('id', '=', $id_seg)
+                    ->find();
+                $seguimiento_actual->estado = 4;
+                if ($seguimiento_actual->oficial == 1) {
+                    $seguimiento_actual->oficial = 2;
+                }
+                $seguimiento_actual->save();
+            } else {
+                if (isset($usuario['oficial'])) {
+                    $documento = ORM::factory('documentos', $id_doc);
+                    $documento->estado = 1;
+                    $documento->save();
+                }
+            }
+            $seguimiento->id_seguimiento = $id_seg;
+            $seguimiento->nur = $nur;
+            $seguimiento->derivado_por = $remite->id;
+            $seguimiento->nombre_emisor = $remite->nombre;
+            $seguimiento->cargo_emisor = $remite->cargo;
+            $seguimiento->fecha_emision = date('Y-m-d H:i:s');
+            $seguimiento->derivado_a = $destino->id;
+            $seguimiento->nombre_receptor = $destino->nombre;
+            $seguimiento->cargo_receptor = $destino->cargo;
+            $seguimiento->estado = 1;
+            $seguimiento->accion = $accion;
+            $seguimiento->oficial = $oficial;
+            $seguimiento->hijo = $hijo;
+            $seguimiento->proveido = $proveido;
+            $seguimiento->adjuntos = $adjunto;
+            $seguimiento->de_oficina = $oficina_remite->oficina;
+            $seguimiento->a_oficina = $oficina_destino->oficina;
+            $seguimiento->id_de_oficina = $oficina_remite->id;
+            $seguimiento->id_a_oficina = $oficina_destino->id;
+            $seguimiento->prioridad = $prioridad;
+            $seguimiento->save();
+//alertas
+            if ($date != '') {
+                $alerta = ORM::factory('alertas');
+                $alerta->id_user = $destino->id;
+                $alerta->id_seguimiento = $seguimiento->id;
+                $fecha = explode('/', $date);
+                $alerta->fecha = $fecha[2] . '-' . $fecha[1] . '-' . $fecha[0];
+                $alerta->estado = 0;
+                $alerta->save();
+            }
+
+
+            if (!$oficial)
+                $oficial = 'Copia';
+            else
+                $oficial = 'Oficial';
+            //guardamo vitacora
+            $this->save($remite->id_entidad, $seguimiento->derivado_por, $seguimiento->nombre_emisor . ' | <b>' . $seguimiento->cargo_emisor . '</b> Deriva la Hoja de Ruta ' . $seguimiento->nur . '(' . $oficial . ') a ' . $seguimiento->nombre_receptor . ' | <b>' . $seguimiento->cargo_receptor . '</b>');
+
+
+            // ===================== ENVIO DE EMAIL POR NUEVA DERIVACION =====================
+            $id_usuario_origen = $remite->id;
+            $id_usuario_destino = $destino->id;
+
+            //      Correo Emisor
+            $queryDatosEmisor = "SELECT
+                                        nombre, email
+                                    FROM
+                                        users
+                                    WHERE
+                                        id = '$id_usuario_origen';";
+
+            $resultSetDatosEmisor = db::query(Database::SELECT, $queryDatosEmisor, FALSE)
+                ->execute()
+                ->as_array();
+
+            //      Correo Receptor
+            $queryDatosReceptor = "SELECT
+                                        nombre, email
+                                    FROM
+                                        users
+                                    WHERE
+                                        id = '$id_usuario_destino';";
+
+            $resultSetDatosReceptor = db::query(Database::SELECT, $queryDatosReceptor, FALSE)
+                ->execute()
+                ->as_array();
+
+            $nro_hoja_ruta = $seguimiento->nur;
+            //      Referencia del Documento
+            $queryReferenciaDocumento = "SELECT
+                                            referencia
+                                        FROM
+                                            documentos
+                                        WHERE
+                                            nur = '$nro_hoja_ruta';";
+
+            $resultSetReferenciaDocumento = db::query(Database::SELECT, $queryReferenciaDocumento, FALSE)
+                ->execute()
+                ->as_array();
+
+            $referencia_del_tramite = $resultSetReferenciaDocumento[0]['referencia'];
+
+            //      Parametros para envio de correos
+            $nombre_receptor = $resultSetDatosReceptor[0]['nombre'];
+
+
+            $date = new DateTime($seguimiento->fecha_emision);
+            $fecha_de_emision = $date->format('Y-m-d');
+            $hora_de_emision = $date->format('H:i:s');
+
+
+            $nombre_emisor = $resultSetDatosEmisor[0]['nombre'];
+
+            if ($seguimiento->prioridad == 1) {
+                $tipo_tramite = 'URGENTE';
+            } else {
+                $tipo_tramite = 'NO URGENTE';
+            }
+
+            $asunto = 'Tramite: ' . $nro_hoja_ruta . ' (' . $tipo_tramite . ')';
+
+            $nombre_receptor = $resultSetDatosReceptor[0]['nombre'];
+            $correo_receptor = $resultSetDatosReceptor[0]['email'];
+
+            $mensaje .= '<html xmlns="http://jabber.org/protocol/xhtml-im">';
+            $mensaje .= '    <head>';
+            $mensaje .= '        <title>NUEVAS DERIVACIONES</title>';
+            $mensaje .= '    </head>';
+            $mensaje .= '    <body xmlns="http://www.w3.org/1999/xhtml">';
+            $mensaje .= '        <p>';
+            $mensaje .= '           Estimado Sr(a):';
+            $mensaje .= '           <span style="font-weight: bold;">';
+            $mensaje .= $nombre_receptor;
+            $mensaje .= '           </span>.' . '<br>';
+            $mensaje .= '        </p>';
+            $mensaje .= '        <p>';
+            $mensaje .= '           En fecha ' . $fecha_de_emision . ' a horas ' . $hora_de_emision . ' se ha enviado a su bandeja personal del Sistema de Correspondencia (SIGEC).' . '<br><br>' . 'El Documento con';
+            $mensaje .= '           <span style="text-decoration: underline;">';
+            $mensaje .= '               Nº de Hoja de Ruta:';
+            $mensaje .= '           </span>';
+            $mensaje .= '           <span style="font-weight: bold;">';
+            $mensaje .= $nro_hoja_ruta;
+            $mensaje .= '           </span>' . 'con ';
+
+            $mensaje .= '           <span style="text-decoration: underline;">';
+            $mensaje .= '               Referencia: ';
+            $mensaje .= '           </span>';
+            $mensaje .= '           <span>' . '"';
+            $mensaje .= $referencia_del_tramite . '"' . '.' . '<br>';
+            $mensaje .= '           </span>';
+
+            $mensaje .= '<br>' . '           Enviado por Sr(a): ';
+            $mensaje .= '           <span style="font-weight: bold;">';
+            $mensaje .= $nombre_emisor;
+            $mensaje .= '           </span>.';
+            $mensaje .= '        </p>';
+            // $mensaje .= '        <p>Recordar a su persona que el Sistema aplica derivaciones digitales, aplicando la firma digital institucional.</p>';
+
+            $url_hoja_de_ruta = 'http://sigec.oopp.gob.bo/route/trace/?hr=' . $nro_hoja_ruta;
+            $mensaje .= '        <p>';
+            $mensaje .= '           Usted puede revisar la Hoja de Ruta en el siguiente enlace: ';
+            $mensaje .= '           <a href=' . $url_hoja_de_ruta . '>' . $nro_hoja_ruta . '</a>';
+            $mensaje .= '        </p>';
+
+            $mensaje .= '        <p style="font-size: 10px;">';
+            $mensaje .= '            <br>';
+            $mensaje .= '            ____________________________________________________________________';
+            $mensaje .= '            <br>Notificación Automática';
+            $mensaje .= '            <br>SISTEMA DE GESTIÓN DE CORRESPONDENCIA (SIGEC)';
+            $mensaje .= '            <br>Fecha y Hora: ' . $fecha_de_emision . ' ' . $hora_de_emision;
+            $mensaje .= '        </p>';
+            $mensaje .= '    </body>';
+            $mensaje .= '</html>';
+
+            // Always set content-type when sending HTML email
+            $headers = "MIME-Version: 1.0" . "\r\n";
+            $headers .= "Content-type: text/html;charset = UTF-8" . "\r\n";
+
+            // More headers
+            $headers .= 'From: <sigec@oopp.gob.bo>' . "\r\n";
+
+            $result = array(
+                'id' => $seguimiento->id,
+                'remite_nombre' => $seguimiento->nombre_emisor,
+                'remite_cargo' => $seguimiento->cargo_emisor,
+                'de_oficina' => $seguimiento->de_oficina,
+                'receptor_nombre' => $seguimiento->nombre_receptor,
+                'receptor_cargo' => $seguimiento->cargo_receptor,
+                'a_oficina' => $seguimiento->a_oficina,
+                'proveido' => $seguimiento->proveido,
+                'oficial' => $seguimiento->oficial,
+                'id_destino' => $seguimiento->derivado_a,
+                'adjunto' => json_decode($seguimiento->adjuntos),
+                // Parametros POST
+                'POST[tipo]' => $_POST['tipo'],
+                'POST[oficial]' => $_POST['oficial'],
+                'POST[id_seg]' => $_POST['id_seg'],
+                'POST[destino]' => $_POST['destino'],
+                'POST[accion]' => $_POST['accion'],
+                'POST[proveido]' => $_POST['proveido'],
+                'POST[nur]' => $_POST['nur'],
+                'POST[fecha]' => $_POST['fecha'],
+                'POST[user]' => $_POST['user'],
+                'POST[document]' => $_POST['document'],
+                'POST[hijo]' => $_POST['hijo'],
+                'POST[urgente]' => $_POST['urgente'],
+                // ORM Seguimiento
+                'seguimiento->id_seguimiento' => $id_seg,
+                'seguimiento->nur' => $nur,
+                'seguimiento->derivado_por' => $remite->id,
+                'seguimiento->nombre_emisor' => $remite->nombre,
+                'seguimiento->cargo_emisor' => $remite->cargo,
+                'seguimiento->fecha_emision' => date('Y-m-d H:i:s'),
+                'seguimiento->derivado_a' => $destino->id,
+                'seguimiento->nombre_receptor' => $destino->nombre,
+                'seguimiento->cargo_receptor' => $destino->cargo,
+                'seguimiento->estado' => 1,
+                'seguimiento->accion' => $accion,
+                'seguimiento->oficial' => $oficial,
+                'seguimiento->hijo' => $hijo,
+                'seguimiento->proveido' => $proveido,
+                'seguimiento->adjuntos' => $adjunto,
+                'seguimiento->de_oficina' => $oficina_remite->oficina,
+                'seguimiento->a_oficina' => $oficina_destino->oficina,
+                'seguimiento->id_de_oficina' => $oficina_remite->id,
+                'seguimiento->id_a_oficina' => $oficina_destino->id,
+                'seguimiento->prioridad' => $prioridad,
+            );
+            
+            // PRUEBAS DE ENVIO DE CORREO DESDE SOLO 'PRODUCCION'
+            /*
+            require_once('/usr/share/php/libphp-phpmailer/class.phpmailer.php');
+            require_once('/usr/share/php/libphp-phpmailer/class.smtp.php');
+            $mail = new PHPMailer();
+            $mail->IsSMTP();
+            $mail->CharSet = 'UTF-8';
+            $mail->SMTPAuth = true;
+            //$mail->SMTPKeepAlive = true;
+            $mail->Host = "mail.correos.gob.bo";
+            $mail->Port = 25;
+            $mail->Username = "info@correos.gob.bo";
+            $mail->Password = "123456";
+            $mail->SMTPSecure = 'tls';
+            $mail->SetFrom('info@correos.gob.bo', 'SIGEC');
+            //$mail->SetFrom('sigec' . $contador . '@oopp.gob.bo', 'SIGEC');
+            $mail->Subject = $asunto;
+            // $mail->AltBody    = "Any message.";
+            $mail->MsgHTML($mensaje);
+            $mail->AddAddress($correo_receptor, $nombre_receptor);
+            $mail->Send();
+            */
+
+            echo json_encode($result);
+        }
+    }
+
+
+    public function sendRESTRequest($url, $request)
+    {
+        // Create a stream context so that we can POST the REST request to $url
+        $context = stream_context_create(array(
+            'http' => array(
+                'method' => 'POST',
+                'header' => "Host: chat.oopp.gob.bo:5282\nContent-Type: text/html;charset=utf-8\nContent-Length: " . strlen($request),
+                'content' => $request
+            )
+        ));
+
+        // Use file_get_contents for PHP 5+ otherwise use fopen, fread, fclose
+        if (version_compare(PHP_VERSION, '5.0.0', '>=')) {
+
+            $result = file_get_contents($url, false, $context);
+        } else {
+
+            // This is the PHP4 workaround which is slightly less elegant
+            // Suppress fopen warnings, otherwise they interfere with the page headers
+            $fp = @fopen($url, 'r', false, $context);
+            $result = '';
+
+            // Only proceed if we have a file handle, otherwise we enter an infinite loop
+            if ($fp) {
+                while (!feof($fp)) {
+                    $result .= fread($fp, 4096);
+                }
+                fclose($fp);
+            }
+        }
+        return $result;
+    }
+
+    public function action_eliminar()
+    {
+        $id_seg = $_POST['id'];
+        $id_destino = $_POST['destino'];
+        $oficial = $_POST['oficial'];
+        $id_doc = $_POST['document'];
+        $session = Session::instance();
+        $usuario = $session->get('destino');
+        unset($usuario[$id_destino]);
+        //verificamos si se borro algun oficial
+        if ($oficial == 1)
+            unset($usuario['oficial']);
+        $session->set('destino', $usuario);
+        /* quitar el seguimiento */
+        $seguimiento = ORM::factory('seguimiento', $id_seg);
+        if ($seguimiento->loaded()) {
+            if (sizeof($usuario) == 0) {
+                if ($seguimiento->id_seguimiento > 0) { //si tienes seguimieto previo el nur debe volver a pendientes
+                    $seg_anterior = ORM::factory('seguimiento', $seguimiento->id_seguimiento);
+                    if ($seg_anterior->oficial == 2)
+                        $seg_anterior->oficial = 1;
+                    $seg_anterior->estado = 2;
+                    $seg_anterior->save();
+                } else {        //si no tiene seguimiento, fue la primera derivacion, entonces el documento debe cambiar el estado
+                    $documento = ORM::factory('documentos', $id_doc);
+                    if ($documento->loaded()) {
+                        $documento->estado = 0;
+                        $documento->save();
+                    }
+                }
+            }
+            //vitacora
+            if (!$seguimiento->oficial)
+                $oficial = 'Copia';
+            else
+                $oficial = 'Oficial';
+            $this->save(0, $seguimiento->derivado_por, $seguimiento->nombre_emisor . ' | <b>' . $seguimiento->cargo_emisor . '</b> Cancela derivacion de la Hoja de Ruta ' . $seguimiento->nur . '(' . $oficial . ') a ' . $seguimiento->nombre_receptor);
+            $seguimiento->delete();
+        }
+        $alerta = ORM::factory('alertas')
+            ->where('id_user', '=', $id_destino)
+            ->and_where('id_seguimiento', '=', $id_seg)
+            ->find();
+        if ($alerta->loaded()) {
+            $alerta->delete();
+        }
+        //si no hay usuarios que derivar verificamos el estado de la derivacion
+
+        echo json_encode($usuario);
+    }
+
+    //LISTA DE DOCUMENTOS CREADOS
+    public function action_documentos()
+    {
+        $auth = Auth::instance();
+        if ($auth->logged_in()) {
+            $documentos = ORM::factory('documentos')
+                ->where('id_user', '=', $auth->get_user())
+                ->find_all();
+            $doc = array();
+            foreach ($documentos as $d) {
+                $doc[] = array('key' => $d->codigo, 'value' => $d->codigo);
+            }
+            echo json_encode($doc);
+        }
+    }
+
+    //archivar documento
+    public function action_archivar()
+    {
+        $auth = Auth::instance();
+        if ($auth->logged_in()) {
+            $oArch = New Model_Archivados();
+            $a = $oArch->archivar($_POST['id_nuri'], $auth->get_user(), $_POST['carpeta'], date('Y-m-d H:i:s'));
+            if ($a) {
+                echo json_encode(array('La hoja de Seguimiento fue almacenada correctamente'));
+            } else {
+                echo json_encode(array('Hubo un error al guardar en archivos'));
+            }
+        }
+    }
+
+    //imprimir una hoja de seguimiento
+    public function action_print_hs()
+    {
+        $hs = $_POST['nur'];
+        $aNur = array();
+        $nur = ORM::factory('nurs')->where('nur', '=', $hs)->count_all();
+        if ($nur > 0) {
+            $aNur['nur'] = $nur;
+        } else {
+            $aNur['nur'] = 0;
+        }
+        echo json_encode($aNur);
+    }
+
+    //verificamos el usuario unico
+    public function action_username()
+    {
+        $username = Arr::get($_POST, 'username', '');
+        $myuser = ORM::factory('users', array('username' => $username));
+        $res = 0;
+        if ($myuser->loaded()) {
+            $res = 1;
+        }
+        echo json_encode(array('result' => $res));
+    }
+
+    //verificamos un email unico
+    public function action_emailunique()
+    {
+        $email = Arr::get($_POST, 'email', '');
+
+        $myuser = new Model_Myuser();
+        $res = $myuser->username_unique($email);
+
+        echo json_encode(array('result' => $res));
+    }
+
+    public function action_checkOldPass()
+    {
+        $oldpass = Arr::get($_POST, 'oldpass', '');
+
+        $myuser = new Model_Myuser();
+        $res = $myuser->checkOldPass($oldpass);
+
+        echo json_encode(array('result' => $res));
+    }
+
+    /*     * *********************REPORTES*********************** */
+
+    public function action_pOficina()
+    {
+        $auth = Auth::instance();
+        if ($auth->logged_in()) {
+            $session = Session::instance();
+            $user = $session->get('auth_user');
+            //usuarios que pertences a mi oficina
+            $users = ORM::factory('users')->where('id_oficina', '=', $user->id_oficina)->or_where('superior', '=', $user->id)->find_all();
+            $oficiales = array();
+            $copias = array();
+            $usuarios = array();
+            $archivados = array();
+            foreach ($users as $u) {
+                $oficial = ORM::factory('seguimiento')->where('derivado_a', '=', $u->id)->and_where('estado', '=', 2)->and_where('oficial', '=', 1)->count_all();
+                $copia = ORM::factory('seguimiento')->where('derivado_a', '=', $u->id)->and_where('estado', '=', 2)->and_where('oficial', '=', 0)->count_all();
+                $archivado = ORM::factory('seguimiento')->where('derivado_a', '=', $u->id)->and_where('estado', '=', 10)->count_all();
+                array_push($oficiales, (int)$oficial);
+                array_push($copias, (int)$copia);
+                array_push($usuarios, $u->nombre);
+                array_push($archivados, (int)$archivado);
+            }
+            $pendientes = array(
+                'oficiales' => array_values($oficiales),
+                'copias' => array_values($copias),
+                'archivados' => array_values($archivados),
+                'names' => array_values($usuarios),
+            );
+            echo json_encode($pendientes);
+        }
+    }
+
+#******* pendientes por oficinas ***********
+
+    public function action_pOficinas()
+    {
+        $auth = Auth::instance();
+        if ($auth->logged_in()) {
+            $session = Session::instance();
+            $user = $session->get('auth_user');
+            //usuarios que pertences a mi oficina
+            $oficina = ORM::factory('oficinas', $user->id_oficina);
+            $oficinas = ORM::factory('oficinas')->where('id_entidad', '=', $oficina->id_entidad)->find_all();
+            $oficiales = array();
+            $copias = array();
+            $usuarios = array();
+            $archivados = array();
+            foreach ($oficinas as $u) {
+                $oficial = ORM::factory('seguimiento')->where('id_a_oficina', '=', $u->id)->and_where('estado', '=', 2)->and_where('oficial', '=', 1)->count_all();
+                $copia = ORM::factory('seguimiento')->where('id_a_oficina', '=', $u->id)->and_where('estado', '=', 2)->and_where('oficial', '=', 0)->count_all();
+                $archivado = ORM::factory('seguimiento')->where('id_a_oficina', '=', $u->id)->and_where('estado', '=', 10)->count_all();
+                array_push($oficiales, (int)$oficial);
+                array_push($copias, (int)$copia);
+                array_push($usuarios, $u->oficina);
+                array_push($archivados, (int)$archivado);
+            }
+            $pendientes = array(
+                'oficiales' => array_values($oficiales),
+                'copias' => array_values($copias),
+                'archivados' => array_values($archivados),
+                'names' => array_values($usuarios),
+            );
+            echo json_encode($pendientes);
+        }
+    }
+
+    public function action_vercite()
+    {
+        if ($_POST) {
+            $a_documento = array();
+            $cite = trim($_POST['cite']);
+            $oficina = trim($_POST['oficina']);
+            if ($cite == '' || $cite == 'S/C') {
+                echo json_encode($a_documento);
+            } else {
+                $documento = ORM::factory('documentos')
+                    ->where('cite_original', '=', $cite)
+                    ->and_where('id_oficina', '=', $oficina)
+                    ->find();
+                if ($documento->loaded()) {
+                    $a_documento['error'] = 'El documento ya fue recpecionado en fecha: ' . $documento->fecha_creacion . ' y tiene HOJA DE RUTA ' . $documento->nur;
+                }
+                echo json_encode($a_documento);
+            }
+        }
+    }
+
+    public function action_pendientes()
+    {
+        $id = $_POST['user'];
+        $usuarios = ORM::factory('users')
+            ->where('superior', '=', $id)
+            ->and_where('habilitado', '=', 1)
+            ->find_all();
+        $data = array();
+        $sql = "SELECT u.id, u.nombre,u.cargo,COUNT(*) as  pendientes FROM users u
+    INNER JOIN seguimiento s ON s.derivado_a=u.id
+    WHERE s.estado='2'
+    AND s.derivado_a IN ( ";
+        foreach ($usuarios as $u):
+            $data[$u->id] = array(
+                'id' => $u->id,
+                'nombre' => $u->nombre,
+                'pendientes' => 0,
+                'cargo' => $u->cargo
+            );
+            $sql .= $u->id . ", ";
+        endforeach;
+        $sql = substr($sql, 0, -2);
+        $sql .= " ) GROUP BY u.id";
+        $mSeg = New Model_Seguimiento();
+        $pendientes = $mSeg->pendientes2($sql);
+        foreach ($pendientes as $p):
+            $data[$p['id']] = array(
+                'id' => $p['id'],
+                'nombre' => $p['nombre'],
+                'pendientes' => $p['pendientes'],
+                'cargo' => $p['cargo']
+            );
+        endforeach;
+        echo json_encode($data);
+    }
+
+    public function save($entidad, $user, $accion)
+    {
+        $vitacora = ORM::factory('vitacora');
+        $vitacora->id_usuario = $user;
+        $vitacora->id_entidad = $entidad;
+        $vitacora->fecha_hora = date('Y-m-d H:i:s');
+        $vitacora->accion_realizada = $accion;
+        $vitacora->ip_usuario = Request::$client_ip;
+        $vitacora->save();
+    }
+
+    // ========================================================
+    // VERIFICAMOS QUE EL 'ID_USUARIO' PUEDA ASIGNAR PLAZOS
+    public function action_jsonVerificarIdUsuarioPuedaAsignarPlazos($id)
+        // $id_usuario_logueado, $id_usuario_destinatario)
+        //$id_usuario_logueado = null, $id_usuario_destinatario = null)
+    {
+        $id_usuario_logueado = $_GET['id_usuario_logueado'];
+        $id_usuario_destinatario = $_GET['id_usuario_destinatario'];
+
+        //echo $id_usuario_logueado;
+        //echo $id_usuario_destinatario;
+
+        $query = " SELECT
+                        IF(COUNT(*) > 0, 'SI', 'NO') AS respuesta
+                    FROM
+                        usuarios_habilitados_plazos
+                    WHERE
+                        (id_usuario_padre = '$id_usuario_logueado')
+                            AND (id_usuario_hijo = '$id_usuario_destinatario');";
+
+        $resultSet = db::query(Database::SELECT, $query, FALSE)
+            ->execute()
+            ->as_array();
+
+        // echo $query;
+
+        header('Content-Type: application/json');
+        echo json_encode($resultSet);
+    }
+
+    // ========================================================
+
+    // ========================================================
+    // GUARDAR JUSTIFICACION
+    public function action_guardar_justificacion()
+    {
+        $id_seguimiento = $_POST['id_seguimiento'];
+        $nur = $_POST['nur'];
+        $observacion = $_POST['observacion'];
+        $id_usuario = $_POST['id_usuario'];
+
+        $query = "  INSERT INTO observacion_seguimiento (id_seguimiento, nur, observacion, fecha_observacion, id_usuario, id_estado)
+                    VALUES ('$id_seguimiento', '$nur', '$observacion', now(), '$id_usuario', '2');";
+
+        $resultSet = db::query(Database::SELECT, $query, FALSE)
+            ->execute();
+
+        // header('Content-Type: application/json');
+        // echo json_encode($resultSet);
+        echo true;
+    }
+    // ========================================================
+
+    // ========================================================
+    // RECHAZAR DERIVACION
+    public function action_rechazar_derivacion()
+    {
+        $id_seguimiento_a_borrar = $_POST['id_seguimiento'];
+        $id_seguimiento_padre = $_POST['id_seguimiento_padre'];
+        $nur = $_POST['nur'];
+        $observacion = $_POST['observacion'];
+        $id_usuario = $_POST['id_usuario'];
+        $estado = $_POST['estado'];
+
+        // logica para el rechazo de derivaciones
+        $info = array();
+        $seg = ORM::factory('seguimiento', array('id' => $id_seguimiento_a_borrar));
+
+        if ($seg->loaded()) {
+
+            if (($seg->derivado_a == $id_usuario) && ($seg->estado == '1')) {
+
+                $padre = $seg->id_seguimiento; //si tiene seguimiento anterior?
+                $oficial = $seg->oficial;
+                $seg->delete();
+
+                //si tiene seguimiento
+                if ($padre > 0) {
+
+                    $seguimiento = ORM::factory('seguimiento', array('id' => $padre));
+
+                    if ($seguimiento->oficial == 2)
+                        $seguimiento->oficial = 1;
+
+                    // lo regresamos a su bandeja de pendientes del que nos derivo
+                    $seguimiento->estado = 2;
+                    $seguimiento->save();
+
+                    $info['info'] = '<b>Restaurado! : </b>La hoja de ruta <b>' . $seguimiento->nur . ' </b> fue restauradoa a <a href="/bandeja/pendientes"> Correspondencia recibida</a>, si quiere volver a derivar click <a href="/route/deriv/?hr=' . $seguimiento->nur . '" > aqui </a>.';
+                } //primera derivacion
+                else {
+
+                    if ($oficial == 1) {
+
+                        $documento = ORM::factory('documentos')->where('nur', '=', $nur)->and_where('original', '=', 1)->find();
+                        $documento->estado = 0;
+                        $documento->save();
+                        $info['info'] = '<b>Restaurado! : </b>La hoja de ruta <b>' . $documento->nur . ' </b> fue restaurada, para volver derivar busque el documento <a href="/document/edit/' . $documento->id . '">' . $documento->codigo . '</a> , o haga click <a href="/route/deriv/?hr=' . $documento->nur . '" > aqui </a>.';
+                    }
+                }
+            } else {
+                $error['error'] = '<b>Error!: </b>La hoja de ruta ya fue recibida por el destinatario o usted no lo tenia en su bandeja de salida';
+            }
+        }
+
+        // GUARDAMOS EL MENSAJE DEL RECHAZO
+        $query = " INSERT INTO observacion_seguimiento
+                    (id_seguimiento, nur, observacion, fecha_observacion, id_usuario, id_estado)
+                    VALUES
+                    ('$id_seguimiento_padre', '$nur', '$observacion', now(), '$id_usuario', '1');";
+
+        $resultSet = db::query(Database::SELECT, $query, FALSE)
+            ->execute();
+
+
+        // header('Content-Type: application/json');
+        // echo json_encode($seg);
+        echo true;
+    }
+    // ========================================================
+}
+
+
+

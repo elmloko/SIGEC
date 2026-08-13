@@ -1,0 +1,1095 @@
+<?php
+defined('SYSPATH') or die('No direct script access.');
+
+/*
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+*/
+
+class Controller_Externo extends Controller
+{
+    public $template = 'busqueda/seguimiento_externo';
+
+    /*
+    public function action_index()
+    {
+        $this->response->body(View::factory('busqueda/seguimiento_externo'));
+    }
+    */
+
+    public function before()
+    {
+        parent::before();
+        //$this->template->title = 'SIGEC';
+    }
+
+    public function action_busqueda()
+    {
+        //echo json_encode("hola");
+        $param_id_entidad = $_GET['id_entidad'];
+
+        // --- [INICIO] INICIALIZAR LA VISTA ---
+        $view = View::factory('busqueda/documentacion_externa');
+        // === [FIN] INICIALIZAR LA VISTA ===
+
+        /*
+        // --- [INICIO] PAGINACION ---
+        $pagination = Pagination::factory(array(
+            'total_items' => $count,
+            'current_page' => array('source' => 'query_string', 'key' => 'page'),
+            'items_per_page' => 15,
+            'view' => 'pagination/floating',
+        ));
+        $page_links = $pagination->render();
+        // --- [FIN] PAGINACION ---
+        */
+
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('sigec');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        /*
+        // === [INICIO] LISTA DE ENTIDADES ===
+        $sql_entidades = "CALL get_entidades();";
+        $entidades = $database->prepare($sql_entidades);
+        //$sentencia->bindParam(1, $valor_devuleto, PDO::PARAM_STR, 4000);
+        $entidades->execute();
+        $entidades_result = $entidades->fetchAll(PDO::FETCH_ASSOC);
+        do {
+            $entidades->fetchAll(PDO::FETCH_ASSOC);
+        } while ($entidades->nextRowSet());
+        // echo json_encode($entidades_result);
+        // === [FIN] LISTA DE ENTIDADES ===
+        */
+
+        // === [INICIO] LISTA DE DOCUMENTACION EXTERNA ===
+        if (isset($_POST['buscar'])) {
+            $hoja_de_ruta = $_POST['hoja-de-ruta'];
+            $nur = $hoja_de_ruta;
+            $hoja_de_ruta = str_pad($hoja_de_ruta, 5, "0", STR_PAD_LEFT);
+            $id_entidad = $param_id_entidad;
+            $gestion = $_POST['gestiones'];
+            $gestion_seleccionada = $gestion;
+
+            $prefijo_entidad = "";
+            if ($id_entidad == "13") {
+                $prefijo_entidad = 'E/';
+                $prefijo_entidad_2 = 'ED/';
+            }
+            if ($id_entidad == "14") {
+                $prefijo_entidad = 'E/';
+            }
+            if ($id_entidad == "17") {
+                $prefijo_entidad = 'E-T/';
+            }
+
+            $hoja_de_ruta = $prefijo_entidad . $gestion . '-' . $hoja_de_ruta;
+
+            /*
+            $sql_documentacion_externa = "CALL get_seguimiento_externo('$hoja_de_ruta','$id_entidad', '$gestion');";
+            $documentacion_externa = $database->prepare($sql_documentacion_externa);
+            $documentacion_externa->execute();
+            $documentacion_externa_result = $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+            do {
+                $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+            } while ($documentacion_externa->nextRowSet());
+
+            if (count($documentacion_externa_result) == 0) {
+                $hoja_de_ruta = $prefijo_entidad_2 . $gestion . '-' . $nur;
+
+                $sql_documentacion_externa = "CALL get_seguimiento_externo('$hoja_de_ruta','$id_entidad', '$gestion');";
+                $documentacion_externa = $database->prepare($sql_documentacion_externa);
+                $documentacion_externa->execute();
+                $documentacion_externa_result = $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+                do {
+                    $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+                } while ($documentacion_externa->nextRowSet());
+            }
+            // echo json_encode($documentacion_externa_result);
+            */
+
+            // === [INICIO] LISTADO DE SEGUIMIENTOS ===
+
+            //     [INICIO] PARAMETROS DE LA BASE DE DATOS ---
+            $database_instance = Database::instance('sigec');
+            $database_instance_array = (Array)$database_instance;
+            //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+            $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+            $hostname_DB = $params_database_instance['hostname'];
+            $database_name = $params_database_instance['database'];
+            $username_DB = $params_database_instance['username'];
+            $password_DB = $params_database_instance['password'];
+
+            $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+            $database->exec("SET NAMES 'utf8';");
+            //      [FIN] PARAMETROS DE LA BASE DE DATOS ---
+
+            $id = $hoja_de_ruta;
+            if ($id != '') {
+                //      [INICIO] GUARDAR EL REGISTRO DE VISITAS
+                $entidad_id = $id_entidad;
+                $gestion_de_consulta = $gestion;
+                $navegador_web = $_POST['client_web_browser'];
+                $visita_ip = isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
+                $visita_url = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+                $ciudad = $_POST['client_city'];
+                $pais = $_POST['client_country'];
+                $isp = $_POST['client_isp'];
+                $latitud = strlen($_POST['client_latitude']) > 0 ? $_POST['client_latitude'] : "0.00000000";
+                $longitud = strlen($_POST['client_longitude']) > 0 ? $_POST['client_latitude'] : "0.00000000";
+                $nombre_region = $_POST['client_region_name'];
+                $timezone = $_POST['client_timezone'];
+
+                $this->guardarRegistroDeVisitas(
+                    $entidad_id,
+                    $hoja_de_ruta,
+                    $gestion_de_consulta,
+                    $navegador_web,
+                    $visita_ip,
+                    $visita_url,
+                    $ciudad,
+                    $pais,
+                    $isp,
+                    $latitud,
+                    $longitud,
+                    $nombre_region,
+                    $timezone
+                );
+                //      [FIN] GUARDAR EL REGISTRO DE VISITAS
+
+                //obtenemos el documento ligado al nur
+                $documento = ORM::factory('documentos')->where('nur', '=', $id)->and_where('original', '=', 1)->find();
+                $tipo = ORM::factory('tipos', $documento->id_tipo);
+                $proceso = ORM::factory('procesos', $documento->id_proceso);
+
+                // ARRAY <DETALLE>
+                $detalle = array(
+                    'nur' => $id,
+                    'fecha' => $documento->fecha_creacion,
+                    'codigo' => $documento->cite_original,
+                    'id_documento' => $documento->id,
+                    'tipo' => $tipo->tipo,
+                    'proceso' => $proceso->proceso,
+                    'referencia' => $documento->referencia,
+                    'remitente' => $documento->nombre_remitente,
+                    'cargo_remitente' => $documento->cargo_remitente,
+                    'destinatario' => $documento->nombre_destinatario,
+                    'cargo_destinatario' => $documento->cargo_destinatario,
+                    'adjunto' => $documento->adjuntos,
+                );
+                /*
+                $archivo = ORM::factory('archivos')
+                    ->where('id_documento', '=', $documento->id)->and_where('estado', '=', '1')
+                    ->find_all();
+                */
+                // [INICIO] SEGUIMIENTO
+                $oSeg = New Model_Seguimiento();
+                $seguimiento = $oSeg->seguimiento($id);
+                // [FIN] SEGUIMIENTO
+
+                //agrupaciones
+                $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $id)->find();
+
+                // [INICIO] OBTENER EL SEGUIMIENTO DE LA ULTIMA DERIVACION OFICIAL
+                $hoja_de_ruta = $id;
+                $sql_seguimiento = "    SELECT 
+                                            *
+                                        FROM
+                                            sigec.seguimiento
+                                        WHERE
+                                            (nur = '$hoja_de_ruta') AND (oficial = 1);";
+                $seguimiento_result = db::query(Database::SELECT, $sql_seguimiento, FALSE)
+                    ->execute()
+                    ->as_array();
+
+                $id_ultimo_seguimiento_oficial = $seguimiento_result[0]['id'];
+                // [FIN] OBTENER EL SEGUIMIENTO DE LA ULTIMA DERIVACION OFICIAL
+
+                $view->bind('seguimiento', $seguimiento);
+                $view->bind('hoja_de_ruta', $hoja_de_ruta);
+                $view->bind('id_seguimiento_oficial', $id_ultimo_seguimiento_oficial);
+                $view->bind('detalle', $detalle);
+                //$view->bind('archivo', $archivo);
+                $view->bind('agrupado', $agrupado);
+            }
+            // ---    [FIN] LISTADO DE SEGUIMIENTOS -->
+        }
+        // --- [FIN] LISTA DE DOCUMENTACION EXTERNA ---
+
+        // --- [INICIO] PARAMETRIZAR LA VISTA ---
+        $gestiones = (Array)range(
+            date("Y"),
+            2013
+        );
+
+        $view->bind('param_id_entidad', $param_id_entidad);
+        //$view->bind('count', count($documentacion_externa_result));
+        //$view->bind('lista_hojas_de_ruta_externas', $documentacion_externa_result);
+        $view->bind('gestiones', $gestiones);
+        $view->bind('gestion_seleccionada', $gestion_seleccionada);
+
+        $this->response->body($view);
+        // --- [FIN] PARAMETRIZAR LA VISTA ---
+    }
+
+    public function action_buscarHojaDeRuta()
+    {
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('sigec');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        // === [INICIO] LISTA DE DOCUMENTACION EXTERNA ===
+        $hoja_de_ruta = $_POST['hoja_de_ruta'];
+        $id_entidad = $_POST['id_entidad_seleccionada'];
+        $gestion = $_POST['gestion_seleccionada'];
+
+        $sql_documentacion_externa = "CALL get_seguimiento_externo('$hoja_de_ruta','$id_entidad', '$gestion');";
+        $documentacion_externa = $database->prepare($sql_documentacion_externa);
+        $documentacion_externa->execute();
+        $documentacion_externa_result = $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+        do {
+            $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+        } while ($documentacion_externa->nextRowSet());
+
+        $result = array(
+            'count: ' => count($documentacion_externa_result),
+            'rows: ' => $documentacion_externa_result
+        );
+        echo json_encode($documentacion_externa_result);
+        //echo json_encode($result);
+        // --- [FIN] LISTA DE DOCUMENTACION EXTERNA ---
+    }
+
+    public function action_seguimientoExterno()
+    {
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('sigec');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        //$id = Arr::get($_GET, 'hr', '');
+        $id = $_GET['hr'];
+        if ($id != '') {
+            //obtenemos el documento ligado al nur
+            $documento = ORM::factory('documentos')->where('nur', '=', $id)->and_where('original', '=', 1)->find();
+            $tipo = ORM::factory('tipos', $documento->id_tipo);
+            $proceso = ORM::factory('procesos', $documento->id_proceso);
+
+            // ARRAY <DETALLE>
+            $detalle = array(
+                'nur' => $id,
+                'fecha' => $documento->fecha_creacion,
+                'codigo' => $documento->cite_original,
+                'id_documento' => $documento->id,
+                'tipo' => $tipo->tipo,
+                'proceso' => $proceso->proceso,
+                'referencia' => $documento->referencia,
+                'remitente' => $documento->nombre_remitente,
+                'cargo_remitente' => $documento->cargo_remitente,
+                'destinatario' => $documento->nombre_destinatario,
+                'cargo_destinatario' => $documento->cargo_destinatario,
+                'adjunto' => $documento->adjuntos,
+            );
+            $archivo = ORM::factory('archivos')
+                ->where('id_documento', '=', $documento->id)->and_where('estado', '=', '1')
+                ->find_all();
+            // [INICIO] SEGUIMIENTO
+            $oSeg = New Model_Seguimiento();
+            $seguimiento = $oSeg->seguimiento($id);
+            // [FIN] SEGUIMIENTO
+
+            //agrupaciones
+            $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $id)->find();
+
+            // [INICIO] OBTENER EL SEGUIMIENTO DE LA ULTIMA DERIVACION OFICIAL
+            $hoja_de_ruta = $id;
+            $sql_seguimiento = "    SELECT 
+                                        *
+                                    FROM
+                                        sigec.seguimiento
+                                    WHERE
+                                        (nur = '$hoja_de_ruta') AND (oficial = 1);";
+            $seguimiento_result = db::query(Database::SELECT, $sql_seguimiento, FALSE)
+                ->execute()
+                ->as_array();
+
+            $id_ultimo_seguimiento_oficial = $seguimiento_result[0]['id'];
+            // [FIN] OBTENER EL SEGUIMIENTO DE LA ULTIMA DERIVACION OFICIAL
+
+            // --- [INICIO] PARAMETRIZAR LA VISTA ---
+            $view = View::factory('hojaruta/seguimiento_externo');
+            $view->bind('seguimiento', $seguimiento);
+            $view->bind('hoja_de_ruta', $hoja_de_ruta);
+            $view->bind('id_seguimiento_oficial', $id_ultimo_seguimiento_oficial);
+            $view->bind('detalle', $detalle);
+            $view->bind('archivo', $archivo);
+            $view->bind('agrupado', $agrupado);
+
+            $this->response->body($view);
+            // === [FIN] PARAMETRIZAR LA VISTA ===
+        }
+    }
+
+    public function action_guardarReclamo()
+    {
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('sigec');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        $id_seguimiento = $_POST['id_seguimiento'];
+        $nur = $_POST['nur'];
+        $observacion = $_POST['observacion'];
+        $telefono = $_POST['telefono'];
+        $email = $_POST['email'];
+
+        $sql = "CALL abm_observacion_externa(
+                null,
+                '$id_seguimiento',
+                '$nur',
+                '$observacion',
+                '$telefono',
+                '$email',
+                'INSERT',
+                @pv_resultado,
+                @pv_mensaje,
+                @pv_mensajebd);";
+
+        $result = db::query(Database::SELECT, $sql)->execute();
+        $result1 = db::query(Database::SELECT, "SELECT @pv_resultado AS resultado, @pv_mensaje AS mensaje, @pv_mensajebd AS mensajebd;")->execute();
+
+        // --- [INICIO] OBTENER USUARIO CON RECLAMO ---
+        $sql_seguimiento_con_reclamo = "SELECT 
+                                            *
+                                        FROM
+                                            seguimiento
+                                        WHERE
+                                            id = '$id_seguimiento';";
+
+        $result_seguimiento_con_reclamo = db::query(Database::SELECT, $sql_seguimiento_con_reclamo)->execute();
+        $id_usuario_con_reclamo = $result_seguimiento_con_reclamo[0]['derivado_a'];
+
+        $sql_correo_superior = "CALL get_correo_superior('$nur', @pv_correo_superior);";
+        $result_out_parametros = db::query(Database::SELECT, $sql_correo_superior)->execute();
+        $result1_out_parametros = db::query(Database::SELECT, "SELECT @pv_correo_superior AS correo_superior")->execute();
+        // ---    [FIN] OBTENER USUARIO CON RECLAMO ---
+
+        // --- [INICIO] ENVIAR CORREO ---
+        $correo_receptor = $result1_out_parametros[0]['correo_superior'];
+        //$correo_receptor = "reynaldo.coca@oopp.gob.bo";
+
+        // RECEPTOR
+        $sql_receptor = "   SELECT 
+                                *
+                            FROM
+                                users
+                            WHERE
+                                id = '$id_usuario_con_reclamo';";
+        $result_receptor = db::query(Database::SELECT, $sql_receptor)->execute();
+        $nombre_receptor = $result_receptor[0]['nombre'];
+
+        // REFERENCIA
+        $sql_referencia = " SELECT 
+                                *
+                            FROM
+                                documentos
+                            WHERE
+                                nur = '$nur'
+                            LIMIT 1;";
+        $result_referencia = db::query(Database::SELECT, $sql_referencia)->execute();
+        $referencia = $result_referencia[0]['referencia'];
+
+        $fecha_actual = date('d/m/Y');
+        $hora_actual = date('H:m');
+
+        // Personalizar Correo
+        $http = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? "https://" : "http://";
+        $link_bandeja_reclamos = $http . $_SERVER['SERVER_NAME'] . '/bandeja/reclamos';
+
+        $asunto = 'RECLAMO';
+        $mensaje = '<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>RECLAMO</title>
+                    </head>
+                    <body>
+                    <p>
+                        Estimado Sr(a): <span><b>' . $nombre_receptor . '</b>.</span>
+                    </p>
+                    <p>
+                        En fecha ' . $fecha_actual . ' a horas ' . $hora_actual . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur . '</span> con <span style="text-decoration: underline;">Referencia: </span>"' . $referencia . '".
+                    </p>
+                    <p>
+                        Usted puede revisar los RECLAMOS realizados en el siguiente enlace: <a href="' . $link_bandeja_reclamos . '">' . $link_bandeja_reclamos . '</a>
+                    </p>
+                    <p>
+                        ____________________________________________________________________
+                        <br>
+                        Notificación Automática
+                        <br>
+                        SISTEMA DE GESTIÓN DE CORRESPONDENCIA (SIGEC) 
+                    </p>
+                    </body>
+                    </html>';
+
+        require_once('/usr/share/php/libphp-phpmailer/class.phpmailer.php');
+        require_once('/usr/share/php/libphp-phpmailer/class.smtp.php');
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->CharSet = 'UTF-8';
+        $mail->SMTPAuth = true;
+        //$mail->SMTPKeepAlive = true;
+        $mail->Host = "mail.oopp.gob.bo";
+        $mail->Port = 25;
+        $mail->Username = "sigec@oopp.gob.bo";
+        $mail->Password = "0;!g*F9cI6Mn";
+        $mail->SMTPSecure = 'tls';
+        $mail->SetFrom('sigec@oopp.gob.bo', 'SIGEC');
+        $mail->Subject = $asunto;
+        $mail->MsgHTML($mensaje);
+        $mail->AddAddress($correo_receptor, $nombre_receptor);
+
+        $mail->Send();
+        // --- [FIN] ENVIAR CORREO ---
+
+        header('Content-Type: application/json');
+        echo json_encode($result1[0]);
+    }
+
+    /*
+    public function action_getSeguimientoReclamo()
+    {
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('default');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        $nur = $_GET['nur'];
+        $id_seguimiento = $_GET['id_seguimiento'];
+
+        // --- [INICIO] OBTENER USUARIO CON RECLAMO ---
+        $sql_seguimiento_con_reclamo = "SELECT
+                                            *
+                                        FROM
+                                            seguimiento
+                                        WHERE
+                                            id = '$id_seguimiento';";
+
+        $result_seguimiento_con_reclamo = db::query(Database::SELECT, $sql_seguimiento_con_reclamo)->execute();
+        $id_usuario_con_reclamo = $result_seguimiento_con_reclamo[0]['derivado_a'];
+
+        $sql_correo_superior = "CALL get_correo_superior('$nur', @pv_correo_superior);";
+        $result_out_parametros = db::query(Database::SELECT, $sql_correo_superior)->execute();
+        $result1_out_parametros = db::query(Database::SELECT, "SELECT @pv_correo_superior AS correo_superior")->execute();
+        // ---    [FIN] OBTENER USUARIO CON RECLAMO ---
+
+        // --- [INICIO] ENVIAR CORREO ---
+        $correo_receptor = $result1_out_parametros[0]['correo_superior'];
+        $correo_receptor = "reynaldo.coca@oopp.gob.bo";
+
+        // RECEPTOR
+        $sql_receptor = "   SELECT
+                                *
+                            FROM
+                                users
+                            WHERE
+                                id = '$id_usuario_con_reclamo';";
+        $result_receptor = db::query(Database::SELECT, $sql_receptor)->execute();
+        $nombre_receptor = $result_receptor[0]['nombre'];
+
+        // REFERENCIA
+        $sql_referencia = " SELECT
+                                *
+                            FROM
+                                documentos
+                            WHERE
+                                nur = '$nur'
+                            LIMIT 1;";
+        $result_referencia = db::query(Database::SELECT, $sql_referencia)->execute();
+        $referencia = $result_referencia[0]['referencia'];
+
+        $fecha_actual = date('d/m/Y');
+        $hora_actual = date('H:m');
+
+        // Personalizar Correo
+        $asunto = 'RECLAMO';
+        $mensaje = '<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>RECLAMO</title>
+                    </head>
+                    <body>
+                    <p>
+                        Estimado Sr(a): <span><b>' . $nombre_receptor . '</b>.</span>
+                    </p>
+                    <p>
+                        En fecha ' . $fecha_actual . ' a horas ' . $hora_actual . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur . '</span> con <span style="text-decoration: underline;">Referencia: </span>"' . $referencia . '".
+                    </p>
+                    <p>
+                        Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="https://sigec.oopp.gob.bo/route/trace/?hr=' . $nur . '">' . $nur . '</a>
+                    </p>
+                    <p>
+                        ____________________________________________________________________
+                        <br>
+                        Notificación Automática
+                        <br>
+                        SISTEMA DE GESTIÓN DE CORRESPONDENCIA (SIGEC)
+                    </p>
+                    </body>
+                    </html>';
+
+        require_once('/usr/share/php/libphp-phpmailer/class.phpmailer.php');
+        require_once('/usr/share/php/libphp-phpmailer/class.smtp.php');
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->CharSet = 'UTF-8';
+        $mail->SMTPAuth = true;
+        //$mail->SMTPKeepAlive = true;
+        $mail->Host = "mail.oopp.gob.bo";
+        $mail->Port = 25;
+        $mail->Username = "sigec@oopp.gob.bo";
+        $mail->Password = "0;!g*F9cI6Mn";
+        $mail->SMTPSecure = 'tls';
+        $mail->SetFrom('sigec@oopp.gob.bo', 'SIGEC');
+        $mail->Subject = $asunto;
+        $mail->MsgHTML($mensaje);
+        $mail->AddAddress($correo_receptor, $nombre_receptor);
+
+        $mail->Send();
+        // --- [FIN] ENVIAR CORREO ---
+    }
+    */
+
+    public function action_getObservacionAEditar()
+    {
+        $id_observacion = $_POST['id_observacion'];
+
+        $sql = "SELECT 
+                    *
+                FROM
+                    sigec.observacion_seguimiento_externo
+                WHERE
+                    id = '$id_observacion';";
+
+        $result = db::query(Database::SELECT, $sql)->execute()->as_array();
+
+        header('Content-Type: application/json');
+        echo json_encode($result[0]);
+    }
+
+    public function action_editarReclamo()
+    {
+        $id_observacion = $_POST['id_observacion'];
+        $id_seguimiento = $_POST['id_seguimiento'];
+        $nur = $_POST['nur'];
+        $observacion = $_POST['observacion'];
+        $telefono = $_POST['telefono'];
+        $email = $_POST['correo'];
+
+        $sql = "CALL abm_observacion_externa(
+                '$id_observacion',
+                '$id_seguimiento',
+                '$nur',
+                '$observacion',
+                '$telefono',
+                '$email',
+                'UPDATE',
+                @pv_resultado,
+                @pv_mensaje,
+                @pv_mensajebd);";
+
+        $result = db::query(Database::SELECT, $sql)->execute();
+        $result1 = db::query(Database::SELECT, "SELECT @pv_resultado AS resultado, @pv_mensaje AS mensaje, @pv_mensajebd AS mensajebd;")->execute();
+
+        header('Content-Type: application/json');
+        //echo json_encode($result1[0]);
+        echo json_encode($result1[0]);
+    }
+
+    // === [INICIO] Guardar Respuesta al Reclamo de Documentacion Externa: /externo/guardarRespuestaReclamo
+    public function action_guardarRespuestaReclamo()
+    {
+        $id_observacion = $_POST['id_observacion'];
+        $respuesta_observacion = $_POST['respuesta_observacion'];
+
+        $sql = "CALL abm_observacion_externa(
+                    '$id_observacion',
+                    null,
+                    null,
+                    '$respuesta_observacion',
+                    null,
+                    null,
+                    'RESPONDER',
+                    @pv_resultado,
+                    @pv_mensaje,
+                    @pv_mensajebd);";
+
+        $result = db::query(Database::SELECT, $sql)->execute();
+        $result1 = db::query(Database::SELECT, "SELECT @pv_resultado AS resultado, @pv_mensaje AS mensaje, @pv_mensajebd AS mensajebd;")->execute();
+        $pv_resultado = intval($result1[0]['resultado']);
+
+        if ($pv_resultado == 1) {
+            // [INICIO] ======= Enviar Correo =======
+            $sql_observacion = "SELECT 
+                                *
+                            FROM
+                                observacion_seguimiento_externo
+                            WHERE
+                                id = '$id_observacion';";
+            $result_observacion = db::query(Database::SELECT, $sql_observacion)->execute();
+
+            $nur_observacion = $result_observacion[0]['nur'];
+            $asunto = 'Respuesta al reclamo con Hoja de Ruta: ' . $nur_observacion;
+            $nombre_receptor = 'ciudadano';
+            $correo_receptor = $result_observacion[0]['correo'];
+            $respuesta = $result_observacion[0]['respuesta'];
+            //$dateTime_observacion = $result_observacion[0]['fecha_observacion'];
+
+            $dateTime_observacion = new DateTime($result_observacion[0]['fecha_observacion']);
+            $fecha_observacion_formateada = $dateTime_observacion->format('d/m/Y');
+            $hora_observacion_formateada = $dateTime_observacion->format('H:m:s');
+
+            $http = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? "https://" : "http://";
+            $mensaje_html = '<!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>' . $asunto . '</title>
+                            </head>
+                            <body>
+                            <p>
+                                Estimado Ciudadano:</span>
+                            </p>
+                            <p>
+                                En fecha ' . $fecha_observacion_formateada . ' a horas ' . $hora_observacion_formateada . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur_observacion . '</span>.
+                            </p>
+                            <p>
+                                La respuesta a su reclamo es la siguiente: <span style="font-weight: bold;">' . $respuesta . '</span>.
+                            </p>                        
+                            <p>
+                                Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="' . $http . $_SERVER['SERVER_NAME'] . '/externo/seguimientoExterno/?hr=' . $nur_observacion . '">' . $nur_observacion . '</a>
+                            </p>
+                            <p>
+                                ____________________________________________________________________
+                                <br>
+                                Notificación Automática
+                                <br>
+                                SISTEMA DE GESTIÓN DE CORRESPONDENCIA (SIGEC) 
+                            </p>
+                            </body>
+                            </html>';
+
+            $this->enviarCorreo($asunto, $mensaje_html, $nombre_receptor, $correo_receptor);
+            //    [FIN] ======= Enviar Correo =======
+        }
+
+        echo json_encode($result1[0]);
+    }
+
+    public function action_resultado()
+    {
+        $sql_observacion = "SELECT 
+                                *
+                            FROM
+                                observacion_seguimiento_externo
+                            WHERE
+                                id = '12';";
+
+        $result_observacion = db::query(Database::SELECT, $sql_observacion)->execute();
+
+        $nur_observacion = $result_observacion[0]['nur'];
+        $asunto = 'Respuesta al reclamo con Hoja de Ruta: ' . $nur_observacion;
+        $nombre_receptor = 'ciudadano';
+        $correo_receptor = $result_observacion[0]['correo'];
+        $respuesta = $result_observacion[0]['respuesta'];
+        //$dateTime_observacion = $result_observacion[0]['fecha_observacion'];
+
+        $dateTime_observacion = new DateTime($result_observacion[0]['fecha_observacion']);
+        $fecha_observacion_formateada = $dateTime_observacion->format('d/m/Y');
+        $hora_observacion_formateada = $dateTime_observacion->format('H:m:s');
+
+        $http = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? "https://" : "http://";
+        $mensaje_html = '<!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>' . $asunto . '</title>
+                        </head>
+                        <body>
+                        <p>
+                            Estimado Ciudadano:</span>
+                        </p>
+                        <p>
+                            En fecha ' . $fecha_observacion_formateada . ' a horas ' . $hora_observacion_formateada . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur_observacion . '</span>.
+                        </p>
+                        <p>
+                            La respuesta a su reclamo es la siguiente: <span style="font-weight: bold;">' . $respuesta . '</span>.
+                        </p>                        
+                        <p>
+                            Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="' . $http . $_SERVER['SERVER_NAME'] . '/externo/seguimientoExterno/?hr=' . $nur_observacion . '">' . $nur_observacion . '</a>
+                        </p>
+                        <p>
+                            ____________________________________________________________________
+                            <br>
+                            Notificación Automática
+                            <br>
+                            SISTEMA DE GESTIÓN DE CORRESPONDENCIA (SIGEC) 
+                        </p>
+                        </body>
+                        </html>';
+
+        $this->enviarCorreo($asunto, $mensaje_html, $nombre_receptor, $correo_receptor);
+
+        //echo json_encode($result_observacion[0]['respuesta']);
+    }
+
+    // ===    [FIN] Guardar Respuesta al Reclamo de Documentacion Externa: /externo/guardarRespuestaReclamo
+
+    public function action_seguimiento()
+    {
+        require Kohana::find_file('vendor/fpdf17', 'fpdf');
+        require Kohana::find_file('vendor/fpdf17', 'code39');
+
+        $hr = $_GET['hr'];
+        if(strpos($hr, 'E/') !== false) {
+            //$hr = 'MT/2015-04144';
+
+            $documento = ORM::factory('documentos')->where('nur', '=', $hr)->and_where('original', '=', 1)->find();
+            $tipo = ORM::factory('tipos', $documento->id_tipo);
+            $proceso = ORM::factory('procesos', $documento->id_proceso);
+            $detalle = array(
+                'nur' => $hr,
+                'fecha' => $documento->fecha_creacion,
+                'codigo' => $documento->cite_original,
+                'id_documento' => $documento->id,
+                'tipo' => $tipo->tipo,
+                'proceso' => $proceso->proceso,
+                'referencia' => $documento->referencia,
+                'remitente' => $documento->nombre_remitente,
+                'cargo_remitente' => $documento->cargo_remitente,
+                'destinatario' => $documento->nombre_destinatario,
+                'cargo_destinatario' => $documento->cargo_destinatario,
+                'adjunto' => $documento->adjuntos,
+            );
+
+            $archivo = ORM::factory('archivos')
+                ->where('id_documento', '=', $documento->id)
+                ->find_all();
+            // [INICIO] SEGUIMIENTO
+            $oSeg = New Model_Seguimiento();
+            $seguimiento = $oSeg->seguimiento($hr);
+            // [FIN] SEGUIMIENTO
+            //agrupaciones
+            $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $hr)->find();
+            $pdf = new PDF_Code39('P', 'mm', 'Letter');
+            $pdf->SetMargins(15, 10, 5);
+            $pdf->AddPage('L');
+            $pdf->SetFont('Arial', '', 14);
+
+
+            $pdf->Cell(246, 10, 'Seguimiento de la hoja de ruta : ' . $hr, 1, FALSE, 'C');
+            $pdf->SetFont('Arial', '', 7);
+            $pdf->Ln();
+
+            $pdf->SetWidths(array(25, 221));
+
+            $pdf->Row(array(
+                utf8_decode('Referencia'),
+                utf8_decode($detalle['referencia'])
+            ));
+            //segunda linea
+            $pdf->SetWidths(array(25, 130, 19, 72));
+            $pdf->Row(array(
+                utf8_decode('Cite original'),
+                utf8_decode($detalle['codigo']),
+                utf8_decode('Proceso'),
+                utf8_decode($detalle['proceso'])
+            ));
+            $pdf->Row(array(
+                utf8_decode('Destinatario'),
+                utf8_decode($detalle['destinatario']) . ' | ' . utf8_decode($detalle['cargo_destinatario']),
+                utf8_decode('Tipo doc.'),
+                utf8_decode($detalle['tipo'])
+            ));
+            $pdf->Row(array(
+                utf8_decode('Remitente'),
+                utf8_decode($detalle['remitente']) . ' | ' . utf8_decode($detalle['cargo_remitente']),
+                utf8_decode('Fecha'),
+                utf8_decode(Date::fecha($detalle['fecha']) . ' ' . date('H:i:s', strtotime($detalle['fecha'])))
+            ));
+            $pdf->Ln();
+            //$pdf->
+            //si es agrupado
+            if (isset($agrupado->id)):
+                $pdf->Cell(246, 10, $agrupado->padre, 1, FALSE, 'C');
+                $pdf->SetFont('Arial', '', 10);
+                $pdf->Ln();
+            endif;
+            if (isset($agrupado->id)):
+                $pdf->Cell(246, 10, 'Una copia pertenece a la Hoja de Ruta principal:' . $agrupado->padre, 1, FALSE, 'C');
+                $pdf->SetFont('Arial', '', 10);
+                $pdf->Ln();
+            endif;
+
+            $count = 0;
+            $hijo = 0;
+            foreach ($seguimiento as $s):
+
+                $pasos = "";
+                if ($s->oficial > 0) {
+                    if ($s->id_estado == 1) {
+                        $pasos = 'media/flag.png';
+                    } else
+                        $pasos = 'media/paw.png';
+                }
+
+                $pasos2 = "";
+                if (($s->oficial > 0) && ($s->id_estado == 6)) {
+                    $pasos2 = 'media/flag.png';
+                }
+                $pasos2 = "";
+                if (($s->oficial > 0) && ($s->id_estado == 2)) {
+                    $pasos2 = 'media/flag.png';
+                }
+
+                if (($s->oficial > 0) && ($s->id_estado == 4)) {
+                    $pasos2 = 'media/paw.png';
+                }
+                if (($s->oficial > 0) && ($s->id_estado == 6)) {
+                    $pasos2 = 'media/flag.png';
+                }
+                if (($s->oficial > 0) && ($s->id_estado == 10)) {
+                    $pasos2 = 'media/flag.png';
+                }
+
+                if ($pdf->GetY() > 170) {
+                    $pdf->Ln(15);
+                }
+
+                $pdf->SetFont('Arial', '', 7);
+                $pdf->Cell(101, 4, utf8_decode($s->de_oficina), 'LT', 0, 'L');
+                if ($pasos != '') {
+                    $y = $pdf->GetY();
+                    $y++;
+                    $pdf->Image($pasos, 115, $y, 8, 7, 'png');
+                    //$pdf->SetY($y);
+                    $pdf->Cell(8, 4, '', 'TR', 0, 'L');
+                } else {
+                    $pdf->Cell(8, 4, $pasos, 'TR', 0, 'L');
+                }
+                $pdf->Cell(101, 4, utf8_decode($s->a_oficina), 'LT', 0, 'L');
+
+                if ($pasos2 != '') {
+                    $y = $pdf->GetY();
+                    $y++;
+                    $pdf->Image($pasos2, 215, $y, 8, 7, 'png');
+                    $pdf->Cell(8, 4, '', 'TR', 0, 'L');
+
+                } else {
+                    $pdf->Cell(8, 4, $pasos2, 'TR', 0, 'L');
+                }
+
+
+                // MOSTRAR TEXTO DE JUSTIFICACIONES
+                $logo_observacion = 'media/exclamation-triangle.png';
+
+                $queryJustificacion = " SELECT
+                                                    COUNT(1) AS nro_resultados
+                                                FROM
+                                                    observacion_seguimiento
+                                                WHERE
+                                                    (id_estado = '2')
+                                                        AND (id_seguimiento = '$s->id');";
+
+                $y = $pdf->GetY();
+                $y++;
+                $resultSetJustificacion = db::query(Database::SELECT, $queryJustificacion, FALSE)
+                    ->execute()
+                    ->as_array();
+
+                $nro_resultados = $resultSetJustificacion[0]['nro_resultados'];
+
+                if ((intval($nro_resultados) >= 1) === TRUE) {
+                    $pdf->Image($logo_observacion, 225, $y, 7, 7, 'png');
+                } else {
+                    //$pdf->Cell(31, 4,'<<<<<<<<<<<<< 0', 'LTR', 0, 'L');
+                }
+
+
+                $pdf->Cell(31, 4, utf8_decode(''), 'LTR', 0, 'L');
+
+                $pdf->Ln(4);
+                $pdf->Cell(101, 4, utf8_decode($s->nombre_emisor), 'L', 0, 'L');
+                $pdf->Cell(8, 4, '', 'R', 0, 'L');
+                $pdf->Cell(101, 4, utf8_decode($s->nombre_receptor), 'L', 0, 'L');
+                $pdf->Cell(8, 4, '', 'R', 0, 'L');
+                $pdf->Cell(31, 4, utf8_decode($s->estado), 'LR', 0, 'L');
+                $pdf->Ln(4);
+
+                $pdf->Cell(101, 4, utf8_decode($s->cargo_emisor), 'L', 0, 'L');
+                $pdf->Cell(8, 4, '', 'R', 0, 'L');
+                $pdf->Cell(101, 4, utf8_decode($s->cargo_receptor), 'L', 0, 'L');
+                $pdf->Cell(8, 4, '', 'R', 0, 'L');
+                $pdf->Cell(31, 4, utf8_decode(''), 'LR', 0, 'L');
+
+                $pdf->Ln(4);
+
+                $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_emision)) . ' - ' . $s->hora_emision, 'LR', 0, 'R');
+                // Verificamos si la 'fecha_recepcion' no es nulo
+                if (!is_null($s->fecha_recepcion) && !is_null($s->hora_recepcion)) {
+                    $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_recepcion)) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
+                } else {
+                    $pdf->Cell(109, 4, utf8_decode($s->fecha_recepcion) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
+                }
+
+                // $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_recepcion)) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
+                $pdf->Cell(31, 4, utf8_decode($s->accion), 'LR', 0, 'L');
+
+                $pdf->Ln(4);
+                $pdf->SetWidths(array(249));
+                $pdf->Row(array(utf8_decode($s->proveido)));
+                $pdf->Ln(3);
+            endforeach;
+            $pdf->Ln();
+            $pdf->Cell(109, 4, utf8_decode("Fecha de impresión: " . Date::fecha_medium(date('Y-m-d'))));
+
+            $pdf->Output('hoja_ruta_.pdf', 'I');
+        }
+        else {
+            $this->request->redirect("https://sigec.oopp.gob.bo/pages/404");
+        }
+    }
+
+    public function enviarCorreo($asunto, $mensaje, $nombre_receptor, $correo_receptor)
+    {
+        //$correo_receptor = "reynaldo.coca@oopp.gob.bo";
+
+        require_once('/usr/share/php/libphp-phpmailer/class.smtp.php');
+        require_once('/usr/share/php/libphp-phpmailer/class.phpmailer.php');
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->CharSet = 'UTF-8';
+        $mail->SMTPAuth = true;
+        //$mail->SMTPKeepAlive = true;
+        $mail->Host = "mail.oopp.gob.bo";
+        $mail->Port = 25;
+        $mail->Username = "sigec@oopp.gob.bo";
+        $mail->Password = "0;!g*F9cI6Mn";
+        $mail->SMTPSecure = 'tls';
+        $mail->SetFrom('reclamos@oopp.gob.bo', 'reclamos');
+        //$mail->SetFrom('sigec' . $contador . '@oopp.gob.bo', 'SIGEC');
+        $mail->Subject = $asunto;
+        // $mail->AltBody    = "Any message.";
+        $mail->MsgHTML($mensaje);
+        $mail->AddAddress($correo_receptor, $nombre_receptor);
+
+        if ($mail->Send()) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    /*
+     * GUARDAR REGISTRO DE VISITAS
+     */
+    private function guardarRegistroDeVisitas(
+        $entidad_id,
+        $hoja_de_ruta,
+        $gestion_de_consulta,
+        $navegador_web,
+        $visita_ip,
+        $visita_url,
+        $ciudad,
+        $pais,
+        $isp,
+        $latitud,
+        $longitud,
+        $nombre_region,
+        $timezone
+    )
+    {
+        $query = "  INSERT INTO visita
+                    (
+                        visita_entidad_id,
+                        visita_hoja_de_ruta,
+                        visita_gestion_de_consulta,
+                        visita_navegador_web,
+                        visita_ip,
+                        visita_url,
+                        visita_ciudad,
+                        visita_pais,
+                        visita_isp,
+                        visita_latitud,
+                        visita_longitud,
+                        visita_nombre_region,
+                        visita_timezone
+                    )
+                    VALUES
+                    (
+                        '$entidad_id',
+                        '$hoja_de_ruta',
+                        '$gestion_de_consulta',
+                        '$navegador_web',
+                        '$visita_ip',
+                        '$visita_url',
+                        '$ciudad',
+                        '$pais',
+                        '$isp',
+                        '$latitud',
+                        '$longitud',
+                        '$nombre_region',
+                        '$timezone'
+                    );";
+
+        $resultSet = db::query(Database::SELECT, $query, FALSE)->execute();
+    }
+}
+
+?>

@@ -1,0 +1,22 @@
+
+#toggler{width: 1px;border-left: 1px solid #ccc;border-right: 1px solid #ccc;background: #E9E9EB url("../images/toggler_bg.gif") no-repeat left center;float: left;}
+#toggler:hover{background: #D9D9DC url("../images/toggler_bg.gif") no-repeat -25px center;cursor: pointer;}
+#toggler.off{background: #c5c5c5 url("../images/toggler_off_bg.gif") no-repeat left center;margin-left: 0;}
+#toggler.off:hover{background: #C5C5C5 url("../images/toggler_off_bg.gif") no-repeat -25px center;margin-left: 0;}.sp{ font-weight: 300; color: #111;    }
+div.widget{  float: left; margin: 3px;  }
+div.widget .title{padding: 5px; border: 1px solid #ccc; font-size: 16px; }
+div.widget .content{ color: #333; font-weight: normal; border: 1px solid #e2e2e2; background-color: #fff; min-height: 200px; }
+#panel {
+        position:fixed;
+	left:0px;
+	top:118px;
+	background-color:#333;
+	height:400px;
+	width:0;/*new line*/
+        z-index: 9999999;
+}
+#panel .content_panel {
+	width:200px;
+	margin-left:20px;
+}
+#themeName{ font-size: 14px; background: #111; color: #fff; line-height: 25px;  display: block; height: 25px; text-align: center;}

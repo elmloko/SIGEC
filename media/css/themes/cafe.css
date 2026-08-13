@@ -1,0 +1,24 @@
+@CHARSET "UTF-8";
+#modx-topbar{border-bottom: 2px solid #A04C1A;}
+#bos-main-blocks h2 a,h2.titulo v,.colorcito {color: #A04C1A;}
+#menu-left ul li a:hover,#menu-left ul li:hover {color:#fff; background: #A04C1A; font-weight: bold; }
+html #modx-topnav ul.modx-subnav li a:hover {background-color: #A04C1A;}
+input#searchsubmit:hover {background-color: #A04C1A;}
+#modx-logo a.nombre{background: url("/media/images/user_cafe.png") left no-repeat; padding-left: 18px;  }
+.button2{
+    border: 1px solid #A04C1A;
+    text-shadow: 0 1px 1px #A04C1A;
+    background:#A04C1A;
+   background: -webkit-linear-gradient(top, #A04C1A, #AB5420);
+   background:    -moz-linear-gradient(top, #A04C1A, #AB5420);
+   background:     -ms-linear-gradient(top, #A04C1A, #AB5420);
+   background:      -o-linear-gradient(top, #A04C1A, #AB5420);
+}
+.button2:hover, .button2:focus {
+    border-color: #AB5420;
+   background:#A04C1A;
+    background: -webkit-linear-gradient(top, #A04C1A, #AB5420);
+   background:    -moz-linear-gradient(top, #A04C1A, #AB5420);
+   background:     -ms-linear-gradient(top, #A04C1A, #AB5420);
+   background:      -o-linear-gradient(top, #A04C1A, #AB5420);
+}

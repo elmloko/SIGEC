@@ -1,0 +1,24 @@
+@CHARSET "UTF-8";
+#modx-topbar{border-bottom: 2px solid #CE1E16;}
+#bos-main-blocks h2 a,h2.titulo v,.colorcito {color: #CE1E16;}
+#menu-left ul li a:hover,#menu-left ul li:hover {color:#fff; background: #CE1E16; font-weight: bold; }
+html #modx-topnav ul.modx-subnav li a:hover {background-color: #CE1E16;}
+input#searchsubmit:hover {background-color: #CE1E16;}
+#modx-logo a.nombre{background: url("/media/images/user_rojo.png") left no-repeat; padding-left: 18px;  }
+.button2{
+    border: 1px solid #CE1E16;
+    text-shadow: 0 1px 1px #CE1E16;
+    background:#CE1E16;
+   background: -webkit-linear-gradient(top, #CE1E16, #DE2820);
+   background:    -moz-linear-gradient(top, #CE1E16, #DE2820);
+   background:     -ms-linear-gradient(top, #CE1E16, #DE2820);
+   background:      -o-linear-gradient(top, #CE1E16, #DE2820);
+}
+.button2:hover, .button2:focus {
+    border-color: #DE2820;
+   background:#CE1E16;
+    background: -webkit-linear-gradient(top, #CE1E16, #DE2820);
+   background:    -moz-linear-gradient(top, #CE1E16, #DE2820);
+   background:     -ms-linear-gradient(top, #CE1E16, #DE2820);
+   background:      -o-linear-gradient(top, #CE1E16, #DE2820);
+}

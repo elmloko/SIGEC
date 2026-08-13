@@ -1,0 +1,65 @@
+﻿2022-04-19 14:54:04, Info                  SP     CSetupPlatform::Initialize: Setup log starts:
+2022-04-19 14:54:04, Info                  SP     SEH: Enter CExceptionHandler::CExceptionHandler
+2022-04-19 14:54:04, Info                  SP     SEH: Exit CExceptionHandler::CExceptionHandler
+2022-04-19 14:54:04, Info                  SP     Host system information:
+                                   VM: NO
+                                   Firmware type: PCAT
+                                   Manufacturer: Dell Inc.
+                                   Model : OptiPlex 7050
+                                   BIOS name : BIOS Date: 06/19/17 03:16:27 Ver: 1.5.2
+                                   BIOS version : 1.5.2
+                                   BIOS release date : 20170619000000.000000+000
+                                   Total memory : 17179869184
+                                   Number of physical CPUs : 1
+                                   Number of logical CPUs : 8
+                                   Processor manufacturer : GenuineIntel
+                                   Processor name : Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz
+                                   Processor caption : Intel64 Family 6 Model 158 Stepping 9
+                                   Processor architecture : x64
+                                   Processor clock : 3600
+
+2022-04-19 14:54:04, Info                  SP     Antivirus software information:
+                                   Name: Windows Defender, Path: %ProgramFiles%\Windows Defender\MsMpeng.exe, Timestamp: Thu, 07 Apr 2022 22:06:14 GMT, State: 397568
+                                   Name: Kaspersky Endpoint Security para Windows, Path: C:\Program Files (x86)\Kaspersky Lab\Kaspersky Endpoint Security for Windows\avp.exe, Timestamp: Thu, 07 Apr 2022 22:06:12 GMT, State: 3424256
+                                   Name: Kaspersky Endpoint Security para Windows, Path: C:\Program Files (x86)\Kaspersky Lab\Kaspersky Endpoint Security for Windows\x64\wmi64.exe, Timestamp: Mon, 05 Apr 2021 19:09:36 GMT, State: 266240
+
+2022-04-19 14:54:04, Info                         SPGenerateCopyListFromConfigFile: Didn't find file list in C:\$Windows.~WS\Sources\setupplatform.cfg, section Footprint.Basic.x86
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Starting verification of footprint section Footprint.Basic
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Could not find footprint file C:\$Windows.~WS\Sources\reagent.admx
+2022-04-19 14:54:04, Warning                      SPGetFootprintCapabilities: Footprint [Footprint.Basic] incomplete; the platform capability will not be available
+2022-04-19 14:54:04, Info                         SPGenerateCopyListFromConfigFile: Didn't find file list in C:\$Windows.~WS\Sources\setupplatform.cfg, section Footprint.Servicing.x86
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Starting verification of footprint section Footprint.Servicing
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Could not find footprint file C:\$Windows.~WS\Sources\dismapi.dll
+2022-04-19 14:54:04, Warning                      SPGetFootprintCapabilities: Footprint [Footprint.Servicing] incomplete; the platform capability will not be available
+2022-04-19 14:54:04, Info                         SPGenerateCopyListFromConfigFile: Didn't find file list in C:\$Windows.~WS\Sources\setupplatform.cfg, section Footprint.ICB.x86
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Starting verification of footprint section Footprint.ICB
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Could not find footprint file C:\$Windows.~WS\Sources\cmi2migxml.dll
+2022-04-19 14:54:04, Warning                      SPGetFootprintCapabilities: Footprint [Footprint.ICB] incomplete; the platform capability will not be available
+2022-04-19 14:54:04, Info                         SPGenerateCopyListFromConfigFile: Didn't find file list in C:\$Windows.~WS\Sources\setupplatform.cfg, section Footprint.Migration.x86
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Starting verification of footprint section Footprint.Migration
+2022-04-19 14:54:04, Info                         SPGetFootprintCapabilities: Could not find footprint file C:\$Windows.~WS\Sources\cmi2migxml.dll
+2022-04-19 14:54:04, Warning                      SPGetFootprintCapabilities: Footprint [Footprint.Migration] incomplete; the platform capability will not be available
+2022-04-19 14:54:04, Info                         Initializing diagnostics helper; data file = (NULL)
+2022-04-19 14:54:04, Info                         No existing diagnostics data
+2022-04-19 14:54:04, Info                         Reading onesetting for tracing settings
+2022-04-19 14:54:04, Warning                      Onesettings: Failed to get DeviceId from registry: 0x80070002
+2022-04-19 14:54:04, Warning                      Onesettings: Failed to initialize and query: 0x80070002
+2022-04-19 14:54:04, Warning                      Failed to create OneSettings infrastructure. Error: 0x0880070002
+2022-04-19 14:54:04, Info                         Reading onesetting for tracing settings completed, Error: 0x80070002
+2022-04-19 14:54:04, Warning                      No onesetting configured or error getting onesetting
+2022-04-19 14:54:04, Info                         Key CollectTrace is not available.
+2022-04-19 14:54:04, Warning               SP     CSetupPlatform::Initialize: Failed to initialize tracing
+2022-04-19 14:54:04, Info                         There is already a running setup user mode etw session!
+2022-04-19 14:54:04, Info                         VDS available
+2022-04-19 14:54:04, Info                         Key CollectTrace is not available.
+2022-04-19 14:54:04, Info                  SP     Attempting to resurrect a new system from C:\$Windows.~BT\Sources
+2022-04-19 14:54:04, Warning               SP     CSetupPlatform::ResurrectNewSystem: Cannot find new system serialized data.
+2022-04-19 14:54:04, Info                  SP     Suspending and releasing setup platform
+2022-04-19 14:54:05, Info                  SP     Upload telemetry data based on environment variable
+2022-04-19 14:54:05, Info                         Copy telemetry file: source folder: C:\$Windows.~WS\Sources\Panther, destination folder: C:\ProgramData\Microsoft\Diagnosis\ETLLogs
+2022-04-19 14:54:05, Info                         Copy etl files: source: C:\$Windows.~WS\Sources\Panther\DlTel-Merge.etl, destination: C:\ProgramData\Microsoft\Diagnosis\ETLLogs\DlTel-Merge.etl
+2022-04-19 14:54:05, Info                         pCopyTelemetryFile: Wrote CV NMV1VwDIOE23yVh4.2 to ETL C:\ProgramData\Microsoft\Diagnosis\ETLLogs\DlTel-Merge.etl:$ETLUNIQUECVDATA
+2022-04-19 14:54:05, Info                         Diagtrack service is running
+2022-04-19 14:54:07, Info                         Successfully Forceuploaded the telemetry data.
+2022-04-19 14:54:07, Info                         Upload files successfully so we can remove all etl files.
+2022-04-19 14:54:07, Info                  SP     Closing Panther Logging

@@ -1,0 +1,853 @@
+@CHARSET "UTF-8";
+.x-table>div.toolbar>button>.back{
+	background: url("icons/famfamfam_mini_icons/action_back.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+.x-table>div.toolbar>button>.forward{
+	background: url("icons/famfamfam_mini_icons/action_forward.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+.x-table>div.toolbar>button>.go{
+	background: url("icons/famfamfam_mini_icons/action_go.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.paste{
+	background: url("icons/famfamfam_mini_icons/action_paste.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+.x-table>div.toolbar>button>.print{
+	background: url("icons/famfamfam_mini_icons/action_print.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.refresh{
+	background: url("icons/famfamfam_mini_icons/action_refresh.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+.x-table>div.toolbar>button>.refresh_blue{
+	background: url("icons/famfamfam_mini_icons/action_refresh_blue.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.save{
+	background: url("icons/famfamfam_mini_icons/action_save.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.stop{
+	background: url("icons/famfamfam_mini_icons/action_stop.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.dreamweaver{
+	background: url("icons/famfamfam_mini_icons/application_dreamweaver.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.firefox{
+	background: url("icons/famfamfam_mini_icons/application_firefox.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.flash{
+	background: url("icons/famfamfam_mini_icons/application_flash.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.arrow_down{
+	background: url("icons/famfamfam_mini_icons/arrow_down.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.arrow_left{
+	background: url("icons/famfamfam_mini_icons/arrow_left.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.arrow_right{
+	background: url("icons/famfamfam_mini_icons/arrow_right.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.arrow_up{
+	background: url("icons/famfamfam_mini_icons/arrow_up.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.box{
+	background: url("icons/famfamfam_mini_icons/box.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.calendar{
+	background: url("icons/famfamfam_mini_icons/calendar.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.comment{
+	background: url("icons/famfamfam_mini_icons/comment.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.comment_blue{
+	background: url("icons/famfamfam_mini_icons/comment_blue.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.comment_delete{
+	background: url("icons/famfamfam_mini_icons/comment_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.comment_new{
+	background: url("icons/famfamfam_mini_icons/comment_new.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.comment_yellow{
+	background: url("icons/famfamfam_mini_icons/comment_yellow.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.copy{
+	background: url("icons/famfamfam_mini_icons/copy.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.cut{
+	background: url("icons/famfamfam_mini_icons/cut.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.date{
+	background: url("icons/famfamfam_mini_icons/date.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.date_delete{
+	background: url("icons/famfamfam_mini_icons/date_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.date_new{
+	background: url("icons/famfamfam_mini_icons/date_new.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.acrobat{
+	background: url("icons/famfamfam_mini_icons/file_acrobat.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.font{
+	background: url("icons/famfamfam_mini_icons/file_font.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.font_truetype{
+	background: url("icons/famfamfam_mini_icons/file_font_truetype.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.flag_blue{
+	background: url("icons/famfamfam_mini_icons/flag_blue.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.flag_green{
+	background: url("icons/famfamfam_mini_icons/flag_green.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.flag_green{
+	background: url("icons/famfamfam_mini_icons/flag_orange.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.flag_red{
+	background: url("icons/famfamfam_mini_icons/flag_red.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.flag_white{
+	background: url("icons/famfamfam_mini_icons/flag_white.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.folder{
+	background: url("icons/famfamfam_mini_icons/folder.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.folder_delete{
+	background: url("icons/famfamfam_mini_icons/folder_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.folder_images{
+	background: url("icons/famfamfam_mini_icons/folder_images.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.folder_lock{
+	background: url("icons/famfamfam_mini_icons/folder_lock.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.folder_new{
+	background: url("icons/famfamfam_mini_icons/folder_new.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.folder_page{
+	background: url("icons/famfamfam_mini_icons/folder_page.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.accept{
+	background: url("icons/famfamfam_mini_icons/icon_accept.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.airmail{
+	background: url("icons/famfamfam_mini_icons/icon_airmail.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.alert{
+	background: url("icons/famfamfam_mini_icons/icon_alert.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.attachment{
+	background: url("icons/famfamfam_mini_icons/icon_attachment.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.clock{
+	background: url("icons/famfamfam_mini_icons/icon_clock.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.component{
+	background: url("icons/famfamfam_mini_icons/icon_component.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.download{
+	background: url("icons/famfamfam_mini_icons/icon_download.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.email{
+	background: url("icons/famfamfam_mini_icons/icon_email.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.extension{
+	background: url("icons/famfamfam_mini_icons/icon_extension.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.favourite{
+	background: url("icons/famfamfam_mini_icons/icon_favourites.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.get_world{
+	background: url("icons/famfamfam_mini_icons/icon_get_world.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.history{
+	background: url("icons/famfamfam_mini_icons/icon_history.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+
+.x-table>div.toolbar>button>.home{
+	background: url("icons/famfamfam_mini_icons/icon_home.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.info{
+	background: url("icons/famfamfam_mini_icons/icon_info.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.key{
+	background: url("icons/famfamfam_mini_icons/icon_key.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.link{
+	background: url("icons/famfamfam_mini_icons/icon_link.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.mail{
+	background: url("icons/famfamfam_mini_icons/icon_mail.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.monitor_mac{
+	background: url("icons/famfamfam_mini_icons/icon_monitor_mac.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.monitor_pc{
+	background: url("icons/famfamfam_mini_icons/icon_monitor_pc.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.network{
+	background: url("icons/famfamfam_mini_icons/icon_network.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.package{
+	background: url("icons/famfamfam_mini_icons/icon_package.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.package_get{
+	background: url("icons/famfamfam_mini_icons/icon_package_get.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.package_open{
+	background: url("icons/famfamfam_mini_icons/icon_package_open.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.padlock{
+	background: url("icons/famfamfam_mini_icons/icon_padlock.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.security{
+	background: url("icons/famfamfam_mini_icons/icon_security.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.setting{
+	background: url("icons/famfamfam_mini_icons/icon_settings.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.user{
+	background: url("icons/famfamfam_mini_icons/icon_user.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.wand{
+	background: url("icons/famfamfam_mini_icons/icon_wand.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.world{
+	background: url("icons/famfamfam_mini_icons/icon_world.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.world_dynamic{
+	background: url("icons/famfamfam_mini_icons/icon_world_dynamic.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.image{
+	background: url("icons/famfamfam_mini_icons/image.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.image_new{
+	background: url("icons/famfamfam_mini_icons/image_new.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.interface_browser{
+	background: url("icons/famfamfam_mini_icons/interface_browser.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.interface_dialog{
+	background: url("icons/famfamfam_mini_icons/interface_dialog.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.interface_installer{
+	background: url("icons/famfamfam_mini_icons/interface_installer.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_comment{
+	background: url("icons/famfamfam_mini_icons/list_comments.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_component{
+	background: url("icons/famfamfam_mini_icons/list_components.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_error{
+	background: url("icons/famfamfam_mini_icons/list_errors.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_extension{
+	background: url("icons/famfamfam_mini_icons/list_extensions.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_image{
+	background: url("icons/famfamfam_mini_icons/list_images.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_link{
+	background: url("icons/famfamfam_mini_icons/list_links.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_package{
+	background: url("icons/famfamfam_mini_icons/list_packages.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_security{
+	background: url("icons/famfamfam_mini_icons/list_security.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_setting{
+	background: url("icons/famfamfam_mini_icons/list_settings.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_user{
+	background: url("icons/famfamfam_mini_icons/list_users.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.list_world{
+	background: url("icons/famfamfam_mini_icons/list_world.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.note{
+	background: url("icons/famfamfam_mini_icons/note.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.note_delete{
+	background: url("icons/famfamfam_mini_icons/note_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.note_new{
+	background: url("icons/famfamfam_mini_icons/note_new.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page{
+	background: url("icons/famfamfam_mini_icons/page.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_alert{
+	background: url("icons/famfamfam_mini_icons/page_alert.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_attachment{
+	background: url("icons/famfamfam_mini_icons/page_attachment.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_bookmark{
+	background: url("icons/famfamfam_mini_icons/page_bookmark.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_boy{
+	background: url("icons/famfamfam_mini_icons/page_boy.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_code{
+	background: url("icons/famfamfam_mini_icons/page_code.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_color{
+	background: url("icons/famfamfam_mini_icons/page_colors.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_component{
+	background: url("icons/famfamfam_mini_icons/page_component.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_cross{
+	background: url("icons/famfamfam_mini_icons/page_cross.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_delete{
+	background: url("icons/famfamfam_mini_icons/page_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_deny{
+	background: url("icons/famfamfam_mini_icons/page_deny.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_down{
+	background: url("icons/famfamfam_mini_icons/page_down.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_dynamic{
+	background: url("icons/famfamfam_mini_icons/page_dynamic.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_edit{
+	background: url("icons/famfamfam_mini_icons/page_edit.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_extension{
+	background: url("icons/famfamfam_mini_icons/page_extension.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_favourite{
+	background: url("icons/famfamfam_mini_icons/page_favourites.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_find{
+	background: url("icons/famfamfam_mini_icons/page_find.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_flash{
+	background: url("icons/famfamfam_mini_icons/page_flash.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_girl{
+	background: url("icons/famfamfam_mini_icons/page_girl.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_html{
+	background: url("icons/famfamfam_mini_icons/page_html.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_java{
+	background: url("icons/famfamfam_mini_icons/page_java.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_key{
+	background: url("icons/famfamfam_mini_icons/page_key.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_left{
+	background: url("icons/famfamfam_mini_icons/page_left.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_link{
+	background: url("icons/famfamfam_mini_icons/page_link.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_lock{
+	background: url("icons/famfamfam_mini_icons/page_lock.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_new{
+	background: url("icons/famfamfam_mini_icons/page_new.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_next{
+	background: url("icons/famfamfam_mini_icons/page_next.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_package{
+	background: url("icons/famfamfam_mini_icons/page_package.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+
+.x-table>div.toolbar>button>.page_php{
+	background: url("icons/famfamfam_mini_icons/page_php.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_prev{
+	background: url("icons/famfamfam_mini_icons/page_prev.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_refresh{
+	background: url("icons/famfamfam_mini_icons/page_refresh.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_right{
+	background: url("icons/famfamfam_mini_icons/page_right.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+
+.x-table>div.toolbar>button>.page_script{
+	background: url("icons/famfamfam_mini_icons/page_script.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+
+.x-table>div.toolbar>button>.page_security{
+	background: url("icons/famfamfam_mini_icons/page_security.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_sound{
+	background: url("icons/famfamfam_mini_icons/page_sound.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_tag_blue{
+	background: url("icons/famfamfam_mini_icons/page_tag_blue.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_tag_red{
+	background: url("icons/famfamfam_mini_icons/page_tag_red.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_text{
+	background: url("icons/famfamfam_mini_icons/page_text.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_text_delete{
+	background: url("icons/famfamfam_mini_icons/page_text_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_tick{
+	background: url("icons/famfamfam_mini_icons/page_tick.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_tree{
+	background: url("icons/famfamfam_mini_icons/page_tree.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_up{
+	background: url("icons/famfamfam_mini_icons/page_up.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_url{
+	background: url("icons/famfamfam_mini_icons/page_url.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_user{
+	background: url("icons/famfamfam_mini_icons/page_user.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_user_dark{
+	background: url("icons/famfamfam_mini_icons/page_user_dark.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_user_light{
+	background: url("icons/famfamfam_mini_icons/page_user_light.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_video{
+	background: url("icons/famfamfam_mini_icons/page_video.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.page_wizard{
+	background: url("icons/famfamfam_mini_icons/page_wizard.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.table{
+	background: url("icons/famfamfam_mini_icons/table.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.table_delete{
+	background: url("icons/famfamfam_mini_icons/table_delete.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+
+.x-table>div.toolbar>button>.tables{
+	background: url("icons/famfamfam_mini_icons/tables.gif") no-repeat center;
+	width:16px;
+	height:16px;
+}
+

@@ -1,0 +1,507 @@
+<?php
+defined('SYSPATH') or die('No direct script access.');
+//ini_set('display_errors', 1);
+//ini_set('display_startup_errors', 1);
+//error_reporting(E_ALL);
+
+class Controller_Externo extends Controller
+{
+    public $template = 'busqueda/seguimiento_externo';
+
+    /*
+    public function action_index()
+    {
+        $this->response->body(View::factory('busqueda/seguimiento_externo'));
+    }
+    */
+
+    public function before()
+    {
+        parent::before();
+        //$this->template->title = 'SIGEC';
+    }
+
+    public function action_busqueda()
+    {
+        //echo json_encode("hola");
+        $param_id_entidad = $_GET['id_entidad'];
+
+        // --- [INICIO] INICIALIZAR LA VISTA ---
+        $view = View::factory('busqueda/documentacion_externa');
+        // === [FIN] INICIALIZAR LA VISTA ===
+
+        /*
+        // --- [INICIO] PAGINACION ---
+        $pagination = Pagination::factory(array(
+            'total_items' => $count,
+            'current_page' => array('source' => 'query_string', 'key' => 'page'),
+            'items_per_page' => 15,
+            'view' => 'pagination/floating',
+        ));
+        $page_links = $pagination->render();
+        // --- [FIN] PAGINACION ---
+        */
+
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('default');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        /*
+        // === [INICIO] LISTA DE ENTIDADES ===
+        $sql_entidades = "CALL get_entidades();";
+        $entidades = $database->prepare($sql_entidades);
+        //$sentencia->bindParam(1, $valor_devuleto, PDO::PARAM_STR, 4000);
+        $entidades->execute();
+        $entidades_result = $entidades->fetchAll(PDO::FETCH_ASSOC);
+        do {
+            $entidades->fetchAll(PDO::FETCH_ASSOC);
+        } while ($entidades->nextRowSet());
+        // echo json_encode($entidades_result);
+        // === [FIN] LISTA DE ENTIDADES ===
+        */
+
+        // === [INICIO] LISTA DE DOCUMENTACION EXTERNA ===
+        if (isset($_POST['buscar'])) {
+            $hoja_de_ruta = $_POST['hoja_de_ruta'];
+            $id_entidad = $param_id_entidad;
+            $gestion = $_POST['gestion_seleccionada'];
+
+            $sql_documentacion_externa = "CALL get_seguimiento_externo('$hoja_de_ruta','$id_entidad', '$gestion');";
+            $documentacion_externa = $database->prepare($sql_documentacion_externa);
+            $documentacion_externa->execute();
+            $documentacion_externa_result = $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+            do {
+                $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+            } while ($documentacion_externa->nextRowSet());
+            // echo json_encode($documentacion_externa_result);
+
+        }
+        // --- [FIN] LISTA DE DOCUMENTACION EXTERNA ---
+
+        // --- [INICIO] PARAMETRIZAR LA VISTA ---
+        $gestiones = (Array)range(
+            date("Y"),
+            2013
+        );
+
+        $view->bind('param_id_entidad', $param_id_entidad);
+        $view->bind('count', count($documentacion_externa_result));
+        $view->bind('lista_hojas_de_ruta_externas', $documentacion_externa_result);
+        $view->bind('gestiones', $gestiones);
+
+        $this->response->body($view);
+        // === [FIN] PARAMETRIZAR LA VISTA ===
+    }
+
+    public function action_buscarHojaDeRuta()
+    {
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('default');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        // === [INICIO] LISTA DE DOCUMENTACION EXTERNA ===
+        $hoja_de_ruta = $_POST['hoja_de_ruta'];
+        $id_entidad = $_POST['id_entidad_seleccionada'];
+        $gestion = $_POST['gestion_seleccionada'];
+
+        $sql_documentacion_externa = "CALL get_seguimiento_externo('$hoja_de_ruta','$id_entidad', '$gestion');";
+        $documentacion_externa = $database->prepare($sql_documentacion_externa);
+        $documentacion_externa->execute();
+        $documentacion_externa_result = $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+        do {
+            $documentacion_externa->fetchAll(PDO::FETCH_ASSOC);
+        } while ($documentacion_externa->nextRowSet());
+
+        $result = array(
+            'count: ' => count($documentacion_externa_result),
+            'rows: ' => $documentacion_externa_result
+        );
+        echo json_encode($documentacion_externa_result);
+        //echo json_encode($result);
+        // --- [FIN] LISTA DE DOCUMENTACION EXTERNA ---
+    }
+
+    public function action_seguimientoExterno()
+    {
+        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
+        $database_instance = Database::instance('default');
+        $database_instance_array = (Array)$database_instance;
+        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
+        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
+        $hostname_DB = $params_database_instance['hostname'];
+        $database_name = $params_database_instance['database'];
+        $username_DB = $params_database_instance['username'];
+        $password_DB = $params_database_instance['password'];
+
+        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
+        $database->exec("SET NAMES 'utf8';");
+        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
+
+        //$id = Arr::get($_GET, 'hr', '');
+        $id = $_GET['hr'];
+        if ($id != '') {
+            //obtenemos el documento ligado al nur
+            $documento = ORM::factory('documentos')->where('nur', '=', $id)->and_where('original', '=', 1)->find();
+            $tipo = ORM::factory('tipos', $documento->id_tipo);
+            $proceso = ORM::factory('procesos', $documento->id_proceso);
+
+            // ARRAY <DETALLE>
+            $detalle = array(
+                'nur' => $id,
+                'fecha' => $documento->fecha_creacion,
+                'codigo' => $documento->cite_original,
+                'id_documento' => $documento->id,
+                'tipo' => $tipo->tipo,
+                'proceso' => $proceso->proceso,
+                'referencia' => $documento->referencia,
+                'remitente' => $documento->nombre_remitente,
+                'cargo_remitente' => $documento->cargo_remitente,
+                'destinatario' => $documento->nombre_destinatario,
+                'cargo_destinatario' => $documento->cargo_destinatario,
+                'adjunto' => $documento->adjuntos,
+            );
+            $archivo = ORM::factory('archivos')
+                ->where('id_documento', '=', $documento->id)->and_where('estado', '=', '1')
+                ->find_all();
+            // [INICIO] SEGUIMIENTO
+            $oSeg = New Model_Seguimiento();
+            $seguimiento = $oSeg->seguimiento($id);
+            // [FIN] SEGUIMIENTO
+
+            //agrupaciones
+            $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $id)->find();
+
+            // [INICIO] OBTENER EL SEGUIMIENTO DE LA ULTIMA DERIVACION OFICIAL
+            $hoja_de_ruta = $id;
+            $sql_seguimiento = "    SELECT 
+                                        *
+                                    FROM
+                                        sigec.seguimiento
+                                    WHERE
+                                        (nur = '$hoja_de_ruta') AND (oficial = 1);";
+            $seguimiento_result = db::query(Database::SELECT, $sql_seguimiento, FALSE)
+                ->execute()
+                ->as_array();
+
+            $id_ultimo_seguimiento_oficial = $seguimiento_result[0]['id'];
+            // [FIN] OBTENER EL SEGUIMIENTO DE LA ULTIMA DERIVACION OFICIAL
+
+            // --- [INICIO] PARAMETRIZAR LA VISTA ---
+            $view = View::factory('hojaruta/seguimiento_externo');
+            $view->bind('seguimiento', $seguimiento);
+            $view->bind('hoja_de_ruta', $hoja_de_ruta);
+            $view->bind('id_seguimiento_oficial', $id_ultimo_seguimiento_oficial);
+            $view->bind('detalle', $detalle);
+            $view->bind('archivo', $archivo);
+            $view->bind('agrupado', $agrupado);
+
+            $this->response->body($view);
+            // === [FIN] PARAMETRIZAR LA VISTA ===
+        }
+    }
+
+    public function action_guardarReclamo()
+    {
+        $id_seguimiento = $_POST['id_seguimiento'];
+        $nur = $_POST['nur'];
+        $observacion = $_POST['observacion'];
+        $telefono = $_POST['telefono'];
+        $email = $_POST['email'];
+
+        $sql = "CALL abm_observacion_externa(
+                null,
+                '$id_seguimiento',
+                '$nur',
+                '$observacion',
+                '$telefono',
+                '$email',
+                'INSERT',
+                @pv_resultado,
+                @pv_mensaje,
+                @pv_mensajebd);";
+
+        $result = db::query(Database::SELECT, $sql)->execute();
+        $result1 = db::query(Database::SELECT, "SELECT @pv_resultado AS resultado, @pv_mensaje AS mensaje, @pv_mensajebd AS mensajebd;")->execute();
+
+        header('Content-Type: application/json');
+        echo json_encode($result1[0]);
+    }
+
+    public function action_getObservacionAEditar()
+    {
+        $id_observacion = $_POST['id_observacion'];
+
+        $sql = "SELECT 
+                    *
+                FROM
+                    sigec.observacion_seguimiento_externo
+                WHERE
+                    id = '$id_observacion';";
+
+        $result = db::query(Database::SELECT, $sql)->execute()->as_array();
+
+        header('Content-Type: application/json');
+        echo json_encode($result[0]);
+    }
+
+    public function action_editarReclamo()
+    {
+        $id_observacion = $_POST['id_observacion'];
+        $id_seguimiento = $_POST['id_seguimiento'];
+        $nur = $_POST['nur'];
+        $observacion = $_POST['observacion'];
+        $telefono = $_POST['telefono'];
+        $email = $_POST['correo'];
+
+        $sql = "CALL abm_observacion_externa(
+                '$id_observacion',
+                '$id_seguimiento',
+                '$nur',
+                '$observacion',
+                '$telefono',
+                '$email',
+                'UPDATE',
+                @pv_resultado,
+                @pv_mensaje,
+                @pv_mensajebd);";
+
+        $result = db::query(Database::SELECT, $sql)->execute();
+        $result1 = db::query(Database::SELECT, "SELECT @pv_resultado AS resultado, @pv_mensaje AS mensaje, @pv_mensajebd AS mensajebd;")->execute();
+
+        header('Content-Type: application/json');
+        //echo json_encode($result1[0]);
+        echo json_encode($result1[0]);
+    }
+
+    public function action_seguimiento()
+    {
+        require Kohana::find_file('vendor/fpdf17', 'fpdf');
+        require Kohana::find_file('vendor/fpdf17', 'code39');
+
+        $hr = $_GET['hr'];
+        //$hr = 'MT/2015-04144';
+
+        $documento = ORM::factory('documentos')->where('nur', '=', $hr)->and_where('original', '=', 1)->find();
+        $tipo = ORM::factory('tipos', $documento->id_tipo);
+        $proceso = ORM::factory('procesos', $documento->id_proceso);
+        $detalle = array(
+            'nur' => $hr,
+            'fecha' => $documento->fecha_creacion,
+            'codigo' => $documento->cite_original,
+            'id_documento' => $documento->id,
+            'tipo' => $tipo->tipo,
+            'proceso' => $proceso->proceso,
+            'referencia' => $documento->referencia,
+            'remitente' => $documento->nombre_remitente,
+            'cargo_remitente' => $documento->cargo_remitente,
+            'destinatario' => $documento->nombre_destinatario,
+            'cargo_destinatario' => $documento->cargo_destinatario,
+            'adjunto' => $documento->adjuntos,
+        );
+
+        $archivo = ORM::factory('archivos')
+            ->where('id_documento', '=', $documento->id)
+            ->find_all();
+        // [INICIO] SEGUIMIENTO
+        $oSeg = New Model_Seguimiento();
+        $seguimiento = $oSeg->seguimiento($hr);
+        // [FIN] SEGUIMIENTO
+        //agrupaciones
+        $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $hr)->find();
+        $pdf = new PDF_Code39('P', 'mm', 'Letter');
+        $pdf->SetMargins(15, 10, 5);
+        $pdf->AddPage('L');
+        $pdf->SetFont('Arial', '', 14);
+
+
+        $pdf->Cell(246, 10, 'Seguimiento de la hoja de ruta : ' . $hr, 1, FALSE, 'C');
+        $pdf->SetFont('Arial', '', 7);
+        $pdf->Ln();
+
+        $pdf->SetWidths(array(25, 221));
+
+        $pdf->Row(array(
+            utf8_decode('Referencia'),
+            utf8_decode($detalle['referencia'])
+        ));
+        //segunda linea
+        $pdf->SetWidths(array(25, 130, 19, 72));
+        $pdf->Row(array(
+            utf8_decode('Cite original'),
+            utf8_decode($detalle['codigo']),
+            utf8_decode('Proceso'),
+            utf8_decode($detalle['proceso'])
+        ));
+        $pdf->Row(array(
+            utf8_decode('Destinatario'),
+            utf8_decode($detalle['destinatario']) . ' | ' . utf8_decode($detalle['cargo_destinatario']),
+            utf8_decode('Tipo doc.'),
+            utf8_decode($detalle['tipo'])
+        ));
+        $pdf->Row(array(
+            utf8_decode('Remitente'),
+            utf8_decode($detalle['remitente']) . ' | ' . utf8_decode($detalle['cargo_remitente']),
+            utf8_decode('Fecha'),
+            utf8_decode(Date::fecha($detalle['fecha']) . ' ' . date('H:i:s', strtotime($detalle['fecha'])))
+        ));
+        $pdf->Ln();
+        //$pdf->
+        //si es agrupado
+        if (isset($agrupado->id)):
+            $pdf->Cell(246, 10, $agrupado->padre, 1, FALSE, 'C');
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->Ln();
+        endif;
+        if (isset($agrupado->id)):
+            $pdf->Cell(246, 10, 'Una copia pertenece a la Hoja de Ruta principal:' . $agrupado->padre, 1, FALSE, 'C');
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->Ln();
+        endif;
+
+        $count = 0;
+        $hijo = 0;
+        foreach ($seguimiento as $s):
+
+            $pasos = "";
+            if ($s->oficial > 0) {
+                if ($s->id_estado == 1) {
+                    $pasos = 'media/flag.png';
+                } else
+                    $pasos = 'media/paw.png';
+            }
+
+            $pasos2 = "";
+            if (($s->oficial > 0) && ($s->id_estado == 6)) {
+                $pasos2 = 'media/flag.png';
+            }
+            $pasos2 = "";
+            if (($s->oficial > 0) && ($s->id_estado == 2)) {
+                $pasos2 = 'media/flag.png';
+            }
+
+            if (($s->oficial > 0) && ($s->id_estado == 4)) {
+                $pasos2 = 'media/paw.png';
+            }
+            if (($s->oficial > 0) && ($s->id_estado == 6)) {
+                $pasos2 = 'media/flag.png';
+            }
+            if (($s->oficial > 0) && ($s->id_estado == 10)) {
+                $pasos2 = 'media/flag.png';
+            }
+
+            if ($pdf->GetY() > 170) {
+                $pdf->Ln(15);
+            }
+
+            $pdf->SetFont('Arial', '', 7);
+            $pdf->Cell(101, 4, utf8_decode($s->de_oficina), 'LT', 0, 'L');
+            if ($pasos != '') {
+                $y = $pdf->GetY();
+                $y++;
+                $pdf->Image($pasos, 115, $y, 8, 7, 'png');
+                //$pdf->SetY($y);
+                $pdf->Cell(8, 4, '', 'TR', 0, 'L');
+            } else {
+                $pdf->Cell(8, 4, $pasos, 'TR', 0, 'L');
+            }
+            $pdf->Cell(101, 4, utf8_decode($s->a_oficina), 'LT', 0, 'L');
+
+            if ($pasos2 != '') {
+                $y = $pdf->GetY();
+                $y++;
+                $pdf->Image($pasos2, 215, $y, 8, 7, 'png');
+                $pdf->Cell(8, 4, '', 'TR', 0, 'L');
+
+            } else {
+                $pdf->Cell(8, 4, $pasos2, 'TR', 0, 'L');
+            }
+
+
+            // MOSTRAR TEXTO DE JUSTIFICACIONES
+            $logo_observacion = 'media/exclamation-triangle.png';
+
+            $queryJustificacion = " SELECT
+                                                COUNT(1) AS nro_resultados
+                                            FROM
+                                                observacion_seguimiento
+                                            WHERE
+                                                (id_estado = '2')
+                                                    AND (id_seguimiento = '$s->id');";
+
+            $y = $pdf->GetY();
+            $y++;
+            $resultSetJustificacion = db::query(Database::SELECT, $queryJustificacion, FALSE)
+                ->execute()
+                ->as_array();
+
+            $nro_resultados = $resultSetJustificacion[0]['nro_resultados'];
+
+            if ((intval($nro_resultados) >= 1) === TRUE) {
+                $pdf->Image($logo_observacion, 225, $y, 7, 7, 'png');
+            } else {
+                //$pdf->Cell(31, 4,'<<<<<<<<<<<<< 0', 'LTR', 0, 'L');
+            }
+
+
+            $pdf->Cell(31, 4, utf8_decode(''), 'LTR', 0, 'L');
+
+            $pdf->Ln(4);
+            $pdf->Cell(101, 4, utf8_decode($s->nombre_emisor), 'L', 0, 'L');
+            $pdf->Cell(8, 4, '', 'R', 0, 'L');
+            $pdf->Cell(101, 4, utf8_decode($s->nombre_receptor), 'L', 0, 'L');
+            $pdf->Cell(8, 4, '', 'R', 0, 'L');
+            $pdf->Cell(31, 4, utf8_decode($s->estado), 'LR', 0, 'L');
+            $pdf->Ln(4);
+
+            $pdf->Cell(101, 4, utf8_decode($s->cargo_emisor), 'L', 0, 'L');
+            $pdf->Cell(8, 4, '', 'R', 0, 'L');
+            $pdf->Cell(101, 4, utf8_decode($s->cargo_receptor), 'L', 0, 'L');
+            $pdf->Cell(8, 4, '', 'R', 0, 'L');
+            $pdf->Cell(31, 4, utf8_decode(''), 'LR', 0, 'L');
+
+            $pdf->Ln(4);
+
+            $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_emision)) . ' - ' . $s->hora_emision, 'LR', 0, 'R');
+            // Verificamos si la 'fecha_recepcion' no es nulo
+            if (!is_null($s->fecha_recepcion) && !is_null($s->hora_recepcion)) {
+                $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_recepcion)) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
+            } else {
+                $pdf->Cell(109, 4, utf8_decode($s->fecha_recepcion) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
+            }
+
+            // $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_recepcion)) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
+            $pdf->Cell(31, 4, utf8_decode($s->accion), 'LR', 0, 'L');
+
+            $pdf->Ln(4);
+            $pdf->SetWidths(array(249));
+            $pdf->Row(array(utf8_decode($s->proveido)));
+            $pdf->Ln(3);
+        endforeach;
+        $pdf->Ln();
+        $pdf->Cell(109, 4, utf8_decode("Fecha de impresión: " . Date::fecha_medium(date('Y-m-d'))));
+
+        $pdf->Output('hoja_ruta_.pdf', 'I');
+    }
+}
+
+?>

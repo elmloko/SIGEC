@@ -1,0 +1,104 @@
+/* 
+    Created on : 16-04-2015, 10:41:39 AM
+    Author     : ivan Marcelo Chacolla
+*/
+
+.thumb {
+        float: left;
+        position: relative;
+        width: 180px;
+    }
+    .thumb:before {
+        background: none repeat scroll 0 0 rgba(0, 0, 0, 0.7);
+        border-radius: 4px;
+        content: "";
+        height: 100%;
+        left: 0;
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        transform: scale(0.7);
+        transition: all 0.4s ease 0s;
+        width: 100%;
+        z-index: 0;
+    }
+    .thumb:hover:before {
+        opacity: 1;
+        transform: scale(1);
+    }
+    .thumb:hover > h3 {
+        height: 0;
+        padding: 0;
+    }
+    .thumb > h3 {
+        background: none repeat scroll 0 0 rgba(0, 0, 0, 0.7);
+        border-radius: 0 0 4px 4px;
+        bottom: 0;
+        color: #fff;
+        font-family: Roboto;
+        font-size: 12px;
+        font-weight: normal;
+        height: 30px;
+        left: 0;
+        letter-spacing: 0.3px;
+        margin: 0;
+        overflow: hidden;
+        padding: 5px 0 10px;
+        position: absolute;
+        text-align: center;
+        text-overflow: ellipsis;
+        transition: all 0.4s ease 0s;
+        white-space: normal;
+        width: 180px;
+    }
+    .thumb > span  {
+        // border: 5px solid #ecedf0;
+        //border-radius: 50%;
+        bottom: -25px;
+        color: #fff;
+        font-size: 24px;
+        height: 50px;
+        left: 50%;
+        line-height: 50px;
+        margin-left: -25px;
+        position: absolute;
+        text-align: center;
+        transition: all 0.4s ease 0s;
+        width: 50px;
+        z-index: 99;
+    }
+    .thumb:hover > i {
+        transform: scale(0);
+        transition: all 0.4s ease 0.2s;
+    }
+    .thumb > span a {
+        border: 3px solid #fafafa;
+        border-radius: 50%;    
+        color: #fff;
+    }
+    .thumb > span {
+        //   border: 5px solid #fafafa;
+        //  border-radius: 50%;
+        color: #fff;
+        font-size: 20px;
+        height: 50px;
+        left: 50%;
+        line-height: 50px;
+        margin-left: -25px;
+        margin-top: -25px;
+        opacity: 0;
+        position: absolute;
+        text-align: center;
+        top: 50%;
+        transform: scale(2);
+        transition: all 0.4s ease 0s;
+        width: 50px;
+    }
+    .thumb:hover > span {
+        opacity: 1;
+        transform: scale(1);
+        transition: all 0.4s ease 0.4s;
+    }
+    .crop{
+        height: 300px;
+    }
