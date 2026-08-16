@@ -1,0 +1,9 @@
+services:
+  sigec_app:
+    build: .
+    container_name: sigec_github_app
+    ports:
+      - "8130:80"
+    volumes:
+      - .:/var/www/html
+    restart: unless-stopped
