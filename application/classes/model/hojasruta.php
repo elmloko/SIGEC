@@ -11,8 +11,8 @@ class Model_Hojasruta extends ORM {
     //mis hojas de ruta creadas por un usuario
     public function HRhijos($p) {
         $sql = "SELECT d.nur,d.referencia,d.cite_original,IF(s.oficial>0,'Oficial','Copia') as oficial,
-            DATE_FORMAT(s.fecha_recepcion,'%d-%m-%Y %H:%i:%s') as fecha_recepcion
-            FROM  (select hijo,fecha,id_seguimiento from agrupaciones where padre='$p') as x, documentos d,seguimiento s 
+            DATE_FORMAT(s.fecha_recepcion,'%d-%m-%Y %H:%i:%s') as fecha_recepcion, x.id as id_agrupacion
+            FROM  (select id,hijo,fecha,id_seguimiento from agrupaciones where padre='$p') as x, documentos d,seguimiento s
             WHERE d.nur=x.hijo
             AND x.id_seguimiento=s.id
             AND d.original='1'"; //important
@@ -103,11 +103,58 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     public function hijos($nur) {
-        $sql = "SELECT * FROM seguimiento s 
-            INNER JOIN nurs n ON s.nur=n.nur 
-            INNER JOIN agrupaciones a ON s.id=a.id_seguimiento 
+        $sql = "SELECT * FROM seguimiento s
+            INNER JOIN nurs n ON s.nur=n.nur
+            INNER JOIN agrupaciones a ON s.id=a.id_seguimiento
             WHERE a.padre='$nur'";
         return $this->_db->query(Database::SELECT, $sql, TRUE);
+    }
+
+    // hoja de ruta "padre" en la que fue agrupado un nur (cuando el nur es el "hijo")
+    public function HRpadre($hijo) {
+        $sql = "SELECT a.id as id_agrupacion, a.padre, a.fecha, a.nombre, a.cargo, d.referencia, d.cite_original,
+            d.nombre_destinatario, d.cargo_destinatario
+            FROM agrupaciones a
+            INNER JOIN documentos d ON d.nur = a.padre AND d.original = '1'
+            WHERE a.hijo = '$hijo'
+            LIMIT 1";
+        return db::query(Database::SELECT, $sql)->execute();
+    }
+
+    // listado admin: todas las hojas de ruta generadas en el sistema, ordenadas por fecha de creacion reciente
+    public function todasAdmin($o, $i, $q = '') {
+        $filtro = '';
+        if ($q !== '') {
+            $like = Database::instance()->escape('%' . $q . '%');
+            $filtro = " AND (d.nur LIKE $like OR d.cite_original LIKE $like OR d.referencia LIKE $like
+                OR d.nombre_destinatario LIKE $like OR u.nombre LIKE $like) ";
+        }
+        $sql = "SELECT d.id, d.nur, d.codigo, d.cite_original, d.referencia, d.estado,
+                d.nombre_destinatario, d.cargo_destinatario, d.fecha_creacion,
+                u.nombre AS creado_por, p.proceso,
+                (SELECT COUNT(*) FROM agrupaciones a WHERE a.padre = d.nur OR a.hijo = d.nur) AS agrupado
+            FROM documentos d
+            LEFT JOIN users u ON u.id = d.id_user
+            LEFT JOIN procesos p ON p.id = d.id_proceso
+            WHERE d.original = '1' $filtro
+            ORDER BY d.fecha_creacion DESC
+            LIMIT $o , $i";
+        return db::query(Database::SELECT, $sql)->execute();
+    }
+
+    public function contarTodas($q = '') {
+        $filtro = '';
+        if ($q !== '') {
+            $like = Database::instance()->escape('%' . $q . '%');
+            $filtro = " AND (d.nur LIKE $like OR d.cite_original LIKE $like OR d.referencia LIKE $like
+                OR d.nombre_destinatario LIKE $like OR u.nombre LIKE $like) ";
+        }
+        $sql = "SELECT COUNT(*) AS n
+            FROM documentos d
+            LEFT JOIN users u ON u.id = d.id_user
+            WHERE d.original = '1' $filtro";
+        $r = db::query(Database::SELECT, $sql)->execute()->as_array();
+        return isset($r[0]['n']) ? (int) $r[0]['n'] : 0;
     }
 
     public function select($sql) {
