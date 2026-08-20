@@ -8,6 +8,16 @@ class Model_Seguimiento extends ORM
 
     protected $_table_names_plural = false;
 
+    //totales del sistema por estado, para el dashboard de administrador (sin filtrar por usuario)
+    public function totalesSistema()
+    {
+        $sql = "SELECT e.id, e.estado AS titulo, e.plural, e.ui,
+                (SELECT COUNT(*) FROM seguimiento s WHERE s.estado = e.id) AS cantidad
+            FROM estados e
+            ORDER BY e.id";
+        return db::query(Database::SELECT, $sql)->execute();
+    }
+
     //nueva forma de obtener estados para dashboard
 
     public function nestados($id_user)

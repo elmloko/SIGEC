@@ -25,9 +25,25 @@ class Controller_Admin_Main extends Controller_AdminTemplate {
         $usuarios = ORM::factory('users')->count_all();
         $this->template->titulo.=$this->user->username;
         $this->template->descripcion.=$this->user->nombre;
-        
-        
-        
+
+        // tarjetas de resumen por estado (soluciona: $estados no llegaba a la vista)
+        $oSeg = New Model_Seguimiento();
+        $totales = $oSeg->totalesSistema();
+        $colores = array('warning', 'danger', 'info', 'primary', 'default', 'success');
+        $estados = array();
+        $i = 0;
+        foreach ($totales as $t) {
+            $estados[$t['id']] = array(
+                'titulo' => $t['plural'],
+                'descripcion' => $t['titulo'],
+                'accion' => '/admin/hojasruta/lista',
+                'cantidad' => $t['cantidad'],
+                'icon' => $t['ui'] != '' ? $t['ui'] : 'fa fa-file-text',
+                'color' => $colores[$i % count($colores)],
+            );
+            $i++;
+        }
+
         $this->template->scripts = array('media/Highcharts/js/modules/exporting.js',
             'media/Highcharts/js/highcharts-more.js',
             'media/Highcharts/js/highcharts.js');
@@ -35,6 +51,7 @@ class Controller_Admin_Main extends Controller_AdminTemplate {
                 ->bind('documentos', $documentos)
                 ->bind('usuarios', $usuarios)
                 ->bind('entidades', $entidades)
+                ->bind('estados', $estados)
         ;
     }
 
