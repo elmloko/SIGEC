@@ -302,6 +302,30 @@
         });
 
 
+        $('#estadisticas').click(function () {
+            var rowindex = $('#jqxgrid').jqxGrid('getselectedrowindex');
+            if (rowindex > -1) {
+                var dataRecord = $("#jqxgrid").jqxGrid('getrowdata', rowindex);
+                var id_user = dataRecord.id;
+                if (id_user != null) {
+                    eModal.iframe('/admin/content/userStats/' + id_user, 'Estadisticas de : ' + dataRecord.username);
+                } else {
+                    var url = "/admin/ajax/mensaje/2";
+                    var title = "Mensaje de alerta";
+                    eModal.ajax(url, title);
+                }
+
+                return false;
+            } else {
+                var options = {
+                    url: "/admin/ajax/mensaje/1",
+                    title: "Mensaje de alerta",
+                    size: eModal.size.sm
+                };
+                eModal.ajax(options);
+            }
+        });
+
         $('#seguimiento').click(function () {
             var rowindex = $('#jqxgrid').jqxGrid('getselectedrowindex');
             if (rowindex > -1) {
@@ -422,6 +446,9 @@
             <a class="btn btn-sm btn-success" href="javascript:;" id="documentos"
                title="Revisar documentos permitidos por el usuario"><i class="fa fa-dot-circle-o"></i> Documentos
                 permitidos</a>
+
+            <a class="btn btn-sm btn-primary" href="javascript:;" id="estadisticas"
+               title="Ver entrada, pendientes, archivo y documentos generados por el usuario"><i class="fa fa-bar-chart"></i> Estadisticas</a>
 
             <a class="btn btn-sm btn-default-dark" href="javascript:;" id="resetPass" title="Resetear contraseña"><i
                     class="fa fa-repeat"></i> Resetear password</a>

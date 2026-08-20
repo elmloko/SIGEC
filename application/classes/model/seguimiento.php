@@ -1253,6 +1253,54 @@ class Model_Seguimiento extends ORM
         return $this->_db->query(Database::SELECT, $sql, TRUE);
     }
 
+    //hojas de ruta archivadas de un usuario (estado=10), para el drill-down de estadisticas
+    public function archivo($id_user)
+    {
+        $sql = "SELECT
+                    s.id,
+                    s.estado,
+                    s.padre,
+                    s.hijo,
+                    s.id_seguimiento,
+                    s.nur,
+                    s.nombre_emisor,
+                    UPPER(s.cargo_emisor) AS cargo_emisor,
+                    s.de_oficina,
+                    s.fecha_emision AS fecha,
+                    s.fecha_recepcion AS fecha2,
+                    a.accion,
+                    s.oficial,
+                    s.hijo,
+                    s.proveido,
+                    s.adjuntos,
+                    s.archivos,
+                    d.codigo,
+                    d.nombre_destinatario,
+                    d.cargo_destinatario,
+                    d.referencia,
+                    d.id AS id_doc,
+                    s.prioridad,
+                    RESTA2_FECHAS(NOW(), s.fecha_recepcion) AS dias
+                FROM
+                    (
+                        SELECT
+                            *
+                        FROM
+                            seguimiento USE INDEX (INDEX_NUR , INDEX_DERIVADO_A__ESTADO)
+                        WHERE
+                            derivado_a = '$id_user' AND estado = '10'
+                    ) AS s
+                        INNER JOIN
+                    documentos AS d USE INDEX (INDEX_NUR) ON s.nur = d.nur
+                        INNER JOIN
+                    acciones a USE INDEX (INDEX_ID) ON s.accion = a.id
+                WHERE
+                    d.original = '1'
+                ORDER BY s.fecha_recepcion DESC;";
+
+        return $this->_db->query(Database::SELECT, $sql, TRUE);
+    }
+
     //estados mejorado en velocidad
     public function enviados($id_user)
     {
