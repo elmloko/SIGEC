@@ -327,7 +327,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
             }
             if (isset($_POST['adjuntar'])) {
 
-                $path = '/backup/backup_sigec/sigec/archivo/' . date('Y_m');
+                $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . date('Y_m');
                 if (!is_dir($path)) {
                     // Creates the directory 
                     if (!mkdir($path, 0777, TRUE)) {

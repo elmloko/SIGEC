@@ -356,7 +356,7 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
                  ->rule('archivo', 'Upload::size', array(':value', '1024M'));
                 //si pasa la validacion guardamamos 
                 if ($post->check()) {
-                    $path = '/backup/backup_sigec/sigec/archivo/' . date('Y_m');
+                    $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . date('Y_m');
                     if (!is_dir($path)) {
                         // Creates the directory 
                         if (!mkdir($path, 0777, TRUE)) {

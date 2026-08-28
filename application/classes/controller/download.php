@@ -5,6 +5,33 @@ defined('SYSPATH') or die('No direct script access.');
 class Controller_Download extends Controller
 {
 
+    private function archivo_base_path()
+    {
+        return rtrim(Kohana::$config->load('archivo')->get('path'), '/\\');
+    }
+
+    private function send_file($file, $filename, $content_type)
+    {
+        if (!is_file($file)) {
+            $this->autoRender = false;
+            http_response_code(404);
+            echo 'Archivo no encontrado en el servidor.';
+            return;
+        }
+
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header("Content-Description: File Transfer");
+        header("Content-Type: " . ($content_type ?: 'application/octet-stream'));
+        header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
+        header("Content-Transfer-Encoding: binary");
+        header("Content-Length: " . filesize($file));
+        readfile($file);
+        exit;
+    }
+
     public function action_file($id = '')
     {
         $auth = Auth::instance();
@@ -15,14 +42,9 @@ class Controller_Download extends Controller
             $archivo = ORM::factory('archivos', $id);
             if ($archivo->loaded()) {
                 //ahora vemos que solo el que estee autorizado pueda descargar
-                //  $file='/archivos/'.$archivo->sub_directorio.'/'.$archivo->nombre_archivo;              
-                $file = '/backup/backup_sigec/sigec/archivo/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
+                $file = $this->archivo_base_path() . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
                 $filetemp = substr($archivo->nombre_archivo, 13);
-                header("Content-Disposition: attachment; filename=" . $filetemp . "\n\n");
-                header("Content-Type: " . $archivo->extension);
-                header("Content-Length: " . filesize($file));
-                readfile($file);
-                exit;
+                $this->send_file($file, $filetemp, $archivo->extension);
             } else {
                 echo 'Archivo Inexistente.!!';
             }
@@ -31,32 +53,11 @@ class Controller_Download extends Controller
 
     public function action_manual()
     {
-        /*
-        $id = 93705;
-        $archivo = ORM::factory('archivos', $id);
-        if ($archivo->loaded()) {
-            //ahora vemos que solo el que estee autorizado pueda descargar
-            //  $file='/archivos/'.$archivo->sub_directorio.'/'.$archivo->nombre_archivo;
-            $file = '/var/www/html/adjuntos/sigec/archivo/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
-            $filetemp = substr($archivo->nombre_archivo, 13);
-            header("Content-Disposition: attachment; filename=" . $filetemp . "\n\n");
-            header("Content-Type: " . $archivo->extension);
-            header("Content-Length: " . filesize($file));
-            readfile($file);
-            exit;
-        } else {
-            echo 'Archivo Inexistente.!!';
-        }
-        */
-        //ahora vemos que solo el que estee autorizado pueda descargar
-        $file = '/backup/backup_sigec/sigec/archivo/Manual-de-Usuario-SIGEC.pdf';
+        $this->autoRender = false;
+        $file = $this->archivo_base_path() . '/Manual-de-Usuario-SIGEC.pdf';
         $file_temp = 'Manual-de-Usuario-SIGEC.pdf';
         $extension = 'application/pdf';
-        header("Content-Disposition: attachment; filename=" . $file_temp . "\n\n");
-        header("Content-Type: " . $extension);
-        header("Content-Length: " . filesize($file));
-        readfile($file);
-        exit;
+        $this->send_file($file, $file_temp, $extension);
     }
 
     public function action_index()
@@ -70,14 +71,9 @@ class Controller_Download extends Controller
             $archivo = ORM::factory('archivos', $id);
             if ($archivo->loaded()) {
                 //ahora vemos que solo el que estee autorizado pueda descargar
-                //  $file='/archivos/'.$archivo->sub_directorio.'/'.$archivo->nombre_archivo;              
-                $file = '/backup/backup_sigec/sigec/archivo/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
+                $file = $this->archivo_base_path() . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
                 $filetemp = substr($archivo->nombre_archivo, 13);
-                header("Content-Disposition: attachment; filename=" . $filetemp . "\n\n");
-                header("Content-Type: " . $archivo->extension);
-                header("Content-Length: " . filesize($file));
-                readfile($file);
-                exit;
+                $this->send_file($file, $filetemp, $archivo->extension);
             } else {
                 echo 'Archivo Inexistente.!!';
             }
@@ -85,4 +81,3 @@ class Controller_Download extends Controller
     }
 
 }
-

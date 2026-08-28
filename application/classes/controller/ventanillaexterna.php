@@ -176,7 +176,7 @@ class Controller_Ventanillaexterna extends Controller
             }
             */
 
-            $path = '/backup/backup_sigec/sigec/archivo/' . date('Y_m');
+            $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . date('Y_m');
             if (!is_dir($path)) {
                 // Creates the directory
                 if (!mkdir($path, 0777, TRUE)) {
@@ -259,10 +259,25 @@ class Controller_Ventanillaexterna extends Controller
         if ($archivo->loaded()) {
             //ahora vemos que solo el que estee autorizado pueda descargar
             //  $file='/archivos/'.$archivo->sub_directorio.'/'.$archivo->nombre_archivo;
-            $file = '/backup/backup_sigec/sigec/archivo/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
+            $base = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\');
+            $file = $base . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
             $filetemp = substr($archivo->nombre_archivo, 13);
-            header("Content-Disposition: attachment; filename=" . $filetemp . "\n\n");
-            header("Content-Type: " . $archivo->extension);
+
+            if (!is_file($file)) {
+                $this->autoRender = false;
+                http_response_code(404);
+                echo 'Archivo no encontrado en el servidor.';
+                return;
+            }
+
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+
+            header("Content-Description: File Transfer");
+            header("Content-Type: " . ($archivo->extension ?: 'application/octet-stream'));
+            header("Content-Disposition: attachment; filename=\"" . $filetemp . "\"");
+            header("Content-Transfer-Encoding: binary");
             header("Content-Length: " . filesize($file));
             readfile($file);
             exit;
