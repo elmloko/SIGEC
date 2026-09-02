@@ -272,6 +272,10 @@
                 //eModal.alert('Seleccione un usuario por favor', '');
             }
         });
+        $('#passDefecto').click(function () {
+            eModal.iframe('/admin/content/passDefecto', 'Contraseña por defecto');
+            return false;
+        });
         $('#documentos').click(function () {
             var rowindex = $('#jqxgrid').jqxGrid('getselectedrowindex');
             if (rowindex > -1) {
@@ -452,6 +456,9 @@
 
             <a class="btn btn-sm btn-default-dark" href="javascript:;" id="resetPass" title="Resetear contraseña"><i
                     class="fa fa-repeat"></i> Resetear password</a>
+
+            <a class="btn btn-sm btn-default-dark" href="javascript:;" id="passDefecto"
+               title="Ver y cambiar la contraseña por defecto de usuarios nuevos"><i class="fa fa-key"></i> Contraseña por defecto</a>
 
             <a class="btn btn-sm btn-info" href="javascript:;" id="alta"
                title="Desahbilitar el acceso al sistema a un usuario"><i class="fa fa-thumbs-o-up"></i> Dar de Alta</a>

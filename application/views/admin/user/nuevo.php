@@ -99,7 +99,7 @@
                         <div class="row">
                             <div class="col-md-6 col-lg-6">
                                 <div class="form-group">
-                                    <?php echo Form::input('email', Arr::get($_POST, 'email', '@oopp.gob.bo'), array('class' => 'form-control required email', 'id' => 'nivel')); ?>
+                                    <?php echo Form::input('email', Arr::get($_POST, 'email', '@correos.gob.bo'), array('class' => 'form-control required email', 'id' => 'nivel')); ?>
                                     <?php echo Form::label('email', 'Correo electronico'); ?>
                                 </div>
                             </div>
@@ -145,6 +145,13 @@
                                 <div class="form-group">
                                     <?php echo Form::input('username', Arr::get($_POST, 'username', ''), array('class' => 'form-control required', 'id' => 'username')); ?>
                                     <?php echo Form::label('usuario', 'Usuario'); ?>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-lg-2">
+                                <div class="form-group">
+                                    <?php echo Form::password('password', '', array('class' => 'form-control', 'id' => 'password', 'minlength' => 6, 'autocomplete' => 'new-password')); ?>
+                                    <?php echo Form::label('password', 'Contraseña (opcional)'); ?>
+                                    <small class="opacity-50">Si se deja en blanco se usa la contraseña por defecto</small>
                                 </div>
                             </div>
                             <div class="row">

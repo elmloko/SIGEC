@@ -34,6 +34,15 @@ class Controller_Admin_content extends Controller_Minitemplate {
         var_dump($_POST);
     }
 
+    // modal para ver/cambiar la contraseña por defecto que se asigna a usuarios nuevos
+    public function action_passDefecto() {
+        $config = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
+        // esta tabla no tiene columna 'id', asi que loaded() no es fiable aqui; se valida por 'campo'
+        $passActual = ($config->campo === 'passDefecto') ? $config->valor : '';
+        $this->template->content = View::factory('admin/pass_defecto')
+                ->bind('passActual', $passActual);
+    }
+
     // estadisticas rapidas de un usuario: entrada, pendientes, archivo y documentos generados
     public function action_userStats($id) {
         $user = ORM::factory('users', array('id' => $id));

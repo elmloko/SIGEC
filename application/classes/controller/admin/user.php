@@ -88,9 +88,17 @@ class Controller_Admin_User extends Controller_AdminTemplate
                 if ($email->loaded()) {
                     $error['username'] = "Ya existe un usuario con el nombre '" . $_POST['username'] . "'";
                 }
+                $passIngresado = trim(Arr::get($_POST, 'password', ''));
+                if ($passIngresado !== '' && strlen($passIngresado) < 6) {
+                    $error['password'] = 'La contraseña debe tener al menos 6 caracteres';
+                }
                 if (sizeof($error) == 0) {
-                    $oPassword = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
-                    $password = hash_hmac('sha256', $oPassword->valor, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
+                    if ($passIngresado !== '') {
+                        $password = hash_hmac('sha256', $passIngresado, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
+                    } else {
+                        $oPassword = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
+                        $password = hash_hmac('sha256', $oPassword->valor, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
+                    }
                     // Create the user using form values
                     $user = ORM::factory('users');
                     $user->username = $_POST['username'];

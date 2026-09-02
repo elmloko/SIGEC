@@ -153,6 +153,52 @@ class Controller_Admin_ajax extends Controller
         }
     }
 
+    // cambia la contraseña por defecto del sistema y la actualiza solo en los
+    // usuarios que todavia la tienen sin modificar (los que ya la cambiaron no se tocan)
+    public function action_cambiarPassDefecto()
+    {
+        if (!$this->request->is_ajax() || !$_POST) {
+            echo json_encode(array('ok' => false, 'msg' => 'Solicitud invalida'));
+            return;
+        }
+
+        $nuevo = trim(Arr::get($_POST, 'nuevo_pass', ''));
+        if (strlen($nuevo) < 6) {
+            echo json_encode(array('ok' => false, 'msg' => 'La contraseña debe tener al menos 6 caracteres'));
+            return;
+        }
+
+        $key = '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'; //sigec users
+        $config = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
+        // esta tabla no tiene columna 'id', asi que loaded() no es fiable aqui; se valida por 'campo'
+        if ($config->campo !== 'passDefecto') {
+            echo json_encode(array('ok' => false, 'msg' => 'No se encontro la configuracion de contraseña por defecto'));
+            return;
+        }
+
+        $hashAnterior = hash_hmac('sha256', $config->valor, $key);
+        $hashNuevo = hash_hmac('sha256', $nuevo, $key);
+
+        // solo se actualizan los usuarios cuyo password actual sea igual al hash de la contraseña por defecto anterior
+        $afectados = ORM::factory('users')->where('password', '=', $hashAnterior)->find_all();
+        $count = 0;
+        foreach ($afectados as $u) {
+            $u->password = $hashNuevo;
+            $u->save();
+            $count++;
+        }
+
+        // la tabla configuracion no tiene llave primaria, por lo que $config->save() de ORM
+        // no puede saber que la fila ya existe (loaded() siempre da false) y terminaria
+        // insertando una fila nueva en vez de actualizar; se hace un UPDATE directo
+        DB::update('configuracion')
+            ->set(array('valor' => $nuevo))
+            ->where('campo', '=', 'passDefecto')
+            ->execute();
+
+        echo json_encode(array('ok' => true, 'count' => $count));
+    }
+
     public function action_conectados()
     {
         $result = array();
