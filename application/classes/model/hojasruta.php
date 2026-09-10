@@ -132,8 +132,7 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
         $sql = "SELECT d.id, d.nur, d.codigo, d.cite_original, d.referencia, d.estado,
                 d.nombre_destinatario, d.cargo_destinatario, d.fecha_creacion,
                 u.nombre AS creado_por, p.proceso,
-                (SELECT COUNT(*) FROM agrupaciones a WHERE a.padre = d.nur OR a.hijo = d.nur) AS agrupado,
-                (SELECT s.estado FROM seguimiento s WHERE s.nur = d.nur ORDER BY s.id DESC LIMIT 1) AS estado_seguimiento
+                (SELECT COUNT(*) FROM agrupaciones a WHERE a.padre = d.nur OR a.hijo = d.nur) AS agrupado
             FROM documentos d
             LEFT JOIN users u ON u.id = d.id_user
             LEFT JOIN procesos p ON p.id = d.id_proceso
