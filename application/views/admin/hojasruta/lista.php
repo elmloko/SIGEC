@@ -7,6 +7,13 @@
                 $(this).closest('form').submit();
             }
         });
+        $('.btn-revertir-hr').click(function (e) {
+            e.preventDefault();
+            var nur = $(this).data('nur');
+            if (confirm('¿Esta seguro de REVERTIR la ultima derivacion de la hoja de ruta ' + nur + '?\n\nEl documento volvera al estado anterior a esa derivacion, para que pueda ser derivado nuevamente.')) {
+                $(this).closest('form').submit();
+            }
+        });
     });
 </script>
 
@@ -75,6 +82,15 @@
                                    class="btn btn-sm btn-primary-dark" title="Editar registro del documento">
                                     <i class="md md-edit"></i>
                                 </a>
+                                <?php if ((int) $h['estado'] === 1 && (int) $h['estado_seguimiento'] === 1): ?>
+                                    <form method="post" action="/admin/hojasruta/revertir/<?php echo $h['id']; ?>" style="display:inline;">
+                                        <input type="hidden" name="confirmar" value="1"/>
+                                        <button type="submit" data-nur="<?php echo HTML::chars($h['nur']); ?>"
+                                                class="btn btn-sm btn-warning btn-revertir-hr" title="Revertir la ultima derivacion (solo si aun no fue recibida)">
+                                            <i class="md md-undo"></i>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                                 <form method="post" action="/admin/hojasruta/eliminar/<?php echo $h['id']; ?>" style="display:inline;">
                                     <input type="hidden" name="confirmar" value="1"/>
                                     <button type="submit" data-nur="<?php echo HTML::chars($h['nur']); ?>"

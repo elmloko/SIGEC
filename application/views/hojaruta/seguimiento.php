@@ -21,6 +21,14 @@
             $('#agrupado').show();
         }
 
+        $('.btn-revertir-hr-trace').click(function (e) {
+            e.preventDefault();
+            var nur = $(this).data('nur');
+            if (confirm('¿Esta seguro de REVERTIR la ultima derivacion de la hoja de ruta ' + nur + '?\n\nEl documento volvera al estado anterior a esa derivacion, para que pueda ser derivado nuevamente.')) {
+                $(this).closest('form').submit();
+            }
+        });
+
         $('html, body').animate({
             scrollTop: $("#scroll").offset().top
         }, 1000);
@@ -366,6 +374,16 @@
 
                                               <?php echo $s->estado; ?>
                                         </span>
+
+                                    <?php if ((int) $s->id_estado === 1 && ((int) $s->derivado_por === (int) $user->id || (int) $user->nivel === 5)): ?>
+                                        <form method="post" action="/admin/hojasruta/revertir/<?php echo $detalle['id_documento']; ?>" style="display:inline;">
+                                            <input type="hidden" name="confirmar" value="1"/>
+                                            <button type="submit" data-nur="<?php echo HTML::chars($s->nur); ?>"
+                                                    class="btn btn-xs btn-warning btn-revertir-hr-trace" title="Revertir esta derivacion (solo si aun no fue recibida)">
+                                                <i class="md md-undo"></i> Revertir
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
 
                                     <!-- === [INICIO] MODAL: LISTADO DE OBSERVACIONES === -->
                                     <?php

@@ -209,6 +209,60 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
         $this->request->redirect('/admin/hojasruta/grupo/' . $documento_id);
     }
 
+    // revierte (cancela) la ultima derivacion de la hoja de ruta, solo si aun no fue recibida
+    public function action_revertir($id = '')
+    {
+        // volvemos a la pagina desde donde se pidio revertir (lista de hojas de ruta o el seguimiento de una en particular)
+        $redirect_to = '/admin/hojasruta/lista';
+        if (!empty($_SERVER['HTTP_REFERER']) && parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST) === $_SERVER['HTTP_HOST']) {
+            $redirect_to = $_SERVER['HTTP_REFERER'];
+        }
+
+        if (!isset($_POST['confirmar'])) {
+            $this->request->redirect($redirect_to);
+        }
+
+        $documento = ORM::factory('documentos')->where('id', '=', $id)->find();
+        if (!$documento->loaded() || $documento->nur === '') {
+            $this->request->redirect($redirect_to);
+        }
+        $nur = $documento->nur;
+
+        // tomamos el ultimo paso de seguimiento (la derivacion mas reciente) de esta hoja de ruta
+        $seg = ORM::factory('seguimiento')->where('nur', '=', $nur)->order_by('id', 'DESC')->find();
+
+        // solo puede revertir quien hizo esa derivacion, o un administrador (nivel 5 = panel de Administrador)
+        $autorizado = $seg->loaded() && (((int) $seg->derivado_por === (int) $this->user->id) || ((int) $this->user->nivel === 5));
+
+        if ($seg->loaded() && $autorizado && (int) $seg->estado === 1) {
+            $padre = $seg->id_seguimiento;
+            $oficial = $seg->oficial;
+            $seg->delete();
+
+            if ($padre > 0) {
+                // habia un seguimiento anterior en la cadena: lo restauramos a pendiente
+                $oSeg = New Model_Seguimiento();
+                $oSeg->delete_deriv($padre);
+                $seguimiento = ORM::factory('seguimiento', array('id' => $padre));
+                if ($seguimiento->oficial == 2) {
+                    $seguimiento->oficial = 1;
+                }
+                $seguimiento->estado = 2; //pendiente
+                $seguimiento->save();
+            } else {
+                // era la primera derivacion: el documento vuelve a estado "no derivado"
+                if ($oficial == 1) {
+                    $documento->estado = 0;
+                    $documento->save();
+                }
+            }
+
+            $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' revirtio la derivacion de la hoja de ruta ' . $nur);
+        }
+
+        $this->request->redirect($redirect_to);
+    }
+
     // eliminacion DEFINITIVA (DROP) de la hoja de ruta y todo su historial relacionado
     public function action_eliminar($id = '')
     {
