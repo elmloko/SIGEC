@@ -229,12 +229,10 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
         $nur = $documento->nur;
 
         // tomamos el ultimo paso de seguimiento (la derivacion mas reciente) de esta hoja de ruta
+        // (solo llega aqui un administrador nivel 5: Controller_AdminTemplate::before() ya lo exige)
         $seg = ORM::factory('seguimiento')->where('nur', '=', $nur)->order_by('id', 'DESC')->find();
 
-        // solo puede revertir quien hizo esa derivacion, o un administrador (nivel 5 = panel de Administrador)
-        $autorizado = $seg->loaded() && (((int) $seg->derivado_por === (int) $this->user->id) || ((int) $this->user->nivel === 5));
-
-        if ($seg->loaded() && $autorizado && (int) $seg->estado === 1) {
+        if ($seg->loaded() && (int) $seg->estado === 1) {
             $padre = $seg->id_seguimiento;
             $oficial = $seg->oficial;
             $seg->delete();
@@ -261,6 +259,104 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
         }
 
         $this->request->redirect($redirect_to);
+    }
+
+    // agrega un destinatario adicional EN COPIA a una derivacion ya enviada (en representacion del
+    // usuario que la hizo), para cuando este se olvido de incluir a alguien. Solo administradores.
+    public function action_agregar($id_ref = '')
+    {
+        // solo administradores (nivel 5) pueden suplantar al remitente original para agregar un destinatario
+        if ((int) $this->user->nivel !== 5) {
+            $this->request->redirect('/');
+        }
+
+        $errors = array();
+
+        $ref = ORM::factory('seguimiento', $id_ref);
+        if (!$ref->loaded()) {
+            $this->request->redirect('/admin/hojasruta/lista');
+        }
+
+        $documento = ORM::factory('documentos')->where('nur', '=', $ref->nur)->and_where('original', '=', 1)->find();
+        if (!$documento->loaded()) {
+            $this->request->redirect('/admin/hojasruta/lista');
+        }
+
+        $remitente = ORM::factory('users', $ref->derivado_por);
+
+        if (isset($_POST['enviar'])) {
+            $id_destino = (int) Arr::get($_POST, 'destino', 0);
+            $accion = (int) Arr::get($_POST, 'accion', 0);
+            $proveido = trim(Arr::get($_POST, 'proveido', ''));
+
+            if ($id_destino <= 0) {
+                $errors['Error'] = 'Debe seleccionar un destinatario.';
+            }
+            if ($proveido === '') {
+                $errors['Error'] = 'Debe ingresar un proveido.';
+            }
+
+            if (sizeof($errors) == 0) {
+                $destino = ORM::factory('users', $id_destino);
+                $oficina_destino = ORM::factory('oficinas', $destino->id_oficina);
+
+                $seg = ORM::factory('seguimiento');
+                $seg->id_seguimiento = $ref->id_seguimiento;
+                $seg->nur = $ref->nur;
+                $seg->derivado_por = $ref->derivado_por;
+                $seg->nombre_emisor = $ref->nombre_emisor;
+                $seg->cargo_emisor = $ref->cargo_emisor;
+                $seg->fecha_emision = date('Y-m-d H:i:s');
+                $seg->derivado_a = $destino->id;
+                $seg->nombre_receptor = $destino->nombre;
+                $seg->cargo_receptor = $destino->cargo;
+                $seg->estado = 1; //no recibido
+                $seg->accion = $accion;
+                $seg->oficial = 0; //siempre en copia: no se debe duplicar el tramite oficial ya existente
+                $seg->hijo = $ref->hijo;
+                $seg->proveido = $proveido;
+                $seg->adjuntos = json_encode(array());
+                $seg->de_oficina = $ref->de_oficina;
+                $seg->a_oficina = $oficina_destino->oficina;
+                $seg->id_de_oficina = $ref->id_de_oficina;
+                $seg->id_a_oficina = $oficina_destino->id;
+                $seg->prioridad = $ref->prioridad;
+                $seg->save();
+
+                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' agrego a ' . $destino->nombre . ' como destinatario en copia de la hoja de ruta ' . $ref->nur . ' (en representacion de ' . $ref->nombre_emisor . ', quien lo olvido)');
+
+                $this->request->redirect('/route/trace/?hr=' . $ref->nur);
+            }
+        }
+
+        $oDestino = New Model_Destinatarios();
+        $destinatarios = array();
+        foreach ($oDestino->dependientes($ref->derivado_por) as $l) {
+            $destinatarios[$l['id']] = $l['oficina'] . ' - ' . Text::limit_words($l['nombre'], 6, '');
+        }
+        foreach ($oDestino->superior($remitente->superior) as $l) {
+            $destinatarios[$l['id']] = $l['oficina'] . ' - ' . Text::limit_words($l['nombre'], 6, '');
+        }
+        foreach ($oDestino->destinos($ref->derivado_por) as $l) {
+            $destinatarios[$l->id] = $l->oficina . ' - ' . Text::limit_words($l->nombre, 6, '');
+        }
+
+        $acciones = array();
+        foreach (ORM::factory('acciones')->find_all() as $a) {
+            $acciones[$a->id] = $a->accion;
+        }
+
+        $this->template->title .= ' / Agregar destinatario a ' . $ref->nur;
+        $this->template->titulo .= ' Agregar destinatario (en copia) a ' . $ref->nur;
+        $this->template->descripcion .= ' Para cuando el usuario olvido incluir a alguien en una derivacion ya enviada';
+        $this->template->scripts = array('static/js/libs/select2/select2.min.js');
+        $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
+        $this->template->content = View::factory('admin/hojasruta/agregar')
+            ->bind('documento', $documento)
+            ->bind('ref', $ref)
+            ->bind('destinatarios', $destinatarios)
+            ->bind('acciones', $acciones)
+            ->bind('errors', $errors);
     }
 
     // eliminacion DEFINITIVA (DROP) de la hoja de ruta y todo su historial relacionado

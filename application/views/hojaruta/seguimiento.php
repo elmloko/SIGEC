@@ -375,7 +375,7 @@
                                               <?php echo $s->estado; ?>
                                         </span>
 
-                                    <?php if ((int) $s->id_estado === 1 && ((int) $s->derivado_por === (int) $user->id || (int) $user->nivel === 5)): ?>
+                                    <?php if ((int) $s->id_estado === 1 && (int) $user->nivel === 5): ?>
                                         <form method="post" action="/admin/hojasruta/revertir/<?php echo $detalle['id_documento']; ?>" style="display:inline;">
                                             <input type="hidden" name="confirmar" value="1"/>
                                             <button type="submit" data-nur="<?php echo HTML::chars($s->nur); ?>"
@@ -383,6 +383,13 @@
                                                 <i class="md md-undo"></i> Revertir
                                             </button>
                                         </form>
+                                    <?php endif; ?>
+
+                                    <?php if ((int) $user->nivel === 5 && (int) $s->oficial > 0): ?>
+                                        <a href="/admin/hojasruta/agregar/<?php echo $s->id; ?>"
+                                           class="btn btn-xs btn-info" title="Agregar un destinatario en copia que <?php echo HTML::chars($s->nombre_emisor); ?> olvido incluir">
+                                            <i class="md md-person-add"></i> Agregar destinatario
+                                        </a>
                                     <?php endif; ?>
 
                                     <!-- === [INICIO] MODAL: LISTADO DE OBSERVACIONES === -->
