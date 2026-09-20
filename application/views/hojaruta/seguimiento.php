@@ -121,6 +121,7 @@
             </div>
         </div>
 
+        <?php if ((int) $user->nivel === 5): ?>
         <div class="row">
             <div class="col-lg-2 col-md-2">
                 <span class=" opacity-50">Archivos adjuntos: </span>
@@ -138,6 +139,7 @@
                     </span>
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -584,6 +586,7 @@
                                                 }
                                             }
                                             ?>
+                                        <?php if ((int) $user->nivel === 5): ?>
                                         <br/>
                                             Adjunto:
                                             <br/>
@@ -592,13 +595,20 @@
                                         $archivos_paso = isset($archivos_por_seguimiento[$s->id]) ? $archivos_por_seguimiento[$s->id] : array();
                                         if (empty($archivos_paso)):
                                             ?>
-                                            <span class="opacity-50">Sin adjuntos</span><br/>
+                                            <span class="opacity-50">Sin adjuntos</span>
+                                            <a href="/admin/hojasruta/crearinforme/<?php echo $s->id; ?>?nur=<?php echo urlencode($detalle['nur']); ?>"
+                                               title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i></a>
+                                            <br/>
                                         <?php else: ?>
                                             <?php foreach ($archivos_paso as $af): ?>
                                                 <a href="/download/?file=<?php echo $af->id; ?>" title="Descargar adjunto">
                                                     <span class="badge badge-adjunto"><?php echo substr($af->nombre_archivo, 13); ?></span>
-                                                </a><br/>
+                                                </a>
+                                                <a href="/admin/hojasruta/editarinforme/<?php echo $af->id_documento; ?>?seg=<?php echo $s->id; ?>&nur=<?php echo urlencode($detalle['nur']); ?>"
+                                                   title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i></a>
+                                                <br/>
                                             <?php endforeach; ?>
+                                        <?php endif; ?>
                                         <?php endif; ?>
 
                                         <?php
@@ -608,7 +618,12 @@
                                             ?>
 
                                             <a href="/vista/?doc=<?php echo $d->cite_original; ?>&id_seg=<?php echo $s->id; ?>"
-                                               target="_blank"><?php echo $d->codigo; ?></a><br/>
+                                               target="_blank"><?php echo $d->codigo; ?></a>
+                                            <?php if ((int) $user->nivel === 5): ?>
+                                                <a href="/admin/hojasruta/editarinforme/<?php echo $d->id; ?>?seg=<?php echo $s->id; ?>&nur=<?php echo urlencode($detalle['nur']); ?>"
+                                                   title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i></a>
+                                            <?php endif; ?>
+                                            <br/>
                                         <?php endforeach;
                                         ?>
                                         </span>

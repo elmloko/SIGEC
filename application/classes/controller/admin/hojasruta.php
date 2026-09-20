@@ -152,6 +152,169 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             ->bind('info', $info);
     }
 
+    // crea un informe (documento) minimo para un paso de la linea de tiempo que todavia no
+    // tiene ninguno adjuntado, y de una vez manda a completarlo (datos + archivo) en editarinforme
+    public function action_crearinforme($id_seguimiento = '')
+    {
+        $seguimiento = ORM::factory('seguimiento', $id_seguimiento);
+        if (!$seguimiento->loaded()) {
+            $this->request->redirect('/admin/hojasruta/lista');
+        }
+
+        $nur = Arr::get($_GET, 'nur', $seguimiento->nur);
+
+        // si ya se habia creado un informe para este paso (ej. el usuario volvio a hacer clic),
+        // no creamos otro: vamos directo a editar el que ya existe
+        $existente = ORM::factory('documentos')->where('id_seguimiento', '=', $seguimiento->id)->find();
+        if ($existente->loaded()) {
+            $this->request->redirect('/admin/hojasruta/editarinforme/' . $existente->id . '?seg=' . $seguimiento->id . '&nur=' . urlencode($nur));
+        }
+
+        $documento = ORM::factory('documentos');
+        $documento->nur = $nur;
+        $documento->id_seguimiento = $seguimiento->id;
+        $documento->id_user = $this->user->id;
+        $documento->original = 0;
+        $documento->fecha_creacion = date('Y-m-d H:i:s');
+        // 'codigo' es UNIQUE en la BD: le agregamos algo variable para que nunca choque
+        $documento->codigo = 'Informe paso ' . $seguimiento->id . ' - ' . date('YmdHis');
+        // precargamos con los datos del propio paso (quien lo emitio / quien lo recibio),
+        // igual que hace route/responder, para no dejar el formulario en blanco
+        $documento->nombre_destinatario = $seguimiento->nombre_emisor;
+        $documento->cargo_destinatario = $seguimiento->cargo_emisor;
+        $documento->nombre_remitente = $seguimiento->nombre_receptor;
+        $documento->cargo_remitente = $seguimiento->cargo_receptor;
+        $documento->referencia = $seguimiento->proveido;
+        $documento->save();
+
+        $this->save($this->user->id_entidad, $this->user->id, 'Administrador creo un informe para el paso ' . $seguimiento->id . ' de la hoja de ruta ' . $nur);
+
+        $this->request->redirect('/admin/hojasruta/editarinforme/' . $documento->id . '?seg=' . $seguimiento->id . '&nur=' . urlencode($nur));
+    }
+
+    // editar el informe (documento) generado en un paso especifico de la linea de tiempo del
+    // seguimiento, incluyendo reemplazar/agregar su archivo adjunto. A diferencia de
+    // documento/edit, aqui no se exige que el documento pertenezca al usuario logeado.
+    public function action_editarinforme($id = '')
+    {
+        $error = array();
+        $info = array();
+
+        $documento = ORM::factory('documentos', $id);
+        if (!$documento->loaded()) {
+            $this->request->redirect('/admin/hojasruta/lista');
+        }
+
+        // paso de la linea de tiempo (seguimiento) donde se genero/adjunto este informe,
+        // para poder corregir la fecha que se ve en "Seguimiento del proceso".
+        // Va por query string ("?seg=") porque la ruta admin solo admite un segmento de id.
+        $id_seguimiento = Arr::get($_GET, 'seg', '');
+        $seguimiento = ($id_seguimiento !== '') ? ORM::factory('seguimiento', $id_seguimiento) : ORM::factory('seguimiento', $documento->id_seguimiento);
+
+        // NUR de la hoja de ruta desde donde se entro (para "Volver al seguimiento"): no siempre
+        // coincide con $documento->nur, porque el informe/archivo de un paso puede pertenecer a
+        // un documento distinto al de la hoja de ruta que se esta viendo.
+        $nur_origen = Arr::get($_GET, 'nur', $documento->nur);
+
+        if (isset($_POST['editar'])) {
+            $documento->titulo = trim(Arr::get($_POST, 'titulo', ''));
+            $documento->referencia = trim(Arr::get($_POST, 'referencia', ''));
+            $documento->contenido = Arr::get($_POST, 'descripcion', '');
+            $documento->nombre_destinatario = trim(Arr::get($_POST, 'destinatario', ''));
+            $documento->cargo_destinatario = trim(Arr::get($_POST, 'cargo_des', ''));
+            $documento->institucion_destinatario = trim(Arr::get($_POST, 'institucion_des', ''));
+            $documento->nombre_remitente = trim(Arr::get($_POST, 'remitente', ''));
+            $documento->cargo_remitente = trim(Arr::get($_POST, 'cargo_rem', ''));
+            $documento->mosca_remitente = trim(Arr::get($_POST, 'mosca', ''));
+            $documento->copias = trim(Arr::get($_POST, 'copias', ''));
+            $documento->hojas = trim(Arr::get($_POST, 'hojas', ''));
+            $documento->nombre_via = trim(Arr::get($_POST, 'via', ''));
+            $documento->cargo_via = trim(Arr::get($_POST, 'cargovia', ''));
+            $nueva_fecha_creacion = trim(Arr::get($_POST, 'fecha_creacion', ''));
+            if ($nueva_fecha_creacion !== '') {
+                $documento->fecha_creacion = $nueva_fecha_creacion;
+            }
+            $documento->save();
+
+            if ($seguimiento->loaded()) {
+                $nueva_fecha_paso = trim(Arr::get($_POST, 'fecha_paso', ''));
+                if ($nueva_fecha_paso !== '') {
+                    $seguimiento->fecha_emision = $nueva_fecha_paso;
+                    $seguimiento->save();
+                }
+            }
+
+            $this->save($this->user->id_entidad, $this->user->id, 'Administrador edito el informe <b>' . $documento->codigo . '</b> (NUR ' . $documento->nur . ')');
+            $info['Exito!'] = 'Se actualizaron correctamente los datos del informe.';
+        }
+
+        if (isset($_POST['adjuntar']) && !empty($_FILES['archivo']['name'])) {
+            $sub_directorio = date('Y_m');
+            if (RemoteArchivo::is_enabled()) {
+                $filename = uniqid() . $_FILES['archivo']['name'];
+                RemoteArchivo::upload($_FILES['archivo']['tmp_name'], $sub_directorio . '/' . $filename);
+            } else {
+                $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . $sub_directorio;
+                if (!is_dir($path)) {
+                    if (!mkdir($path, 0777, TRUE)) {
+                        throw new Exception("No se puedo crear el directorio!");
+                    }
+                }
+                $filename = upload::save($_FILES['archivo'], NULL, $path);
+            }
+
+            $archivo = ORM::factory('archivos');
+            $archivo->nombre_archivo = basename($filename);
+            $archivo->extension = $_FILES['archivo']['type'];
+            $archivo->tamanio = $_FILES['archivo']['size'];
+            $archivo->id_user = $this->user->id;
+            $archivo->id_documento = $documento->id;
+            $archivo->sub_directorio = $sub_directorio;
+            $archivo->fecha = date('Y-m-d H:i:s');
+            $archivo->estado = 1;
+            $archivo->save();
+
+            $this->save($this->user->id_entidad, $this->user->id, 'Administrador adjunto un archivo al informe <b>' . $documento->codigo . '</b> (NUR ' . $documento->nur . ')');
+            $info['Exito!'] = 'Archivo adjuntado correctamente.';
+        }
+
+        $archivos = ORM::factory('archivos')
+            ->where('id_documento', '=', $documento->id)
+            ->and_where('estado', '=', 1)
+            ->find_all();
+
+        $this->template->title .= ' / Editar informe ' . $documento->codigo;
+        $this->template->titulo .= ' Editar informe ' . $documento->codigo;
+        $this->template->descripcion .= ' Editar los datos y el adjunto del informe generado en este paso de la hoja de ruta ' . $documento->nur;
+        $this->template->content = View::factory('admin/hojasruta/editarinforme')
+            ->bind('documento', $documento)
+            ->bind('archivos', $archivos)
+            ->bind('seguimiento', $seguimiento)
+            ->bind('nur_origen', $nur_origen)
+            ->bind('error', $error)
+            ->bind('info', $info);
+    }
+
+    // elimina (soft-delete) un adjunto de un informe, sin restriccion de propietario (solo admin)
+    public function action_eliminararchivoinforme($id = '')
+    {
+        // conservamos seg/nur para volver exactamente a la misma pantalla (ver nota en action_editarinforme)
+        $volver = '?' . http_build_query(array_filter(array(
+            'seg' => Arr::get($_GET, 'seg', ''),
+            'nur' => Arr::get($_GET, 'nur', ''),
+        )));
+
+        $archivo = ORM::factory('archivos', $id);
+        if ($archivo->loaded()) {
+            $id_documento = $archivo->id_documento;
+            $archivo->estado = 0;
+            $archivo->save();
+            $this->save($this->user->id_entidad, $this->user->id, 'Administrador elimino un adjunto del informe id ' . $id_documento);
+            $this->request->redirect('/admin/hojasruta/editarinforme/' . $id_documento . $volver);
+        }
+        $this->request->redirect('/admin/hojasruta/lista');
+    }
+
     // detalle de agrupacion: muestra si la hoja de ruta fue agrupada como padre y/o como hijo
     public function action_grupo($id = '')
     {
