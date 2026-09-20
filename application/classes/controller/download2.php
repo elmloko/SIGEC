@@ -11,7 +11,16 @@ class Controller_Download2 extends Controller
 
     private function send_file($file, $filename, $content_type)
     {
-        if (!is_file($file)) {
+        $remote = RemoteArchivo::is_enabled();
+
+        if ($remote) {
+            if (!RemoteArchivo::exists($file)) {
+                $this->autoRender = false;
+                http_response_code(404);
+                echo 'Archivo no encontrado en el servidor.';
+                return;
+            }
+        } elseif (!is_file($file)) {
             $this->autoRender = false;
             http_response_code(404);
             echo 'Archivo no encontrado en el servidor.';
@@ -26,8 +35,14 @@ class Controller_Download2 extends Controller
         header("Content-Type: " . ($content_type ?: 'application/octet-stream'));
         header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
         header("Content-Transfer-Encoding: binary");
-        header("Content-Length: " . filesize($file));
-        readfile($file);
+
+        if ($remote) {
+            header("Content-Length: " . RemoteArchivo::filesize($file));
+            RemoteArchivo::stream_download($file);
+        } else {
+            header("Content-Length: " . filesize($file));
+            readfile($file);
+        }
         exit;
     }
 
@@ -41,7 +56,9 @@ class Controller_Download2 extends Controller
         $archivo = ORM::factory('archivos', $id);
         if ($archivo->loaded()) {
             //ahora vemos que solo el que estee autorizado pueda descargar
-            $file = $this->archivo_base_path() . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
+            $file = RemoteArchivo::is_enabled()
+                ? $archivo->sub_directorio . '/' . $archivo->nombre_archivo
+                : $this->archivo_base_path() . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
             $filetemp = substr($archivo->nombre_archivo, 13);
             $this->send_file($file, $filetemp, $archivo->extension);
         } else {

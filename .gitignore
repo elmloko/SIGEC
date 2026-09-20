@@ -1,2 +1,4 @@
 application/cache/*
 application/logs/*
+/vendor/
+application/config/archivo_secret.php

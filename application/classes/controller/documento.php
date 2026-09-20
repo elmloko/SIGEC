@@ -327,24 +327,32 @@ class Controller_Documento extends Controller_DefaultTemplate {
             }
             if (isset($_POST['adjuntar'])) {
 
-                $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . date('Y_m');
-                if (!is_dir($path)) {
-                    // Creates the directory 
-                    if (!mkdir($path, 0777, TRUE)) {
-                        // On failure, throws an error 
-                        throw new Exception("No se puedo crear el directorio!");
-                        exit;
+                $sub_directorio = date('Y_m');
+                if (RemoteArchivo::is_enabled()) {
+                    $filename = ($_FILES['archivo']['name'] != '') ? uniqid() . $_FILES['archivo']['name'] : '';
+                    if ($filename != '') {
+                        RemoteArchivo::upload($_FILES['archivo']['tmp_name'], $sub_directorio . '/' . $filename);
                     }
+                } else {
+                    $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . $sub_directorio;
+                    if (!is_dir($path)) {
+                        // Creates the directory
+                        if (!mkdir($path, 0777, TRUE)) {
+                            // On failure, throws an error
+                            throw new Exception("No se puedo crear el directorio!");
+                            exit;
+                        }
+                    }
+                    $filename = upload::save($_FILES ['archivo'], NULL, $path);
                 }
-                $filename = upload::save($_FILES ['archivo'], NULL, $path);
                 if ($_FILES ['archivo']['name'] != '') {
-                    $archivo = ORM::factory('archivos'); //intanciamos el modelo proveedor                                          
+                    $archivo = ORM::factory('archivos'); //intanciamos el modelo proveedor
                     $archivo->nombre_archivo = basename($filename);
                     $archivo->extension = $_FILES ['archivo'] ['type'];
                     $archivo->tamanio = $_FILES ['archivo'] ['size'];
                     $archivo->id_user = $this->user->id;
                     $archivo->id_documento = $_POST['id_doc'];
-                    $archivo->sub_directorio = date('Y_m');
+                    $archivo->sub_directorio = $sub_directorio;
                     $archivo->fecha = date('Y-m-d H:i:s');
                     $archivo->save();
                     if ($archivo->id > 0)

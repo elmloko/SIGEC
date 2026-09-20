@@ -176,16 +176,25 @@ class Controller_Ventanillaexterna extends Controller
             }
             */
 
-            $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . date('Y_m');
-            if (!is_dir($path)) {
-                // Creates the directory
-                if (!mkdir($path, 0777, TRUE)) {
-                    // On failure, throws an error
-                    throw new Exception("No se puedo crear el directorio!");
-                    exit;
+            $sub_directorio = date('Y_m');
+            if (RemoteArchivo::is_enabled()) {
+                $nombre_archivo = uniqid() . $_FILES['archivo']['name'];
+                if ($_FILES['archivo']['name'] != '') {
+                    RemoteArchivo::upload($_FILES['archivo']['tmp_name'], $sub_directorio . '/' . $nombre_archivo);
                 }
+                $filename = $nombre_archivo;
+            } else {
+                $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . $sub_directorio;
+                if (!is_dir($path)) {
+                    // Creates the directory
+                    if (!mkdir($path, 0777, TRUE)) {
+                        // On failure, throws an error
+                        throw new Exception("No se puedo crear el directorio!");
+                        exit;
+                    }
+                }
+                $filename = upload::save($_FILES ['archivo'], NULL, $path);
             }
-            $filename = upload::save($_FILES ['archivo'], NULL, $path);
             if ($_FILES['archivo']['name'] != '') {
                 $archivo = ORM::factory('archivos'); //intanciamos el modelo proveedor
                 $archivo->nombre_archivo = basename($filename);
@@ -193,7 +202,7 @@ class Controller_Ventanillaexterna extends Controller
                 $archivo->tamanio = $_FILES ['archivo'] ['size'];
                 $archivo->id_user = $user->id;
                 $archivo->id_documento = $documento->id;
-                $archivo->sub_directorio = date('Y_m');
+                $archivo->sub_directorio = $sub_directorio;
                 $archivo->fecha = date('Y-m-d H:i:s');
                 $archivo->save();
                 if ($archivo->id > 0)
@@ -259,11 +268,20 @@ class Controller_Ventanillaexterna extends Controller
         if ($archivo->loaded()) {
             //ahora vemos que solo el que estee autorizado pueda descargar
             //  $file='/archivos/'.$archivo->sub_directorio.'/'.$archivo->nombre_archivo;
-            $base = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\');
-            $file = $base . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
+            $remote = RemoteArchivo::is_enabled();
+            $file = $remote
+                ? $archivo->sub_directorio . '/' . $archivo->nombre_archivo
+                : rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
             $filetemp = substr($archivo->nombre_archivo, 13);
 
-            if (!is_file($file)) {
+            if ($remote) {
+                if (!RemoteArchivo::exists($file)) {
+                    $this->autoRender = false;
+                    http_response_code(404);
+                    echo 'Archivo no encontrado en el servidor.';
+                    return;
+                }
+            } elseif (!is_file($file)) {
                 $this->autoRender = false;
                 http_response_code(404);
                 echo 'Archivo no encontrado en el servidor.';
@@ -278,8 +296,14 @@ class Controller_Ventanillaexterna extends Controller
             header("Content-Type: " . ($archivo->extension ?: 'application/octet-stream'));
             header("Content-Disposition: attachment; filename=\"" . $filetemp . "\"");
             header("Content-Transfer-Encoding: binary");
-            header("Content-Length: " . filesize($file));
-            readfile($file);
+
+            if ($remote) {
+                header("Content-Length: " . RemoteArchivo::filesize($file));
+                RemoteArchivo::stream_download($file);
+            } else {
+                header("Content-Length: " . filesize($file));
+                readfile($file);
+            }
             exit;
         } else {
             echo 'Archivo Inexistente.!!';
