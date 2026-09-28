@@ -68,12 +68,12 @@
                             <div class="input-daterange input-group" id="demo-date-range">
                                 <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
                                 <div class="input-group-content">
-                                    <input type="text" class="form-control" name="start" placeholder="dd-mm-aaaa" value="<?php echo Arr::get($_GET, 'start', '') ?>" />
+                                    <input type="text" class="form-control" name="start" placeholder="dd-mm-aaaa" autocomplete="off" value="<?php echo Arr::get($_GET, 'start', date('d-m-Y')) ?>" />
 
                                 </div>
                                 <span class="input-group-addon">A</span>
                                 <div class="input-group-content">
-                                    <input type="text" class="form-control" name="end" placeholder="dd-mm-aaaa" value="<?php echo Arr::get($_GET, 'end', '') ?>" />
+                                    <input type="text" class="form-control" name="end" placeholder="dd-mm-aaaa" autocomplete="off" value="<?php echo Arr::get($_GET, 'end', date('d-m-Y')) ?>" />
 
                                     <div class="form-control-line"></div>
                                 </div>
