@@ -21,8 +21,47 @@ class Controller_Admin_Entidades extends Controller_AdminTemplate {
     // lista de oficinas
     public function action_index() {
         $entidades = ORM::factory('entidades')->find_all();
+        $session = Session::instance();
+        $mensaje = $session->get_once('entidad_mensaje', '');
+        $error = $session->get_once('entidad_error', '');
         $this->template->content = View::factory('admin/entidades/lista')
-                ->bind('entidades', $entidades);
+                ->bind('entidades', $entidades)
+                ->bind('mensaje', $mensaje)
+                ->bind('error', $error);
+    }
+
+    // elimina una entidad solo si no tiene oficinas, usuarios ni documentos asociados
+    public function action_eliminar($id = '') {
+        $session = Session::instance();
+        $entidad = ORM::factory('entidades', $id);
+        if ($this->request->method() !== Request::POST || !$entidad->loaded()) {
+            $this->request->redirect('/admin/entidades');
+        }
+        $dependencias = array(
+            'oficinas' => 'oficinas',
+            'users' => 'usuarios',
+            'documentos' => 'documentos',
+        );
+        $en_uso = array();
+        foreach ($dependencias as $tabla => $nombre) {
+            $total = DB::select(array(DB::expr('COUNT(*)'), 'total'))
+                    ->from($tabla)
+                    ->where('id_entidad', '=', $entidad->id)
+                    ->execute()
+                    ->get('total');
+            if ($total > 0) {
+                $en_uso[] = "$total $nombre";
+            }
+        }
+        if ($en_uso) {
+            $session->set('entidad_error', 'No se puede eliminar la entidad ' . $entidad->sigla . ' porque tiene ' . implode(', ', $en_uso) . ' asociados. Puede desactivarla en su lugar.');
+        } else {
+            $sigla = $entidad->sigla;
+            DB::delete('entidades_oficinas')->where('id_entidad', '=', $entidad->id)->execute();
+            $entidad->delete();
+            $session->set('entidad_mensaje', 'Se elimino la entidad ' . $sigla . '.');
+        }
+        $this->request->redirect('/admin/entidades');
     }
 
     public function action_logo($id) {

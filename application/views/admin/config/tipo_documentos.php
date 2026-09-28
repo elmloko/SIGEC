@@ -21,7 +21,7 @@
 </script>
 <div class="row">
     <div class="col-md-12">
-        <form method="post" action="" class="form">
+        <div class="form">
             <div class="card card-underline ">
                 <div class="card-head">
                     <header>Tipos de Documentos</header>
@@ -29,6 +29,12 @@
                                 class="fa fa-plus"></i> Nuevo</a></tools>
                 </div>
                 <div class="card-body">
+                    <?php if (!empty($mensaje)): ?>
+                        <div class="alert alert-success"><?php echo HTML::chars($mensaje); ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($error)): ?>
+                        <div class="alert alert-danger"><?php echo HTML::chars($error); ?></div>
+                    <?php endif; ?>
                     <table id="datatable1" class="table table-condensed table-striped">
                         <thead>
                         <tr>
@@ -77,11 +83,13 @@
                                        class="btn btn-xs btn-primary-dark">
                                         <i class="fa fa-pencil"></i>
                                     </a>
-                                    <!--
-                                    <a href="/admin/config/tipo/<?php echo $t->id ?>" class="btn btn-xs btn-danger">
-                                        <i class="fa fa-trash-o"></i>
-                                    </a>
-                                    -->
+                                    <form method="post" action="/admin/tipos/eliminar/<?php echo $t->id ?>" style="display:inline"
+                                          data-tipo="<?php echo HTML::chars($t->tipo); ?>"
+                                          onsubmit="return confirm('¿Eliminar el tipo de documento ' + this.getAttribute('data-tipo') + '? Esta accion no se puede deshacer.');">
+                                        <button type="submit" class="btn btn-xs btn-danger" title="Eliminar tipo">
+                                            <i class="fa fa-trash-o"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -89,6 +97,6 @@
                     </table>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>

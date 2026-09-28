@@ -9,6 +9,12 @@
                 </div>
             </div>
             <div class="card-body">
+                <?php if (!empty($mensaje)): ?>
+                    <div class="alert alert-success"><?php echo HTML::chars($mensaje); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($error)): ?>
+                    <div class="alert alert-danger"><?php echo HTML::chars($error); ?></div>
+                <?php endif; ?>
                 <table id="theTable" class="table table-bordered table-striped table-responsive">
                     <thead>
                         <tr>
@@ -60,7 +66,12 @@
                                 </td>
                                 <td>
                                     <a href="/admin/entidades/edit/<?php echo $e->id; ?>" class="btn btn-sm btn-primary-dark"> <i class="md md-edit"></i></a>               
-                                    <a href="/admin/entidades/logo/<?php echo $e->id; ?>" class="btn btn-sm btn-accent"> <i class="md md-picture-in-picture"></i></a>               
+                                    <a href="/admin/entidades/logo/<?php echo $e->id; ?>" class="btn btn-sm btn-accent"> <i class="md md-picture-in-picture"></i></a>
+                                    <form method="post" action="/admin/entidades/eliminar/<?php echo $e->id; ?>" style="display:inline"
+                                          data-sigla="<?php echo HTML::chars($e->sigla); ?>"
+                                          onsubmit="return confirm('¿Eliminar la entidad ' + this.getAttribute('data-sigla') + '? Esta accion no se puede deshacer.');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar entidad"><i class="md md-delete"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
