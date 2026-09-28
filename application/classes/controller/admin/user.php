@@ -57,7 +57,19 @@ class Controller_Admin_User extends Controller_AdminTemplate
             'media/jqwidgets/jqxcore.js',
             'static/js/eModal.min.js'
         );
-        $this->template->content = View::factory('admin/j_usuarios');
+        // mismos joins que el listado (admin/ajax/usuariosjson) para que los totales coincidan con la grilla
+        $totales = DB::query(Database::SELECT, 'SELECT u.habilitado, COUNT(*) AS total FROM users u
+                INNER JOIN niveles n ON u.nivel = n.id
+                INNER JOIN oficinas o ON u.id_oficina = o.id
+                INNER JOIN entidades e ON o.id_entidad = e.id
+                GROUP BY u.habilitado')
+                ->execute()
+                ->as_array('habilitado', 'total');
+        $total_alta = Arr::get($totales, 1, 0);
+        $total_baja = Arr::get($totales, 0, 0);
+        $this->template->content = View::factory('admin/j_usuarios')
+                ->bind('total_alta', $total_alta)
+                ->bind('total_baja', $total_baja);
     }
 
     public function action_index_old()

@@ -1,6 +1,18 @@
 <script type="text/javascript">
     $(document).ready(function () {
         var user = $('#user').val();
+        // pestaña activa: 1 = usuarios de alta, 0 = usuarios de baja (se recuerda en el hash para sobrevivir al reload)
+        var estado = (location.hash === '#baja') ? '0' : '1';
+        var urlUsuarios = function () {
+            return '/admin/ajax/usuariosjson/' + user + '?estado=' + estado;
+        };
+        var marcarPestana = function () {
+            $('#tabsEstado li').removeClass('active');
+            $('#tabsEstado a[data-estado="' + estado + '"]').parent().addClass('active');
+            $('#alta').toggle(estado === '0');
+            $('#baja').toggle(estado === '1');
+        };
+        marcarPestana();
         // prepare the data
         var url = '';
         //  var theme = 'metro';
@@ -22,7 +34,7 @@
                     {name: 'edit', type: 'string'},
                 ],
                 cache: false,
-                url: '/admin/ajax/usuariosjson/' + user,
+                url: urlUsuarios(),
                 data: {
                     user: user
 
@@ -115,27 +127,41 @@
                     return obj.data;
                 },
                 columns: [
-                    {text: 'username', datafield: 'username', width: '8%',},
-                    //{text: 'HOJA DE RUTA', datafield: 'nur', width: '110'},                        
-                    {text: 'USUARIO', datafield: 'usuario', width: '20%'},
-                    {text: 'CORREO', datafield: 'email', width: '13%'},
-                    {text: 'MOSCA', datafield: 'mosca', width: '4%'},
-                    {text: 'OFICINA', datafield: 'oficina', width: '17%'},
-                    {text: 'Entidad', datafield: 'entidad', width: '20%'},
-                    {text: 'LOGINS', datafield: 'logins', width: '4%'},
-                    {text: 'ACTIVO', datafield: 'habilitado', width: '4%'},
+                    {text: 'username', datafield: 'username', width: '12%',},
+                    //{text: 'HOJA DE RUTA', datafield: 'nur', width: '110'},
+                    {text: 'USUARIO', datafield: 'usuario', width: '35%'},
+                    {text: 'OFICINA', datafield: 'oficina', width: '30%'},
+                    {text: 'LOGINS', datafield: 'logins', width: '6%'},
                     {
                         text: 'ULT.INGRESO',
                         datafield: 'last_login',
-                        width: '7%',
+                        width: '11%',
                         cellsformat: 'yyyy-MM-dd H:mm:ss',
                         filtertype: 'date'
                     },
                     //{text: 'OPCIONES', datafield: 'id', width: 50, cellsrenderer: linkrenderer},
-                    {text: 'EDIT', datafield: 'edit', filtertype: 'none', width: '4%', cellsrenderer: editrenderer},
+                    {text: 'EDIT', datafield: 'edit', filtertype: 'none', width: '6%', cellsrenderer: editrenderer},
                     //{text: 'CREADO POR EL USUARIO', datafield: 'nombre', width: '250'},
                 ]
             });
+        $('#tabsEstado a').click(function (e) {
+            e.preventDefault();
+            var nuevo = String($(this).data('estado'));
+            if (nuevo === estado) {
+                return;
+            }
+            estado = nuevo;
+            if (history.replaceState) {
+                history.replaceState(null, '', estado === '0' ? '#baja' : '#alta');
+            } else {
+                location.hash = estado === '0' ? 'baja' : 'alta';
+            }
+            marcarPestana();
+            source.url = urlUsuarios();
+            $('#jqxgrid').jqxGrid('clearselection');
+            $('#jqxgrid').jqxGrid('gotopage', 0);
+            $('#jqxgrid').jqxGrid('updatebounddata');
+        });
         $('#quitarFiltro').click(function () {
             // alert('quitar filtro');
             $("#jqxgrid").jqxGrid('clearfilters');
@@ -479,6 +505,16 @@
 </div>
 <div class="row">
     <div class="col-md-12">
+        <ul class="nav nav-tabs" id="tabsEstado" style="margin-bottom: 10px;">
+            <li class="active">
+                <a href="#alta" data-estado="1"><i class="fa fa-user text-success"></i> Usuarios de alta
+                    <span class="badge style-success"><?php echo (int) $total_alta; ?></span></a>
+            </li>
+            <li>
+                <a href="#baja" data-estado="0"><i class="fa fa-user-times text-danger"></i> Usuarios de baja
+                    <span class="badge style-danger"><?php echo (int) $total_baja; ?></span></a>
+            </li>
+        </ul>
 
         <div id="jqxgrid">
 

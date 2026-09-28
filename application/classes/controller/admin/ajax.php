@@ -369,11 +369,15 @@ class Controller_Admin_ajax extends Controller
     {
 // $this->view->disable();
 //$user = '150';
+        // estado=1 solo usuarios de alta, estado=0 solo usuarios de baja, sin estado todos
+        $estado = Arr::get($_GET, 'estado', '');
+        $where_estado = ($estado === '1' || $estado === '0') ? "WHERE u.habilitado = $estado" : "";
         $esql = "SELECT u.id,u.username,CONCAT(u.nombre,'<br><b>',u.cargo,'</b>') as usuario,u.email,u.logins,u.habilitado,n.nivel,o.oficina,e.entidad,
                 from_unixtime(u.last_login) as last_login,u.mosca
                 FROM users u INNER JOIN niveles n  ON u.nivel=n.id
                 INNER JOIN oficinas o ON u.id_oficina=o.id
                 INNER JOIN entidades e ON o.id_entidad=e.id
+                $where_estado
                 order by username";
 
         $query = "SELECT * FROM ( " . $esql . " ) as d";
