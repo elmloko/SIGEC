@@ -17,10 +17,10 @@ return array
 			 *
 			 * Ports and sockets may be appended to the hostname.
 			 */
-			'hostname'   => '172.65.10.55',
+			'hostname'   => '172.65.10.108',
 			'database'   => 'sigec',
-			'username'   => 'agbc',
-			'password'   => 'Correos.2026',
+			'username'   => 'sigec_app',
+			'password'   => '5gBUAgvxxvLdgSANKGdG9M8c',
 			'persistent' => FALSE,
 		),
 		'table_prefix' => '',
@@ -43,10 +43,10 @@ return array
 			 *
 			 * Ports and sockets may be appended to the hostname.
 			 */
-			'hostname'   => '172.65.10.55',
+			'hostname'   => '172.65.10.108',
 			'database'   => 'sigec',
-			'username'   => 'agbc',
-			'password'   => 'Correos.2026',
+			'username'   => 'sigec_app',
+			'password'   => '5gBUAgvxxvLdgSANKGdG9M8c',
 			'persistent' => FALSE,
 		),
 		'table_prefix' => '',
