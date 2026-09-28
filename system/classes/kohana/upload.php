@@ -88,8 +88,11 @@ class Kohana_Upload {
 		{
 			if ($chmod !== FALSE)
 			{
-				// Set permissions on filename
-				chmod($filename, $chmod);
+				// Set permissions on filename. En algunos entornos (Docker,
+				// volumenes montados, propietario distinto al proceso PHP) el
+				// chmod no esta permitido aunque el archivo ya se movio
+				// correctamente; no es un error fatal, solo se ignora.
+				@chmod($filename, $chmod);
 			}
 
 			// Return new file path
