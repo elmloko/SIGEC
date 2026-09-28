@@ -170,11 +170,10 @@ class Controller_Admin_User extends Controller_AdminTemplate
 
         $u = ORM::factory('users')->where('id', '=', $id)->find();
         if ($u->loaded()) {
+            $message = '';
+            $error = array();
             if (isset($_POST['submit'])) {
                 try {
-                    $message = '';
-                    $error = array();
-
                     $email = ORM::factory('users')
                         ->where('email', '=', $_POST['email'])
                         ->and_where('id', '<>', $_POST['id'])
