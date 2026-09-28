@@ -144,7 +144,7 @@
     <header id="header">
         <div class="headerbar">
             <img height="50px" src="/media/logo-transparente.png"/>
-            <span class="text-lg text-bold text-primary">CORRESPONDENCIA - MOPSV</span>
+            <span class="text-lg text-bold text-primary">CORRESPONDENCIA - CORREOS DE BOLIVIA</span>
         </div>
     </header>
 </div>

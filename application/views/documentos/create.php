@@ -260,7 +260,7 @@
                             <div class="col-lg-4 col-md-4">
                                 <div class="form-group">
                                     <?php
-                                    echo Form::input('adjuntos', '', array('id' => 'adjuntos', 'size' => 48, 'class' => ' form-control', 'title' => 'Ejemplo: Lo citado'));
+                                    echo Form::input('adjuntos', 'Folder', array('id' => 'adjuntos', 'size' => 48, 'class' => ' form-control', 'title' => 'Ejemplo: Lo citado'));
                                     echo Form::label('adjuntos', 'Adjunto:', array('class' => 'form'));
                                     ?>
                                 </div>
@@ -268,7 +268,7 @@
                             <div class="col-lg-8 col-md-8">
                                 <div class="form-group">
                                     <?php
-                                    echo Form::input('hojas', '', array('id' => 'hojas', 'class' => 'required form-control', 'title' => 'La casilla está vacía o ingrese número > 0', 'type' => 'number', 'min' => '1'));
+                                    echo Form::input('hojas', '1', array('id' => 'hojas', 'class' => 'required form-control', 'title' => 'La casilla está vacía o ingrese número > 0', 'type' => 'number', 'min' => '1'));
                                     echo Form::label('hojas', 'Nro hojas:', array('class' => 'form'));
                                     ?>
                                 </div>

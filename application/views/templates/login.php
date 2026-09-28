@@ -58,7 +58,7 @@
         <!-- END JAVASCRIPT -->
         <div id="" class="col-lg12 text-center">
             <span class=" opacity-50">
-                <a href="mailto:imchacolla@gmail.com" class="opacity-75" title="Ivan Marcelo Chacolla M." >Copyright (c) IMCM 2011 - <?php echo date('Y')?> </a></b> | <b>MINISTERIO DE OBRAS PÚBLICAS, SERVICIOS Y VIVIENDA | Estado Plurinacional de Bolivia
+                <b>MINISTERIO DE OBRAS PÚBLICAS, SERVICIOS Y VIVIENDA | Estado Plurinacional de Bolivia</b>
             </span>
         </div>
     </body>
