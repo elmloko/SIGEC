@@ -12,7 +12,6 @@
             <div class="form-group">
                 <input type="password" class="required form-control"  maxlength="25"  autocomplete="off" title="Ingrese su contrase&ntilde;a"  name="password" id="password"/>
                 <label for="password">Password</label>
-                <p class="help-block"><a href="/login/pass">Olvido su contraseña?</a></p>
             </div>
             <br/>
             <div class="row">
