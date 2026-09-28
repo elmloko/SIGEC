@@ -220,6 +220,7 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
                 $documento->id_oficina = $this->user->id_oficina;
                 $documento->id_proceso = 4;
                 $documento->id_entidad = $this->user->id_entidad;
+                $documento->nur = ''; // evita error "Field 'nur' doesn't have a default value"; se sobreescribe abajo
                 $documento->save();
                 if ($documento->id) {
                     $oNur = New Model_nurs();

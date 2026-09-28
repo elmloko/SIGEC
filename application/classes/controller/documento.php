@@ -135,6 +135,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->cargo_via = $_POST['cargovia'];
                 $documento->titulo = $_POST['titulo'];
                 $documento->id_entidad = $this->user->id_entidad;
+                $documento->nur = ''; // evita error "Field 'nur' doesn't have a default value"; se sobreescribe abajo si se asigna hoja de ruta
                 $documento->save();
                 //si se creo el documento entonces
                 //guardamos en vitacora
