@@ -586,7 +586,6 @@
                                                 }
                                             }
                                             ?>
-                                        <?php if ((int) $user->nivel === 5): ?>
                                         <br/>
                                             Adjunto:
                                             <br/>
@@ -596,19 +595,22 @@
                                         if (empty($archivos_paso)):
                                             ?>
                                             <span class="opacity-50">Sin adjuntos</span>
+                                            <?php if ((int) $user->nivel === 5): ?>
                                             <a href="/admin/hojasruta/crearinforme/<?php echo $s->id; ?>?nur=<?php echo urlencode($detalle['nur']); ?>"
                                                title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i></a>
+                                            <?php endif; ?>
                                             <br/>
                                         <?php else: ?>
                                             <?php foreach ($archivos_paso as $af): ?>
                                                 <a href="/download/?file=<?php echo $af->id; ?>" title="Descargar adjunto">
                                                     <span class="badge badge-adjunto"><?php echo substr($af->nombre_archivo, 13); ?></span>
                                                 </a>
+                                                <?php if ((int) $user->nivel === 5): ?>
                                                 <a href="/admin/hojasruta/editarinforme/<?php echo $af->id_documento; ?>?seg=<?php echo $s->id; ?>&nur=<?php echo urlencode($detalle['nur']); ?>"
                                                    title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i></a>
+                                                <?php endif; ?>
                                                 <br/>
                                             <?php endforeach; ?>
-                                        <?php endif; ?>
                                         <?php endif; ?>
 
                                         <?php
