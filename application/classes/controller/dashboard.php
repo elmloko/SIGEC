@@ -139,6 +139,19 @@ class Controller_Dashboard extends Controller_DefaultTemplate {
         //$mistipos = $oTipo->lista($this->user->id);
         $mistipos = $oTipo->misTipos($this->user->id);
 
+        // datos adicionales del panel (solo la vista general; ventanilla tiene su propia vista)
+        $actividad = array();
+        $pendientes_lista = array();
+        $por_recibir = array();
+        if ($vista == 'index') {
+            $mDashboard = new Model_Dashboard();
+            $actividad = $mDashboard->actividad($id, 12);
+            $pendientes_lista = $mDashboard->pendientes_antiguos($id, 6);
+            $por_recibir = $mDashboard->por_recibir($id, 6);
+        }
+        $oficina = ORM::factory('oficinas', $this->user->id_oficina);
+        $nombre_oficina = $oficina->loaded() ? $oficina->oficina : '';
+
 
         $this->template->scripts = array('media/Highcharts/js/modules/exporting.js',
             'media/Highcharts/js/highcharts-more.js',
@@ -161,6 +174,10 @@ class Controller_Dashboard extends Controller_DefaultTemplate {
                 ->bind('zdoc', $ultimos_documentos)
                 ->bind('documentos', $documentos)
                 ->bind('tipos', $mistipos)
+                ->bind('actividad', $actividad)
+                ->bind('pendientes_lista', $pendientes_lista)
+                ->bind('por_recibir', $por_recibir)
+                ->bind('nombre_oficina', $nombre_oficina)
         ;
     }
 
