@@ -63,6 +63,14 @@ $clase_dias = function ($dias) {
     });
 </script>
 
+<?php // mensajes de bandeja/cancel (HTML armado por el controlador) ?>
+<?php if (!empty($info['info'])): ?>
+    <div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo $info['info']; ?></div>
+<?php endif; ?>
+<?php if (!empty($error['error'])): ?>
+    <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> <?php echo $error['error']; ?></div>
+<?php endif; ?>
+
 <div class="bj-toolbar">
     <h3><i class="md md-send"></i> Correspondencia enviada
         <span class="bj-contador" id="bj-visibles"><?php echo count($entrada); ?></span>

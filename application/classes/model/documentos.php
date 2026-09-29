@@ -238,13 +238,14 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     //busqueda
+    // $text viene del buscador de la cabecera: se enlaza como parametro (antes se concatenaba: inyeccion SQL)
     public function contarHR($text, $entidad) {
 
         $sql = "SELECT COUNT(*) as count
-                   FROM documentos d 
-                   WHERE d.nur LIKE '%$text%' ";
+                   FROM documentos d
+                   WHERE d.nur LIKE :like ";
 
-        return db::query(Database::SELECT, $sql)->execute();
+        return db::query(Database::SELECT, $sql)->param(':like', '%' . $text . '%')->execute();
     }
 
     public function contar($text, $entidad) {
@@ -301,16 +302,19 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
             ,DATE_FORMAT(d.fecha_creacion,'<b>%d/%m/%Y </b><br/> %H:%i:%s') as fecha_creacion,
             d.institucion_remitente ,d.adjuntos
                   FROM documentos d INNER JOIN tipos t ON d.id_tipo=t.id
-                   WHERE 
-                    d.nur LIKE '%$text%' 
-                LIMIT $o,$i";
-        return db::query(Database::SELECT, $sql)->execute();
+                   WHERE
+                    d.nur LIKE :like
+                LIMIT " . (int) $o . "," . (int) $i;
+        return db::query(Database::SELECT, $sql)->param(':like', '%' . $text . '%')->execute();
     }
 
     //
+    // $where lo arma Controller_Search::action_advanced con valores ya escapados
     public function search($where, $o, $i)
     {
-        $sql = "SELECT 
+        $o = (int) $o;
+        $i = (int) $i;
+        $sql = "SELECT
                     d.institucion_remitente,
                     d.id,
                     d.nur,
@@ -321,6 +325,8 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
                     d.cargo_remitente,
                     d.referencia,
                     d.fecha_creacion,
+                    d.estado,
+                    d.original,
                     t.tipo
                 FROM
                     documentos d
@@ -345,13 +351,14 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
                     d.cargo_remitente,
                     d.referencia,
                     d.fecha_creacion,
+                    d.estado,
+                    d.original,
                     t.tipo
                 FROM
                     documentos d
                         INNER JOIN
                     tipos t ON d.id_tipo = t.id ";
-        //$sql .= $where;
-        $sql .= $where;
+        $sql .= $where . " ORDER BY d.fecha_creacion DESC";
 
         return db::query(Database::SELECT, $sql)->execute();
     }

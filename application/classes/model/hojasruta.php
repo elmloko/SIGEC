@@ -21,10 +21,24 @@ class Model_Hojasruta extends ORM {
 
     //ajsx hoja ruta imprimir
     public function hojaruta($like) {
-        $sql = "SELECT id_user,nur FROM nurs where nur like '%$like%'
+        // el texto llega del usuario (autocompletado): se enlaza como parametro, nunca concatenado
+        $sql = "SELECT id_user,nur FROM nurs where nur like :like
                 order by fecha_creacion DESC
                 limit 10"; //important
-        return db::query(Database::SELECT, $sql)->execute();
+        return db::query(Database::SELECT, $sql)->param(':like', '%' . $like . '%')->execute();
+    }
+
+    /**
+     * Ultimas hojas de ruta generadas por el usuario: las de sus documentos originales (documento que dio origen a la hoja de ruta).
+     */
+    public function recientes_usuario($id_user, $limite = 8) {
+        $limite = (int) $limite;
+        $sql = "SELECT d.nur, d.fecha_creacion AS fecha, d.referencia
+                FROM documentos d USE INDEX (INDEX_ID_USER__FECHA_CREACION)
+                WHERE d.id_user = :id AND d.original = 1 AND d.nur <> ''
+                ORDER BY d.fecha_creacion DESC
+                LIMIT $limite";
+        return db::query(Database::SELECT, $sql)->param(':id', (int) $id_user)->execute()->as_array();
     }
 
     //lista de pendientes a pdf
