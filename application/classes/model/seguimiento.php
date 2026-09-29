@@ -1003,8 +1003,8 @@ class Model_Seguimiento extends ORM
 
     public function hrArchivada($nur, $user)
     {
-        $sql = "SELECT c.id,c.carpeta,a.observaciones,nur FROM archivados a INNER JOIN carpetas c ON a.id_carpeta=c.id WHERE a.nur='$nur' AND a.id_user='$user'";
-        $result = db::query(Database::SELECT, $sql)->execute();
+        $sql = "SELECT c.id,c.carpeta,a.observaciones,nur FROM archivados a INNER JOIN carpetas c ON a.id_carpeta=c.id WHERE a.nur = :nur AND a.id_user = :usr";
+        $result = db::query(Database::SELECT, $sql)->param(':nur', (string) $nur)->param(':usr', (int) $user)->execute();
         if (isset($result[0]['nur'])) {
             return $result[0];
         } else {
@@ -1382,12 +1382,12 @@ class Model_Seguimiento extends ORM
                     r.genero AS s1,
                     d.genero AS s2
                 FROM
-                    (SELECT 
+                    (SELECT
                         *
                     FROM
                         seguimiento
                     WHERE
-                        nur = '$id') AS s
+                        nur = :nur) AS s
                         INNER JOIN
                     acciones c ON s.accion = c.id
                         INNER JOIN
@@ -1397,8 +1397,9 @@ class Model_Seguimiento extends ORM
                         INNER JOIN
                     users d ON s.derivado_a = d.id
                 ORDER BY s.fecha_emision ASC;";
-                
-        return $this->_db->query(Database::SELECT, $sql, TRUE);
+
+        // $id llega de la URL (?hr=): se enlaza como parametro (antes se concatenaba: inyeccion SQL)
+        return DB::query(Database::SELECT, $sql)->param(':nur', (string) $id)->as_object()->execute($this->_db);
     }
 
     public function archivado($nur)

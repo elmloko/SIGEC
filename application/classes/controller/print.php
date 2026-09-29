@@ -678,242 +678,333 @@ class Controller_Print extends Controller
     public function action_seguimiento()
     {
         $auth = Auth::instance();
-        if ($auth->logged_in()) {
-
-            require Kohana::find_file('vendor/fpdf17', 'fpdf');
-            require Kohana::find_file('vendor/fpdf17', 'code39');
-            //verificamos de que la hoja de ruta es el padre de hojas de ruta hijos
-            $user = $auth->get_user();
-
-            $hr = $_GET['hr'];
-            //$hr = 'MT/2015-04144';
-
-            $documento = ORM::factory('documentos')->where('nur', '=', $hr)->and_where('original', '=', 1)->find();
-            $tipo = ORM::factory('tipos', $documento->id_tipo);
-            $proceso = ORM::factory('procesos', $documento->id_proceso);
-            $detalle = array(
-                'nur' => $hr,
-                'fecha' => $documento->fecha_creacion,
-                'codigo' => $documento->cite_original,
-                'id_documento' => $documento->id,
-                'tipo' => $tipo->tipo,
-                'proceso' => $proceso->proceso,
-                'referencia' => $documento->referencia,
-                'remitente' => $documento->nombre_remitente,
-                'cargo_remitente' => $documento->cargo_remitente,
-                'destinatario' => $documento->nombre_destinatario,
-                'cargo_destinatario' => $documento->cargo_destinatario,
-                'adjunto' => $documento->adjuntos,
-            );
-
-            $archivo = ORM::factory('archivos')
-                ->where('id_documento', '=', $documento->id)
-                ->find_all();
-            //$seguimiento=ORM::factory('seguimiento')->where('nur','=',$id)->find_all();
-            $oSeg = New Model_Seguimiento();
-            $seguimiento = $oSeg->seguimiento($hr);
-            //$f = $oSeg->archivado($id);
-            //$oficina = $this->user->id_oficina;
-            //$user = $this->user;
-            //agrupaciones
-            $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $hr)->find();
-            $pdf = new PDF_Code39('P', 'mm', 'Letter');
-            $pdf->SetMargins(15, 10, 5);
-            $pdf->AddPage('L');
-            $pdf->SetFont('Arial', '', 14);
-
-
-            $pdf->Cell(246, 10, 'Seguimiento de la hoja de ruta : ' . $hr, 1, FALSE, 'C');
-            $pdf->SetFont('Arial', '', 7);
-            $pdf->Ln();
-
-            $pdf->SetWidths(array(25, 221));
-
-            $pdf->Row(array(
-                utf8_decode('Referencia'),
-                utf8_decode($detalle['referencia'])
-            ));
-            //segunda linea
-            $pdf->SetWidths(array(25, 130, 19, 72));
-            $pdf->Row(array(
-                utf8_decode('Cite original'),
-                utf8_decode($detalle['codigo']),
-                utf8_decode('Proceso'),
-                utf8_decode($detalle['proceso'])
-            ));
-            $pdf->Row(array(
-                utf8_decode('Destinatario'),
-                utf8_decode($detalle['destinatario']) . ' | ' . utf8_decode($detalle['cargo_destinatario']),
-                utf8_decode('Tipo doc.'),
-                utf8_decode($detalle['tipo'])
-            ));
-            $pdf->Row(array(
-                utf8_decode('Remitente'),
-                utf8_decode($detalle['remitente']) . ' | ' . utf8_decode($detalle['cargo_remitente']),
-                utf8_decode('Fecha'),
-                utf8_decode(Date::fecha($detalle['fecha']) . ' ' . date('H:i:s', strtotime($detalle['fecha'])))
-            ));
-            $pdf->Ln();
-            //$pdf->
-            //si es agrupado
-            if (isset($agrupado->id)):
-                $pdf->Cell(246, 10, $agrupado->padre, 1, FALSE, 'C');
-                $pdf->SetFont('Arial', '', 10);
-                $pdf->Ln();
-            endif;
-            if (isset($agrupado->id)):
-                $pdf->Cell(246, 10, 'Una copia pertenece a la Hoja de Ruta principal:' . $agrupado->padre, 1, FALSE, 'C');
-                $pdf->SetFont('Arial', '', 10);
-                $pdf->Ln();
-            endif;
-
-            $count = 0;
-            $hijo = 0;
-            foreach ($seguimiento as $s):
-
-                $pasos = "";
-                if ($s->oficial > 0) {
-                    if ($s->id_estado == 1) {
-                        $pasos = 'media/flag.png';
-                    } else
-                        $pasos = 'media/paw.png';
-                }
-
-                $pasos2 = "";
-                if (($s->oficial > 0) && ($s->id_estado == 6)) {
-                    $pasos2 = 'media/flag.png';
-                }
-                $pasos2 = "";
-                if (($s->oficial > 0) && ($s->id_estado == 2)) {
-                    $pasos2 = 'media/flag.png';
-                }
-
-                if (($s->oficial > 0) && ($s->id_estado == 4)) {
-                    $pasos2 = 'media/paw.png';
-                }
-                if (($s->oficial > 0) && ($s->id_estado == 6)) {
-                    $pasos2 = 'media/flag.png';
-                }
-                if (($s->oficial > 0) && ($s->id_estado == 10)) {
-                    $pasos2 = 'media/flag.png';
-                }
-                /*
-                $x=$pdf->GetX();
-                $y=$pdf->GetY();
-                $pdf->MultiCell(8, 5,$pasos , 'LTR', 'L');
-                $pdf->SetXY($x+8, $y);
-                $pdf->MultiCell(98, 5,$s->de_oficina , 'LTR', 'L');
-                $pdf->SetXY($x+98, $y);
-                $pdf->MultiCell(8, 5,$pasos2 , 'LTR', 'L');
-                $pdf->SetXY($x+8, $y);
-                $pdf->MultiCell(98, 5,$s->a_oficina , 'LTR', 'L');
-                $pdf->SetXY($x+98, $y);
-                $pdf->MultiCell(22, 5,'' , 'LTR', 'L');
-                $pdf->SetXY($x+22, $y);
-                $pdf->SetWidths(array(8, 98, 8, 98, 22));
-                $pdf->Ln();
-                */
-
-                if ($pdf->GetY() > 170) {
-                    $pdf->Ln(15);
-                }
-
-                $pdf->SetFont('Arial', '', 7);
-                $pdf->Cell(101, 4, utf8_decode($s->de_oficina), 'LT', 0, 'L');
-                if ($pasos != '') {
-                    $y = $pdf->GetY();
-                    $y++;
-                    //$pdf->Image($file, $x, $y, $w, $h, $type)
-                    $pdf->Image($pasos, 115, $y, 8, 7, 'png');
-                    //$pdf->SetY($y);
-                    $pdf->Cell(8, 4, '', 'TR', 0, 'L');
-                } else {
-                    $pdf->Cell(8, 4, $pasos, 'TR', 0, 'L');
-                }
-                $pdf->Cell(101, 4, utf8_decode($s->a_oficina), 'LT', 0, 'L');
-
-                if ($pasos2 != '') {
-                    $y = $pdf->GetY();
-                    $y++;
-                    //$pdf->Image($file, $x, $y, $w, $h, $type)
-                    $pdf->Image($pasos2, 215, $y, 8, 7, 'png');
-                    //$pdf->SetY($y);
-                    $pdf->Cell(8, 4, '', 'TR', 0, 'L');
-
-                } else {
-                    $pdf->Cell(8, 4, $pasos2, 'TR', 0, 'L');
-                }
-
-
-                // MOSTRAR TEXTO DE JUSTIFICACIONES
-                $logo_observacion = 'media/exclamation-triangle.png';
-
-                $queryJustificacion = " SELECT
-                                                COUNT(1) AS nro_resultados
-                                            FROM
-                                                observacion_seguimiento
-                                            WHERE
-                                                (id_estado = '2')
-                                                    AND (id_seguimiento = '$s->id');";
-
-                $y = $pdf->GetY();
-                $y++;
-                $resultSetJustificacion = db::query(Database::SELECT, $queryJustificacion, FALSE)
-                    ->execute()
-                    ->as_array();
-
-                $nro_resultados = $resultSetJustificacion[0]['nro_resultados'];
-
-                if ((intval($nro_resultados) >= 1) === TRUE) {
-                    $pdf->Image($logo_observacion, 225, $y, 7, 7, 'png');
-                } else {
-                    //$pdf->Cell(31, 4,'<<<<<<<<<<<<< 0', 'LTR', 0, 'L');
-                }
-
-
-                $pdf->Cell(31, 4, utf8_decode(''), 'LTR', 0, 'L');
-
-                $pdf->Ln(4);
-                $pdf->Cell(101, 4, utf8_decode($s->nombre_emisor), 'L', 0, 'L');
-                $pdf->Cell(8, 4, '', 'R', 0, 'L');
-                $pdf->Cell(101, 4, utf8_decode($s->nombre_receptor), 'L', 0, 'L');
-                $pdf->Cell(8, 4, '', 'R', 0, 'L');
-                $pdf->Cell(31, 4, utf8_decode($s->estado), 'LR', 0, 'L');
-                $pdf->Ln(4);
-
-                $pdf->Cell(101, 4, utf8_decode($s->cargo_emisor), 'L', 0, 'L');
-                $pdf->Cell(8, 4, '', 'R', 0, 'L');
-                $pdf->Cell(101, 4, utf8_decode($s->cargo_receptor), 'L', 0, 'L');
-                $pdf->Cell(8, 4, '', 'R', 0, 'L');
-                $pdf->Cell(31, 4, utf8_decode(''), 'LR', 0, 'L');
-
-                $pdf->Ln(4);
-
-                $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_emision)) . ' - ' . $s->hora_emision, 'LR', 0, 'R');
-                // Verificamos si la 'fecha_recepcion' no es nulo
-                if (!is_null($s->fecha_recepcion) && !is_null($s->hora_recepcion)) {
-                    $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_recepcion)) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
-                } else {
-                    $pdf->Cell(109, 4, utf8_decode($s->fecha_recepcion) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
-                }
-
-                // $pdf->Cell(109, 4, utf8_decode(Date::fecha_medium($s->fecha_recepcion)) . ' - ' . $s->hora_recepcion, 'LR', 0, 'R');
-                $pdf->Cell(31, 4, utf8_decode($s->accion), 'LR', 0, 'L');
-
-                $pdf->Ln(4);
-                $pdf->SetWidths(array(249));
-                $pdf->Row(array(utf8_decode($s->proveido)));
-                $pdf->Ln(3);
-            endforeach;
-            $pdf->Ln();
-            $pdf->Cell(109, 4, utf8_decode("Fecha de impresión: " . Date::fecha_medium(date('Y-m-d'))));
-
-            $pdf->Output('hoja_ruta_.pdf', 'I');
-
-            //echo $documento->referencia;
-        } else {
+        if (!$auth->logged_in()) {
             $this->request->redirect('error404');
         }
+        require Kohana::find_file('vendor/fpdf17', 'fpdf');
+        require Kohana::find_file('vendor/fpdf17', 'code39');
+        $user = $auth->get_user();
+        $hr = trim(Arr::get($_GET, 'hr', ''));
+
+        $documento = ORM::factory('documentos')->where('nur', '=', $hr)->and_where('original', '=', 1)->find();
+        $tipo = ORM::factory('tipos', $documento->id_tipo);
+        $proceso = ORM::factory('procesos', $documento->id_proceso);
+        $agrupado = ORM::factory('agrupaciones')->where('hijo', '=', $hr)->find();
+        $oSeg = New Model_Seguimiento();
+        $pasos = array();
+        foreach ($oSeg->seguimiento($hr) as $s) {
+            $pasos[] = $s;
+        }
+        $actual = SeguimientoUtil::paso_actual($pasos);
+        $ultimo_oficial = SeguimientoUtil::ultimo_oficial($pasos);
+        $tenencia = SeguimientoUtil::tenencia($pasos);
+        $ruta = SeguimientoUtil::ruta($pasos);
+        // prioridad del tramite (si tiene alerta registrada)
+        $alerta = DB::query(Database::SELECT, 'SELECT s.prioridad, a.fecha FROM alertas a INNER JOIN seguimiento s ON a.id_seguimiento = s.id WHERE s.nur = :nur LIMIT 1')
+                ->param(':nur', $hr)->execute()->current();
+        $urgente = $alerta && (int) $alerta['prioridad'] === 1;
+
+        $pdf = new Pdf_Seguimiento('L', 'mm', 'Letter');
+        $pdf->hr = 'Hoja de ruta ' . $hr;
+        $pdf->impreso_por = $user->nombre;
+        $pdf->logo = DOCROOT . 'media/LOGO 19-2-26.png';
+        $pdf->SetTitle($pdf->t('Seguimiento ' . $hr));
+        $pdf->SetMargins(12, 10, 12);
+        $pdf->SetAutoPageBreak(TRUE, 14);
+        $pdf->AliasNbPages();
+        $pdf->AddPage();
+        $m = 12;
+        $ancho = 279.4 - 24;
+
+        // ===== datos del documento =====
+        $y = $pdf->GetY();
+        $pdf->SetFont('Arial', 'B', 11);
+        $referencia = $pdf->t($documento->referencia != '' ? $documento->referencia : 'Sin referencia');
+        $alto_ref = $pdf->alto_texto($ancho - 8, 5.2, $referencia);
+        $alto_caja = 8 + $alto_ref + 24;
+        $pdf->color_linea(Pdf_Seguimiento::$borde);
+        $pdf->SetLineWidth(0.25);
+        $pdf->RoundedRect($m, $y, $ancho, $alto_caja, 2.5, 'D');
+        $pdf->SetXY($m + 4, $y + 3);
+        $pdf->SetFont('Arial', '', 6.5);
+        $pdf->color_texto(Pdf_Seguimiento::$gris);
+        $pdf->Cell(40, 3.5, $pdf->t('REFERENCIA'), 0, 2);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->color_texto(Pdf_Seguimiento::$azul_oscuro);
+        $pdf->MultiCell($ancho - 8, 5.2, $referencia, 0, 'L');
+        $yc = $pdf->GetY() + 2;
+        $pdf->color_linea(Pdf_Seguimiento::$borde);
+        $pdf->Line($m + 4, $yc - 1, $m + $ancho - 4, $yc - 1);
+        $col = ($ancho - 8) / 4;
+        $campos = array(
+            array('DOCUMENTO ORIGINAL', $documento->cite_original, ''),
+            array('TIPO DE DOCUMENTO', $tipo->tipo, ''),
+            array('PROCESO', $proceso->proceso != '' ? $proceso->proceso : '—', ''),
+            array('CREADO', $documento->fecha_creacion ? Date::fecha($documento->fecha_creacion) . ' · ' . date('H:i', strtotime($documento->fecha_creacion)) : '—', ''),
+        );
+        foreach ($campos as $i => $c) {
+            $pdf->SetXY($m + 4 + $i * $col, $yc);
+            $pdf->SetFont('Arial', '', 6.5);
+            $pdf->color_texto(Pdf_Seguimiento::$gris);
+            $pdf->Cell($col - 3, 3.5, $pdf->t($c[0]), 0, 2);
+            $pdf->SetFont('Arial', 'B', 8.5);
+            $pdf->color_texto(Pdf_Seguimiento::$texto);
+            $pdf->Cell($col - 3, 4.5, $pdf->t($c[1]), 0, 0);
+        }
+        $yc += 10;
+        $personas = array(
+            array('REMITENTE', $documento->nombre_remitente, $documento->cargo_remitente),
+            array('DESTINATARIO', $documento->nombre_destinatario, $documento->cargo_destinatario),
+        );
+        foreach ($personas as $i => $p) {
+            $pdf->SetXY($m + 4 + $i * 2 * $col, $yc);
+            $pdf->SetFont('Arial', '', 6.5);
+            $pdf->color_texto(Pdf_Seguimiento::$gris);
+            $pdf->Cell(2 * $col - 3, 3.5, $pdf->t($p[0]), 0, 2);
+            $pdf->SetFont('Arial', 'B', 8.5);
+            $pdf->color_texto(Pdf_Seguimiento::$texto);
+            $pdf->Cell(2 * $col - 3, 4.5, $pdf->t($p[1]) . '   ', 0, 0);
+            $pdf->SetFont('Arial', '', 7.5);
+            $pdf->color_texto(Pdf_Seguimiento::$gris);
+            $pdf->SetXY($m + 4 + $i * 2 * $col + $pdf->GetStringWidth($pdf->t($p[1])) * 8.5 / 7.5 + 4, $yc + 3.8);
+            $pdf->Cell(2 * $col - 3, 4.5, $pdf->t($p[2]), 0, 0);
+        }
+        $pdf->SetY($y + $alto_caja + 5);
+
+        if (!$pasos) {
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->color_texto(Pdf_Seguimiento::$gris);
+            $pdf->Cell($ancho, 20, $pdf->t('Esta hoja de ruta aún no fue derivada.'), 0, 1, 'C');
+            $pdf->Output('seguimiento_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $hr) . '.pdf', 'I');
+            exit;
+        }
+
+        // ===== resumen =====
+        $paso_res = $actual !== NULL ? $pasos[$actual] : ($ultimo_oficial !== NULL ? $pasos[$ultimo_oficial] : end($pasos));
+        $abierto = $actual !== NULL;
+        $desde_res = (int) $paso_res->id_estado === 1 ? $paso_res->fecha_emision . ' ' . $paso_res->hora_emision
+            : ($paso_res->fecha_recepcion ? $paso_res->fecha_recepcion . ' ' . $paso_res->hora_recepcion : $paso_res->fecha_emision);
+        $dias_res = SeguimientoUtil::dias_entre($desde_res);
+        $n_oficiales = 0;
+        foreach ($pasos as $p) {
+            $n_oficiales += (int) $p->oficial > 0 ? 1 : 0;
+        }
+        $dias_creado = $documento->fecha_creacion ? SeguimientoUtil::dias_entre($documento->fecha_creacion) : NULL;
+        $resumen = array(
+            array($abierto ? 'AHORA ESTÁ CON' : 'ÚLTIMO DESTINO', $paso_res->nombre_receptor,
+                $paso_res->estado . ($abierto && $dias_res !== NULL ? ' · hace ' . ($dias_res == 1 ? '1 día' : $dias_res . ' días') : ''),
+                $abierto && $dias_res > 7),
+            array('RECORRIDO', count($pasos) . ' paso' . (count($pasos) == 1 ? '' : 's'),
+                $n_oficiales . ' oficial' . ($n_oficiales == 1 ? '' : 'es') . ' · ' . (count($pasos) - $n_oficiales) . ' en copia', FALSE),
+            array('TIEMPO DEL TRÁMITE', $dias_creado !== NULL ? ($dias_creado == 1 ? '1 día' : $dias_creado . ' días') : '—', 'desde que se creó', FALSE),
+            array('PRIORIDAD', $urgente ? 'Urgente' : 'Normal',
+                $alerta && $alerta['fecha'] ? 'Plazo: ' . date('d/m/Y', strtotime($alerta['fecha'])) : 'Sin plazo definido', $urgente),
+        );
+        $y = $pdf->GetY();
+        $gap = 4;
+        $wbox = ($ancho - 3 * $gap) / 4;
+        foreach ($resumen as $i => $r) {
+            $x = $m + $i * ($wbox + $gap);
+            $pdf->color_relleno($r[3] ? array(253, 232, 232) : Pdf_Seguimiento::$fondo);
+            $pdf->RoundedRect($x, $y, $wbox, 16, 2.5, 'F');
+            $pdf->color_relleno($r[3] ? array(211, 47, 47) : Pdf_Seguimiento::$azul);
+            $pdf->Rect($x, $y + 3, 1.2, 10, 'F');
+            $pdf->SetXY($x + 4, $y + 2.2);
+            $pdf->SetFont('Arial', '', 6.5);
+            $pdf->color_texto(Pdf_Seguimiento::$gris);
+            $pdf->Cell($wbox - 6, 3.5, $pdf->t($r[0]), 0, 2);
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->color_texto($r[3] ? array(180, 35, 24) : Pdf_Seguimiento::$azul_oscuro);
+            $pdf->Cell($wbox - 6, 5.5, $pdf->t($r[1]), 0, 2);
+            $pdf->SetFont('Arial', '', 7);
+            $pdf->color_texto(Pdf_Seguimiento::$gris);
+            $pdf->Cell($wbox - 6, 3.5, $pdf->t($r[2]), 0, 0);
+        }
+        $pdf->SetY($y + 20);
+
+        // ===== camino (pasos oficiales) =====
+        if (count($ruta) > 1) {
+            $pdf->SetFont('Arial', 'B', 7.5);
+            $pdf->color_texto(Pdf_Seguimiento::$azul_oscuro);
+            $pdf->Cell(18, 4.5, $pdf->t('Camino:'), 0, 0);
+            $x = $pdf->GetX();
+            $yr = $pdf->GetY();
+            foreach ($ruta as $k => $nodo) {
+                $es_actual = $nodo['paso'] !== NULL && $nodo['paso'] === $actual;
+                $texto = $pdf->t(($k === 0 ? '' : $k . '. ') . $nodo['oficina']);
+                $pdf->SetFont('Arial', $es_actual ? 'B' : '', 7);
+                $w = $pdf->GetStringWidth($texto) + 5;
+                if ($x + $w + 5 > $m + $ancho) {
+                    $x = $m + 18;
+                    $yr += 6;
+                }
+                $pdf->color_relleno($es_actual ? Pdf_Seguimiento::$amarillo : Pdf_Seguimiento::$azul_suave);
+                $pdf->RoundedRect($x, $yr, $w, 4.8, 1.5, 'F');
+                $pdf->color_texto(Pdf_Seguimiento::$azul_oscuro);
+                $pdf->SetXY($x, $yr + 0.3);
+                $pdf->Cell($w, 4.2, $texto, 0, 0, 'C');
+                $x += $w;
+                if ($k < count($ruta) - 1) {
+                    $pdf->SetFont('Arial', 'B', 8);
+                    $pdf->color_texto(Pdf_Seguimiento::$gris_claro);
+                    $pdf->SetXY($x, $yr + 0.3);
+                    $pdf->Cell(5, 4.2, '>', 0, 0, 'C');
+                    $x += 5;
+                }
+            }
+            $pdf->SetY($yr + 8);
+        }
+
+        if (isset($agrupado->id)) {
+            $pdf->SetFont('Arial', 'B', 8);
+            $pdf->color_relleno(Pdf_Seguimiento::$amarillo_suave);
+            $pdf->color_texto(array(138, 97, 0));
+            $pdf->Cell($ancho, 6, $pdf->t('Esta hoja de ruta fue agrupada dentro de la hoja de ruta principal ' . $agrupado->padre), 0, 1, 'L', TRUE);
+            $pdf->Ln(3);
+        }
+
+        // ===== recorrido paso a paso =====
+        $pdf->titulo_seccion('Recorrido de la hoja de ruta');
+        $x_caja = $m + 11;
+        $w_caja = $ancho - 11;
+        $w_col = ($w_caja - 8 - 10) / 2;
+        foreach ($pasos as $i => $s) {
+            $estado = (int) $s->id_estado;
+            $es_actual = ($i === $actual);
+            $oficial = (int) $s->oficial > 0;
+            $proveido = trim($s->proveido) != '' ? $pdf->t($s->proveido) : '';
+            $justificaciones = (int) DB::query(Database::SELECT, "SELECT COUNT(1) AS n FROM observacion_seguimiento WHERE id_estado = '2' AND id_seguimiento = :id")
+                    ->param(':id', (int) $s->id)->execute()->get('n');
+            $docs = array();
+            foreach (ORM::factory('documentos')->where('id_seguimiento', '=', $s->id)->find_all() as $d) {
+                $docs[] = $d->codigo;
+            }
+            $archivado = $estado === 10 ? $oSeg->hrArchivada($s->nur, $s->derivado_a) : FALSE;
+            $extras = array();
+            if ($docs) {
+                $extras[] = 'Documentos: ' . implode(', ', $docs);
+            }
+            if ($archivado) {
+                $extras[] = 'Archivado en: ' . $archivado['carpeta'] . (trim($archivado['observaciones']) != '' ? ' (Obs.: ' . $archivado['observaciones'] . ')' : '');
+            }
+            if ($justificaciones) {
+                $extras[] = 'Tiene ' . $justificaciones . ' justificación(es) por retraso';
+            }
+
+            // alto del bloque para no cortarlo entre paginas
+            $pdf->SetFont('Arial', '', 7.5);
+            $alto_prov = $proveido !== '' ? $pdf->alto_texto($w_caja - 10, 3.8, $proveido) + 3 : 0;
+            $alto_extras = $extras ? $pdf->alto_texto($w_caja - 10, 3.6, $pdf->t(implode('   ·   ', $extras))) + 1 : 0;
+            $alto = 7 + 21 + $alto_prov + $alto_extras + 3;
+            if ($pdf->GetY() + $alto > $pdf->h - 16) {
+                $pdf->AddPage();
+                $pdf->titulo_seccion('Recorrido de la hoja de ruta (continuación)');
+            }
+            $y = $pdf->GetY();
+
+            // numero del paso
+            $pdf->color_relleno($es_actual ? Pdf_Seguimiento::$amarillo : ($oficial ? Pdf_Seguimiento::$azul : Pdf_Seguimiento::$gris_claro));
+            $pdf->RoundedRect($m, $y + 1, 8, 8, 4, 'F');
+            $pdf->SetFont('Arial', 'B', 8.5);
+            $pdf->color_texto($es_actual ? Pdf_Seguimiento::$azul_oscuro : array(255, 255, 255));
+            $pdf->SetXY($m, $y + 2.5);
+            $pdf->Cell(8, 5, $i + 1, 0, 0, 'C');
+            // linea que une los pasos
+            if ($i < count($pasos) - 1) {
+                $pdf->color_relleno(Pdf_Seguimiento::$borde);
+                $pdf->Rect($m + 3.6, $y + 9.5, 0.8, $alto - 7, 'F');
+            }
+
+            // caja
+            $pdf->SetLineWidth($es_actual ? 0.6 : 0.25);
+            $pdf->color_linea($es_actual ? Pdf_Seguimiento::$amarillo : Pdf_Seguimiento::$borde);
+            if ($es_actual || !$oficial) {
+                $pdf->color_relleno($es_actual ? array(255, 253, 244) : array(250, 251, 252));
+                $pdf->RoundedRect($x_caja, $y, $w_caja, $alto - 3, 2.5, 'DF');
+            } else {
+                $pdf->RoundedRect($x_caja, $y, $w_caja, $alto - 3, 2.5, 'D');
+            }
+            $pdf->SetLineWidth(0.25);
+
+            // etiquetas
+            $xe = $x_caja + 4;
+            $ye = $y + 2.5;
+            if ($es_actual) {
+                $xe += $pdf->etiqueta($xe, $ye, 'Aquí está ahora', Pdf_Seguimiento::$amarillo, Pdf_Seguimiento::$azul_oscuro) + 1.5;
+            }
+            $colores = isset(Pdf_Seguimiento::$estados[$estado]) ? Pdf_Seguimiento::$estados[$estado] : Pdf_Seguimiento::$estados[10];
+            $xe += $pdf->etiqueta($xe, $ye, $s->estado, $colores[0], $colores[1]) + 1.5;
+            $xe += $pdf->etiqueta($xe, $ye, $oficial ? 'Oficial' : 'Copia', $oficial ? Pdf_Seguimiento::$azul : array(238, 242, 247), $oficial ? array(255, 255, 255) : array(74, 85, 104)) + 1.5;
+            if (isset($tenencia[$i])) {
+                $td = $tenencia[$i]['dias'];
+                $col_t = $td > 7 ? array(array(253, 232, 232), array(180, 35, 24)) : ($td > 2 ? array(array(255, 243, 220), array(178, 107, 0)) : array(array(230, 244, 236), array(34, 117, 71)));
+                $pdf->etiqueta($xe, $ye, ($tenencia[$i]['en_curso'] ? 'La tiene hace ' : 'La tuvo ') . SeguimientoUtil::duracion($tenencia[$i]['segundos']), $col_t[0], $col_t[1]);
+            }
+            if ($s->accion != '') {
+                $pdf->SetFont('Arial', 'B', 7.5);
+                $pdf->color_texto(array(138, 97, 0));
+                $pdf->SetXY($x_caja + $w_caja - 84, $ye);
+                $pdf->Cell(80, 4.4, $pdf->t($s->accion), 0, 0, 'R');
+            }
+
+            // de -> para
+            $yp = $y + 9;
+            $lados = array(
+                array('DE', $s->de_oficina, $s->nombre_emisor, $s->cargo_emisor,
+                    'Enviado el ' . date('d/m/Y', strtotime($s->fecha_emision)) . ' · ' . substr($s->hora_emision, 0, 5), FALSE),
+                array('PARA', $s->a_oficina, $s->nombre_receptor, $s->cargo_receptor,
+                    $s->fecha_recepcion
+                        ? 'Recibido el ' . date('d/m/Y', strtotime($s->fecha_recepcion)) . ' · ' . substr($s->hora_recepcion, 0, 5)
+                        : 'Sin recibir desde hace ' . SeguimientoUtil::duracion(max(0, time() - strtotime($s->fecha_emision . ' ' . $s->hora_emision))),
+                    !$s->fecha_recepcion),
+            );
+            foreach ($lados as $k => $l) {
+                $xl = $x_caja + 4 + $k * ($w_col + 10);
+                $pdf->SetXY($xl, $yp);
+                $pdf->SetFont('Arial', 'B', 6);
+                $pdf->color_texto(Pdf_Seguimiento::$gris_claro);
+                $pdf->Cell($w_col, 3, $l[0], 0, 2);
+                $pdf->SetFont('Arial', 'B', 6.5);
+                $pdf->color_texto(Pdf_Seguimiento::$azul);
+                $pdf->Cell($w_col, 3.3, $pdf->t(mb_strtoupper($l[1], 'UTF-8')), 0, 2);
+                $pdf->SetFont('Arial', 'B', 8.5);
+                $pdf->color_texto(Pdf_Seguimiento::$texto);
+                $pdf->Cell($w_col, 4.3, $pdf->t($l[2]), 0, 2);
+                $pdf->SetFont('Arial', '', 7);
+                $pdf->color_texto(Pdf_Seguimiento::$gris);
+                $pdf->Cell($w_col, 3.5, $pdf->t($l[3]), 0, 2);
+                $pdf->SetFont('Arial', $l[5] ? 'B' : '', 7);
+                $pdf->color_texto($l[5] ? array(178, 107, 0) : array(74, 85, 104));
+                $pdf->Cell($w_col, 3.8, $pdf->t($l[4]), 0, 0);
+            }
+            // flecha
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->color_texto(Pdf_Seguimiento::$gris_claro);
+            $pdf->SetXY($x_caja + 4 + $w_col, $yp + 6);
+            $pdf->Cell(10, 5, '>', 0, 0, 'C');
+
+            // proveido
+            $yv = $yp + 19.5;
+            if ($proveido !== '') {
+                $pdf->SetFont('Arial', '', 7.5);
+                $pdf->color_relleno(Pdf_Seguimiento::$fondo);
+                $pdf->RoundedRect($x_caja + 4, $yv, $w_caja - 8, $alto_prov - 1, 1.5, 'F');
+                $pdf->color_texto(Pdf_Seguimiento::$texto);
+                $pdf->SetXY($x_caja + 5, $yv + 1);
+                $pdf->MultiCell($w_caja - 10, 3.8, $proveido, 0, 'L');
+                $yv += $alto_prov;
+            }
+            if ($extras) {
+                $pdf->SetFont('Arial', '', 7);
+                $pdf->color_texto($justificaciones ? array(180, 35, 24) : array(74, 85, 104));
+                $pdf->SetXY($x_caja + 5, $yv);
+                $pdf->MultiCell($w_caja - 10, 3.6, $pdf->t(implode('   ·   ', $extras)), 0, 'L');
+            }
+            $pdf->SetY($y + $alto);
+        }
+
+        $pdf->Output('seguimiento_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $hr) . '.pdf', 'I');
+        exit;
     }
 
     public function action_word()

@@ -111,6 +111,7 @@ class Controller_route extends Controller_DefaultTemplate {
 	    // DETALLE DEL TIEMPO DEL TRAMITE
             // $query = "call detalleTiempoDelTramite('$id')";
 
+            // ?hr= viene de la URL: se enlaza como parametro (antes se concatenaba: inyeccion SQL)
             $query = "  SELECT
                             s.prioridad tipo_tramite,
                             a.fecha fecha_plazo_urgente,
@@ -122,14 +123,18 @@ class Controller_route extends Controller_DefaultTemplate {
                             FROM
                                 seguimiento s
                             WHERE
-                                nur = '$id') AS s
+                                nur = :nur) AS s
                         WHERE
                             (a.id_seguimiento = s.id)
                         LIMIT 1";
 
-            $resultSetTiempoDelTramite = db::query(Database::SELECT, $query, FALSE)
+            $resultSetTiempoDelTramite = db::query(Database::SELECT, $query)
+                ->param(':nur', (string) $id)
                 ->execute()
                 ->as_array();
+            if (!$resultSetTiempoDelTramite) {
+                $resultSetTiempoDelTramite = array(array('tipo_tramite' => 0, 'fecha_plazo_urgente' => NULL, 'tiempo_transcurrido' => NULL));
+            }
 
             $prioridad_tramite = $resultSetTiempoDelTramite[0]['tipo_tramite'];
             $tipo_tramite = "NO URGENTE";
