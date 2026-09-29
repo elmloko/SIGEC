@@ -1438,22 +1438,22 @@ be a descendant of the grid when it is being dragged.
 .fc-unthemed tbody,
 .fc-unthemed .fc-row,
 .fc-unthemed .fc-popover {
-  border-color: #e5e6e6;
+  border-color: #e5e5e6;
 }
 .fc-unthemed .fc-today {
-  background: rgba(33, 150, 243, 0.07);
+  background: rgba(26, 84, 154, 0.07);
 }
 .fc-unthemed .fc-event {
-  border-color: #2196f3;
-  background-color: #2196f3;
+  border-color: #1a549a;
+  background-color: #1a549a;
 }
 .fc-event.event-danger {
   border-color: #f44336;
   background-color: #f44336;
 }
 .fc-event.event-warning {
-  border-color: #ff9800;
-  background-color: #ff9800;
+  border-color: #fb8c00;
+  background-color: #fb8c00;
 }
 .fc-event.event-success {
   border-color: #4caf50;
@@ -1464,7 +1464,7 @@ be a descendant of the grid when it is being dragged.
   background-color: #2196f3;
 }
 .fc-event.event-default {
-  border-color: #96999c;
-  background-color: #96999c;
+  border-color: #96979c;
+  background-color: #96979c;
 }
 

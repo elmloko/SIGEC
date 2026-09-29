@@ -1477,7 +1477,7 @@ body .ui-tooltip {
 .ui-widget-content .ui-state-highlight,
 .ui-widget-header .ui-state-highlight {
   border: 1px solid #a3a3e8;
-  background: #adb5e8 url("images/ui-bg_flat_55_adb5e8_40x100.png") 50% 50% repeat-x;
+  background: #88b7f4 url("images/ui-bg_flat_55_adb5e8_40x100.png") 50% 50% repeat-x;
   color: #363636;
 }
 .ui-state-highlight a,
@@ -2130,13 +2130,13 @@ body .ui-tooltip {
 }
 .ui-menu .ui-menu-item a.ui-state-focus,
 .ui-menu .ui-menu-item a.ui-state-active {
-  background: #3f51b5;
+  background: #1a549a;
 }
 .ui-slider.ui-widget-content {
   background: #e5e5e6;
 }
 .ui-widget-header {
-  background: #3f51b5;
+  background: #1a549a;
   color: #ffffff;
 }
 .ui-widget-header a {
@@ -2145,13 +2145,13 @@ body .ui-tooltip {
 .ui-state-active,
 .ui-widget-content .ui-state-active,
 .ui-widget-header .ui-state-active {
-  border-color: #3f51b5;
+  border-color: #1a549a;
 }
 .ui-state-highlight,
 .ui-widget-content .ui-state-highlight,
 .ui-widget-header .ui-state-highlight {
-  border-color: #3f51b5;
-  background: #3f51b5;
+  border-color: #1a549a;
+  background: #1a549a;
   color: #ffffff;
 }
 .ui-sortable .ui-state-highlight {
@@ -2205,13 +2205,13 @@ body .ui-tooltip {
   height: 16px;
   border-color: transparent;
   border-radius: 50%;
-  background: #3f51b5;
+  background: #1a549a;
 }
 .ui-slider .ui-slider-handle:focus,
 .ui-slider .ui-slider-handle.ui-state-hover {
   outline: none;
-  -webkit-box-shadow: 0px 0px 0px 7px rgba(63, 81, 181, 0.2);
-  box-shadow: 0px 0px 0px 7px rgba(63, 81, 181, 0.2);
+  -webkit-box-shadow: 0px 0px 0px 7px rgba(26, 84, 154, 0.2);
+  box-shadow: 0px 0px 0px 7px rgba(26, 84, 154, 0.2);
 }
 .ui-slider .ui-slider-handle.ui-state-active {
   width: 22px;

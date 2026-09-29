@@ -1109,7 +1109,7 @@ button.ui-button::-moz-focus-inner {
 .ui-menu .ui-menu-item a.ui-state-active {
   font-weight: normal;
   margin: -1px;
-  background: #c34d5b;
+  background: #4a95b1;
   color: #fff;
 }
 .ui-menu .ui-state-disabled {
@@ -1334,12 +1334,12 @@ body .ui-tooltip {
 }
 .ui-widget-header {
   border: 1px solid #aaaaaa;
-  background: #c34d5b;
-  color: #ffffff;
+  background: #4a95b1;
+  color: #000000;
   font-weight: bold;
 }
 .ui-widget-header a {
-  color: #ffffff;
+  color: #000000;
 }
 /* Interaction states
 ----------------------------------*/
@@ -1378,7 +1378,7 @@ body .ui-tooltip {
 .ui-state-active,
 .ui-widget-content .ui-state-active,
 .ui-widget-header .ui-state-active {
-  border: 1px solid #c34d5b;
+  border: 1px solid #4a95b1;
   background: #ffffff url(images/ui-bg_flat_100_ffffff_40x100.png) 50% 50% repeat-x;
   font-weight: normal;
   color: #212121;
@@ -1394,9 +1394,9 @@ body .ui-tooltip {
 .ui-state-highlight,
 .ui-widget-content .ui-state-highlight,
 .ui-widget-header .ui-state-highlight {
-  border: 1px solid #c34d5b;
-  background: #c34d5b;
-  color: #ffffff;
+  border: 1px solid #4a95b1;
+  background: #4a95b1;
+  color: #000000;
 }
 .ui-state-highlight a,
 .ui-widget-content .ui-state-highlight a,

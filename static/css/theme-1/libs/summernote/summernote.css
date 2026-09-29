@@ -625,7 +625,7 @@
 /* Frame Mode Layout
  ------------------------------------------*/
 .note-editor {
-  border: 1px solid #e5e6e6;
+  border: 1px solid #e5e5e6;
   position: relative;
   /* dropzone */
   /* fullscreen mode */
@@ -659,8 +659,8 @@
   display: table;
 }
 .note-editor .note-toolbar {
-  background-color: #e5e6e6;
-  border-bottom: 1px solid #e5e6e6;
+  background-color: #e5e5e6;
+  border-bottom: 1px solid #e5e5e6;
 }
 .note-editor.fullscreen {
   position: fixed;
@@ -683,18 +683,18 @@
   display: block;
 }
 .note-editor .note-statusbar {
-  background-color: #e5e6e6;
+  background-color: #e5e5e6;
 }
 .note-editor .note-statusbar .note-resizebar {
   height: 8px;
   width: 100%;
-  border-top: 1px solid #e5e6e6;
+  border-top: 1px solid #e5e5e6;
   cursor: ns-resize;
 }
 .note-editor .note-statusbar .note-resizebar .note-icon-bar {
   width: 20px;
   margin: 1px auto;
-  border-top: 1px solid #e5e6e6;
+  border-top: 1px solid #e5e5e6;
 }
 .note-editor .note-editable {
   padding: 10px;

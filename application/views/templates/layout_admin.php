@@ -25,6 +25,7 @@
         echo HTML::script($file, NULL, TRUE), "\n";
     }
     ?>
+    <link rel="stylesheet" href="<?php echo URL::base(); ?>static/css/tema-correos.css?v=<?php echo @filemtime(DOCROOT . 'static/css/tema-correos.css'); ?>" media="all"/>
     <style type="text/css"><?php echo $theme; ?></style>
 </head>
 <body class="<?php echo $menubar; ?> header-fixed ">

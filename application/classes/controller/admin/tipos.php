@@ -50,8 +50,7 @@ class Controller_Admin_Tipos extends Controller_AdminTemplate {
                 ->execute()
                 ->get('total');
         if ($total > 0) {
-            $session->set('tipo_error', 'No se puede eliminar el tipo ' . $tipo->tipo . ' porque tiene ' . $total . ' documentos generados.');
-        } else {
+            $session->set('tipo_error', 'No se puede eliminar el tipo ' . $tipo->tipo . ' porque tiene ' . $total . ' documentos generados.');        } else {
             $nombre = $tipo->tipo;
             DB::delete('usertipo')->where('id_tipo', '=', $tipo->id)->execute();
             DB::delete('correlativo')->where('id_tipo', '=', $tipo->id)->execute();

@@ -628,15 +628,15 @@
   color: #ffffff;
   text-decoration: none;
   outline: 0;
-  background-color: #2196f3;
+  background-color: #1a549a;
 }
 .twitter-typeahead .tt-suggestion.tt-cursor {
-  background-color: #2196f3;
+  background-color: #1a549a;
 }
 .twitter-typeahead .tt-suggestion.tt-cursor > p {
   color: #ffffff;
 }
 .twitter-typeahead .tt-hint {
-  color: #bdbfc1;
+  color: #bdbec1;
 }
 

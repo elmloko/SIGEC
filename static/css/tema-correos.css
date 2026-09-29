@@ -1,0 +1,207 @@
+/*
+ * Tema Correos de Bolivia.
+ * Los colores primario (azul) y acento (amarillo) ya estan aplicados en static/css/theme-1 y theme-3;
+ * este archivo ajusta lo que la paleta sola no resuelve: menu lateral, encabezado, tarjetas, tablas y formularios.
+ * El menu sobrescribe el tema oscuro (.menubar-inverse) usando #menubar para ganar en especificidad.
+ */
+:root {
+    --correos-amarillo: #FECB34;
+    --correos-amarillo-oscuro: #F2BC17;
+    --correos-amarillo-suave: #FFF7DD;
+    --correos-azul: #1A549A;
+    --correos-azul-oscuro: #123E73;
+    --correos-azul-suave: #EAF1F9;
+    --correos-fondo: #F3F5F8;
+    --correos-borde: #DCE3EC;
+}
+
+/* ===== base ===== */
+body {
+    background: var(--correos-fondo);
+}
+
+/* ===== encabezado ===== */
+#header {
+    background: #ffffff;
+    border-bottom: 3px solid var(--correos-amarillo);
+    box-shadow: 0 1px 4px rgba(18, 62, 115, 0.12);
+}
+#header .header-nav-brand .text-primary {
+    color: var(--correos-azul);
+    letter-spacing: 0.3px;
+}
+#header .header-nav-profile .profile-info {
+    color: var(--correos-azul-oscuro);
+}
+
+/* ===== tarjetas ===== */
+.card {
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(18, 62, 115, 0.10), 0 1px 2px rgba(18, 62, 115, 0.06);
+}
+.card-head {
+    border-radius: 6px 6px 0 0;
+}
+.card-head header {
+    color: var(--correos-azul-oscuro);
+    font-weight: 500;
+}
+.card-underline .card-head {
+    border-bottom: 2px solid var(--correos-amarillo);
+}
+
+/* ===== tablas ===== */
+.table thead {
+    opacity: 1;
+}
+.table > thead > tr > th {
+    background: var(--correos-azul-suave);
+    color: var(--correos-azul-oscuro);
+    font-weight: 600;
+    border-bottom: 2px solid var(--correos-borde);
+}
+.table-hover > tbody > tr:hover > td,
+.table-hover > tbody > tr:hover > th {
+    background: var(--correos-amarillo-suave);
+}
+
+/* ===== pestanas ===== */
+.nav-tabs > li > a:hover {
+    color: var(--correos-azul);
+}
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+    border-bottom: 3px solid var(--correos-amarillo);
+    color: var(--correos-azul);
+    font-weight: 600;
+}
+
+/* ===== formularios ===== */
+.form-control:focus ~ label {
+    color: var(--correos-azul);
+}
+
+/* ===== botones ===== */
+.btn {
+    border-radius: 4px;
+}
+.btn-accent,
+.btn-accent:hover,
+.btn-accent:focus {
+    color: var(--correos-azul-oscuro);
+}
+
+/* ===== alertas ===== */
+.alert {
+    border-radius: 6px;
+}
+
+/* ===== grilla jqx (lista de usuarios) ===== */
+.jqx-grid-column-header-custom,
+.jqx-grid-columngroup-header-custom {
+    background: var(--correos-azul-suave) !important;
+    color: var(--correos-azul-oscuro) !important;
+    font-weight: 600;
+}
+.jqx-grid-cell-selected-custom,
+.jqx-fill-state-pressed-custom {
+    background: var(--correos-amarillo-suave) !important;
+    border-color: var(--correos-amarillo) !important;
+    color: var(--correos-azul-oscuro) !important;
+}
+.jqx-grid-cell-hover-custom,
+.jqx-fill-state-hover-custom {
+    background: var(--correos-azul-suave) !important;
+    color: var(--correos-azul-oscuro) !important;
+}
+
+/* ===== menu lateral ===== */
+
+/* fondo */
+#menubar.menubar-inverse {
+    color: var(--correos-azul);
+}
+#menubar.menubar-inverse:before {
+    background: var(--correos-amarillo);
+}
+#menubar.menubar-inverse .nano-slider {
+    background: rgba(26, 84, 154, 0.35);
+}
+#menubar.menubar-inverse .menubar-fixed-panel,
+#menubar.menubar-inverse .menubar-foot-panel {
+    border-color: rgba(26, 84, 154, 0.15);
+}
+#menubar.menubar-inverse hr {
+    border-top-color: rgba(26, 84, 154, 0.25);
+    margin-top: 0;
+}
+#menubar.menubar-inverse .menubar-scroll-panel > img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+#menubar.menubar-inverse .text-primary,
+#menubar.menubar-inverse .menubar-toggle {
+    color: var(--correos-azul);
+}
+
+/* textos */
+#menubar.menubar-inverse .gui-controls li .title,
+#menubar.menubar-inverse .gui-controls li.gui-folder > a .title,
+#menubar.menubar-inverse .gui-controls li.gui-folder.expanded > a .title,
+#menubar.menubar-inverse .gui-controls li.gui-folder.active > a .title,
+#menubar.menubar-inverse .gui-controls small {
+    color: var(--correos-azul);
+    text-shadow: none;
+    font-weight: 500;
+}
+#menubar.menubar-inverse .gui-controls li > a:hover .title,
+#menubar.menubar-inverse .gui-controls li.active > a .title {
+    color: var(--correos-azul-oscuro);
+    font-weight: 700;
+}
+#menubar.menubar-inverse .gui-folder > a:after,
+#menubar.menubar-inverse .gui-controls > .gui-folder.expanding > a:after,
+#menubar.menubar-inverse .gui-controls > .gui-folder.expanded > a:after {
+    color: rgba(26, 84, 154, 0.6);
+}
+
+/* iconos */
+#menubar.menubar-inverse .gui-icon {
+    color: var(--correos-azul);
+}
+#menubar.menubar-inverse .gui-icon:hover,
+#menubar.menubar-inverse .gui-folder:hover:not(.active) .gui-icon {
+    background-color: rgba(26, 84, 154, 0.12);
+    color: var(--correos-azul-oscuro);
+}
+#menubar.menubar-inverse .gui-controls a.expanded .gui-icon,
+#menubar.menubar-inverse .gui-controls li.active .gui-icon,
+#menubar.menubar-inverse .gui-controls li.active .gui-icon:hover,
+#menubar.menubar-inverse .gui-icon-active {
+    background-color: var(--correos-azul);
+    border-color: var(--correos-azul);
+    color: #ffffff;
+}
+
+/* filas: hover y seleccionada */
+#menubar.menubar-inverse .gui-controls > li:not(.gui-folder) > a:hover,
+#menubar.menubar-inverse .gui-controls > li ul > li > a:hover,
+#menubar.menubar-inverse .gui-controls > li ul > li > a:focus {
+    background-color: var(--correos-amarillo-oscuro);
+}
+#menubar.menubar-inverse .gui-controls > li.active:not(.gui-folder) > a,
+#menubar.menubar-inverse .gui-controls > li ul > li > a:active,
+#menubar.menubar-inverse .gui-controls > li ul > li > a.active,
+#menubar.menubar-inverse .gui-controls > li ul > li.active > a {
+    background-color: rgba(255, 255, 255, 0.55);
+}
+
+/* lineas guia de los submenus */
+#menubar.menubar-inverse .gui-controls > li ul > li:before {
+    border-left-color: rgba(26, 84, 154, 0.35);
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a:before {
+    border-bottom-color: rgba(26, 84, 154, 0.35);
+}

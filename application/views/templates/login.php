@@ -11,8 +11,8 @@
 
         <!-- BEGIN STYLESHEETS -->
     <!--    <link href='http://fonts.googleapis.com/css?family=Roboto:300italic,400italic,300,400,500,700,900' rel='stylesheet' type='text/css'/>-->
-        <link type="text/css" rel="stylesheet" href="/static/css/theme-3/bootstrap.css?1422792965" />
-        <link type="text/css" rel="stylesheet" href="/static/css/theme-3/materialadmin.css?1425466319" />
+        <link type="text/css" rel="stylesheet" href="/static/css/theme-3/bootstrap.css?v=correos1" />
+        <link type="text/css" rel="stylesheet" href="/static/css/theme-3/materialadmin.css?v=correos1" />
         <link type="text/css" rel="stylesheet" href="/static/css/theme-3/font-awesome.min.css?1422529194" />
         <link type="text/css" rel="stylesheet" href="/static/css/theme-3/material-design-iconic-font.min.css?1421434286" />
         <!-- END STYLESHEETS -->
