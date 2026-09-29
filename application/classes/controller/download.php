@@ -10,7 +10,8 @@ class Controller_Download extends Controller
         return rtrim(Kohana::$config->load('archivo')->get('path'), '/\\');
     }
 
-    private function send_file($file, $filename, $content_type)
+    // $inline = TRUE muestra el archivo en el navegador (vista previa) en vez de forzar la descarga
+    private function send_file($file, $filename, $content_type, $inline = FALSE)
     {
         $remote = RemoteArchivo::is_enabled();
 
@@ -34,7 +35,7 @@ class Controller_Download extends Controller
 
         header("Content-Description: File Transfer");
         header("Content-Type: " . ($content_type ?: 'application/octet-stream'));
-        header("Content-Disposition: attachment; filename=\"" . $filename . "\"");
+        header("Content-Disposition: " . ($inline ? 'inline' : 'attachment') . "; filename=\"" . str_replace('"', '', $filename) . "\"");
         header("Content-Transfer-Encoding: binary");
 
         if ($remote) {
@@ -92,7 +93,10 @@ class Controller_Download extends Controller
                     ? $archivo->sub_directorio . '/' . $archivo->nombre_archivo
                     : $this->archivo_base_path() . '/' . $archivo->sub_directorio . '/' . $archivo->nombre_archivo;
                 $filetemp = substr($archivo->nombre_archivo, 13);
-                $this->send_file($file, $filetemp, $archivo->extension);
+                // ?ver=1 abre el PDF en el navegador (vista previa); los demas tipos siempre se descargan
+                $es_pdf = stripos($archivo->extension, 'pdf') !== FALSE || preg_match('/\.pdf$/i', $filetemp);
+                $inline = Arr::get($_GET, 'ver') == '1' && $es_pdf;
+                $this->send_file($file, $filetemp, $inline ? 'application/pdf' : $archivo->extension, $inline);
             } else {
                 echo 'Archivo Inexistente.!!';
             }

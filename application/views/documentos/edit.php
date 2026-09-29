@@ -161,7 +161,200 @@
     /* .cke_contents{height: 500px;}*/
     /* cke_skin_kama{border: none;}   */
 
+    /* ===== Archivos Digitales ===== */
+    .archivos-digitales .arch-contador {
+        background: var(--correos-azul, #1A549A);
+        color: #fff;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+    .archivos-digitales .arch-zona {
+        position: relative;
+        display: block;
+        margin: 0 0 10px;
+        padding: 18px 12px;
+        border: 2px dashed var(--correos-borde, #DCE3EC);
+        border-radius: 8px;
+        background: var(--correos-fondo, #F3F5F8);
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+    }
+    .archivos-digitales .arch-zona:hover,
+    .archivos-digitales .arch-zona.arrastrando {
+        border-color: var(--correos-azul, #1A549A);
+        background: var(--correos-azul-suave, #EAF1F9);
+    }
+    .archivos-digitales .arch-zona.con-archivo {
+        border-style: solid;
+        border-color: var(--correos-amarillo, #FECB34);
+        background: var(--correos-amarillo-suave, #FFF7DD);
+    }
+    /* el input queda invisible pero presente, para que el navegador valide "required" */
+    .archivos-digitales .arch-zona input[type=file] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        left: 50%;
+        top: 50%;
+    }
+    .archivos-digitales .arch-zona-icono {
+        display: block;
+        font-size: 30px;
+        color: var(--correos-azul, #1A549A);
+        margin-bottom: 4px;
+    }
+    .archivos-digitales .arch-zona-texto {
+        display: block;
+        font-size: 12px;
+        color: #5b6675;
+        font-weight: normal;
+    }
+    .archivos-digitales .arch-zona-archivo {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--correos-azul-oscuro, #123E73);
+        word-break: break-word;
+    }
+    .archivos-digitales .arch-subir {
+        margin-bottom: 16px;
+    }
+    .archivos-digitales .arch-vacio {
+        text-align: center;
+        color: #8a94a3;
+        padding: 16px 0 4px;
+    }
+    .archivos-digitales .arch-vacio .fa {
+        font-size: 32px;
+        opacity: .5;
+    }
+    .archivos-digitales .arch-vacio p {
+        margin: 6px 0 0;
+    }
+    .archivos-digitales .arch-lista {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .archivos-digitales .arch-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px;
+        margin-bottom: 8px;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        border-radius: 8px;
+        background: #fff;
+        transition: box-shadow .15s, border-color .15s;
+    }
+    .archivos-digitales .arch-item:hover {
+        border-color: var(--correos-azul, #1A549A);
+        box-shadow: 0 2px 6px rgba(18, 62, 115, .12);
+    }
+    .archivos-digitales .arch-icono {
+        flex: 0 0 auto;
+        font-size: 26px;
+        line-height: 1;
+        color: #d32f2f;
+        padding-top: 2px;
+    }
+    .archivos-digitales .arch-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .archivos-digitales .arch-nombre {
+        font-weight: 600;
+        color: var(--correos-azul-oscuro, #123E73);
+        word-break: break-word;
+        line-height: 1.3;
+    }
+    .archivos-digitales .arch-meta {
+        font-size: 11px;
+        color: #8a94a3;
+        margin: 2px 0 6px;
+    }
+    .archivos-digitales .arch-acciones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .archivos-digitales .arch-acciones .btn {
+        margin: 0;
+    }
+    .archivos-digitales .arch-eliminar:hover {
+        color: #fff;
+        background: #d32f2f;
+        border-color: #d32f2f;
+    }
 </style>
+<script type="text/javascript">
+    // Archivos Digitales: arrastrar y soltar, vista previa y confirmacion al eliminar
+    $(function () {
+        var $zona = $('#arch-zona');
+        var $input = $('#file1');
+        var textoInicial = $('#arch-zona-texto').html();
+
+        function mostrarSeleccion() {
+            var f = $input[0].files && $input[0].files[0];
+            if (f) {
+                var tam = f.size >= 1048576 ? (f.size / 1048576).toFixed(2) + ' MB' : Math.round(f.size / 1024) + ' KB';
+                $('#arch-zona-archivo').text(f.name + ' (' + tam + ')');
+                $('#arch-zona-texto').html('Archivo listo para subir. Haga clic para cambiarlo.');
+                $zona.addClass('con-archivo');
+                $('#arch-subir').prop('disabled', false);
+            } else {
+                $('#arch-zona-archivo').text('');
+                $('#arch-zona-texto').html(textoInicial);
+                $zona.removeClass('con-archivo');
+                $('#arch-subir').prop('disabled', true);
+            }
+        }
+
+        $input.on('change', mostrarSeleccion);
+        $zona.on('dragover dragenter', function (e) {
+            e.preventDefault();
+            $zona.addClass('arrastrando');
+        }).on('dragleave dragend drop', function (e) {
+            e.preventDefault();
+            $zona.removeClass('arrastrando');
+        }).on('drop', function (e) {
+            var archivos = e.originalEvent.dataTransfer && e.originalEvent.dataTransfer.files;
+            if (archivos && archivos.length) {
+                try {
+                    $input[0].files = archivos;
+                } catch (err) {
+                    alert('Su navegador no permite arrastrar archivos, haga clic para elegirlo.');
+                    return;
+                }
+                mostrarSeleccion();
+            }
+        });
+        $('#arch-form').on('submit', function (e) {
+            // la validacion original (onsubmit) pudo cancelar el envio
+            if (e.isDefaultPrevented() || $('#arch-subir').prop('disabled')) {
+                return false;
+            }
+            $('#arch-subir').html('<i class="fa fa-circle-o-notch fa-spin"></i> Subiendo...');
+            setTimeout(function () {
+                $('#arch-subir').prop('disabled', true);
+            }, 0);
+        });
+
+        $('.archivos-digitales').on('click', '.arch-ver', function () {
+            eModal.iframe({
+                url: $(this).data('url'),
+                title: $(this).data('nombre'),
+                size: eModal.size.xl
+            });
+            return false;
+        }).on('click', '.arch-eliminar', function () {
+            return confirm('¿Eliminar el archivo "' + $(this).data('nombre') + '"?');
+        });
+    });
+</script>
 
 <div class="row">
 
@@ -379,46 +572,73 @@
     </div>
     <div class="col-lg-4">
         <div class="row">
-            <div class="card card-underline">
+            <div class="card card-underline archivos-digitales">
                 <div class="card-head">
-                    <header>Archivos Digitales</header>
+                    <header><i class="fa fa-paperclip"></i> Archivos Digitales
+                        <span class="badge arch-contador"><?php echo count($archivos); ?></span>
+                    </header>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" action=""
+                    <form method="post" enctype="multipart/form-data" action="" id="arch-form"
                           onsubmit="return validarTipoDeArchivoASubir()">
-                        <input type="file" class="file" id="file1" name="archivo" class="formControl form-control"
-                               accept="application/pdf" required/>
-                        <label>Seleccione un archivo para subir...</label>
+                        <label for="file1" class="arch-zona" id="arch-zona">
+                            <input type="file" id="file1" name="archivo" accept="application/pdf" required/>
+                            <i class="fa fa-cloud-upload arch-zona-icono"></i>
+                            <span class="arch-zona-texto" id="arch-zona-texto">
+                                <b>Arrastre un PDF aqu&iacute;</b> o haga clic para elegirlo
+                            </span>
+                            <span class="arch-zona-archivo" id="arch-zona-archivo"></span>
+                        </label>
                         <input type="hidden" name="id_doc" value="<?php echo $documento->id; ?>"/>
-                        <input type="submit" name="adjuntar" value="Subir archivo" class="btn btn-sm btn-primary-dark"/>
+                        <button type="submit" name="adjuntar" value="1" class="btn btn-primary btn-block arch-subir" id="arch-subir" disabled>
+                            <i class="fa fa-upload"></i> Subir archivo
+                        </button>
                     </form>
-                    <hr/>
-                    <div class=" table-responsive">
-                        <table class="table no-margin">
-                            <thead>
-                            <tr>
-                                <th>NOMBRE ARCHIVO</th>
-                                <th>TAMA&Ntilde;O</th>
-                                <th>FECHA DE SUBIDA</th>
-                                <th>OPCION</th>
-                            </tr>
-                            </thead>
-                            <tbody>
+
+                    <?php if (count($archivos) == 0): ?>
+                        <div class="arch-vacio">
+                            <i class="fa fa-file-pdf-o"></i>
+                            <p>Este documento a&uacute;n no tiene archivos digitales.</p>
+                        </div>
+                    <?php else: ?>
+                        <ul class="arch-lista">
                             <?php foreach ($archivos as $a): ?>
-                                <tr>
-                                    <td>
-                                        <a href="/download/?file=<?php echo $a->id; ?>"><?php echo substr($a->nombre_archivo, 13) ?></a>
-                                    </td>
-                                    <td align="center"><?php echo number_format(($a->tamanio / 1024) / 1024, 2) . ' MB'; ?></td>
-                                    <td align="center"><?php echo $a->fecha ?></td>
-                                    <td align="center"><a href="/archivo/eliminar/<?php echo $a->id; ?>"
-                                                          class="delete btn btn-sm btn-danger"><i
-                                                class="fa fa-trash-o"></i></a></td>
-                                </tr>
+                                <?php
+                                $nombre = substr($a->nombre_archivo, 13);
+                                $es_pdf = stripos($a->extension, 'pdf') !== FALSE || preg_match('/\.pdf$/i', $nombre);
+                                $tamanio = $a->tamanio >= 1048576
+                                    ? number_format($a->tamanio / 1048576, 2) . ' MB'
+                                    : number_format($a->tamanio / 1024, 0) . ' KB';
+                                ?>
+                                <li class="arch-item">
+                                    <div class="arch-icono"><i class="fa <?php echo $es_pdf ? 'fa-file-pdf-o' : 'fa-file-o'; ?>"></i></div>
+                                    <div class="arch-info">
+                                        <div class="arch-nombre" title="<?php echo HTML::chars($nombre); ?>"><?php echo HTML::chars($nombre); ?></div>
+                                        <div class="arch-meta">
+                                            <?php echo $tamanio; ?> &middot;
+                                            <?php echo $a->fecha ? date('d-m-Y H:i', strtotime($a->fecha)) : ''; ?>
+                                        </div>
+                                        <div class="arch-acciones">
+                                            <?php if ($es_pdf): ?>
+                                                <a href="javascript:void(0);" class="btn btn-xs btn-default-bright arch-ver"
+                                                   data-url="/download/?file=<?php echo $a->id; ?>&amp;ver=1"
+                                                   data-nombre="<?php echo HTML::chars($nombre); ?>" title="Ver sin descargar">
+                                                    <i class="fa fa-eye"></i> Ver
+                                                </a>
+                                            <?php endif; ?>
+                                            <a href="/download/?file=<?php echo $a->id; ?>" class="btn btn-xs btn-default-bright" title="Descargar">
+                                                <i class="fa fa-download"></i> Descargar
+                                            </a>
+                                            <a href="/archivo/eliminar/<?php echo $a->id; ?>" class="btn btn-xs btn-default-bright arch-eliminar"
+                                               data-nombre="<?php echo HTML::chars($nombre); ?>" title="Eliminar">
+                                                <i class="fa fa-trash-o"></i> Eliminar
+                                            </a>
+                                        </div>
+                                    </div>
+                                </li>
                             <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                        </ul>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
