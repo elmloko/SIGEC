@@ -826,6 +826,10 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
             <h2><?php echo HTML::chars($detalle['referencia'] != '' ? $detalle['referencia'] : 'Sin referencia'); ?></h2>
         </div>
         <div class="tr-botones">
+            <?php if (!empty($derivacion_editable)): ?>
+                <a href="/route/deriv/?hr=<?php echo urlencode($detalle['nur']); ?>&amp;editar=1" class="btn btn-sm btn-warning"
+                   title="Todavía nadie recibió su derivación: puede agregar destinatarios o cancelar alguno"><i class="fa fa-pencil"></i> Editar derivación</a>
+            <?php endif; ?>
             <?php if ($detalle['id_documento']): ?>
                 <a href="/document/detalle/<?php echo (int) $detalle['id_documento']; ?>" class="btn btn-sm btn-default-bright"><i class="fa fa-file-text-o"></i> Ver documento</a>
             <?php endif; ?>

@@ -1,5 +1,6 @@
 <?php
 $es_ventanilla = ($user->id == '255');
+$editando = isset($editando) && $editando;
 
 // preseleccionar al destinatario del documento (si esta en la lista)
 $nombre_usuario_destinatario = $documento->nombre_destinatario;
@@ -36,7 +37,7 @@ $archivos_doc = ORM::factory('archivos')->where('id_documento', '=', $documento-
 $es_copia = ($oficial == 0);
 
 // derivaciones que este usuario ya hizo desde este paso (p.ej. copias enviadas antes de recargar)
-$previas = DB::query(Database::SELECT, 'SELECT s.id, s.oficial, s.nombre_receptor, s.cargo_receptor, s.proveido, s.estado, a.accion
+$previas = DB::query(Database::SELECT, 'SELECT s.id, s.oficial, s.derivado_a, s.nombre_receptor, s.cargo_receptor, s.proveido, s.estado, a.accion
         FROM seguimiento s LEFT JOIN acciones a ON a.id = s.accion
         WHERE s.nur = :nur AND s.id_seguimiento = :id AND s.derivado_por = :user ORDER BY s.id')
         ->param(':nur', (string) $documento->nur)->param(':id', (int) $id_seguimiento)->param(':user', (int) $user->id)
@@ -630,6 +631,30 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
         display: block;
         font-size: 15px;
     }
+    .dr-editando {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        border-left: 5px solid var(--correos-amarillo, #FECB34);
+        font-size: 13px;
+        color: #4a5568;
+    }
+    .dr-editando > .fa {
+        flex: 0 0 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--correos-amarillo-suave, #FFF7DD);
+        color: #B7791F;
+        font-size: 16px;
+    }
+    .dr-editando b:first-child {
+        display: block;
+        color: var(--correos-azul-oscuro, #123E73);
+    }
     @media (min-width: 1200px) {
         .dr-resumen {
             position: sticky;
@@ -704,7 +729,7 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
     <div class="dr-cab">
         <div class="dr-cab-icono"><i class="fa fa-paper-plane"></i></div>
         <div class="dr-cab-titulo">
-            <h2>Derivar <span><?php echo HTML::chars($documento->nur); ?></span></h2>
+            <h2><?php echo $editando ? 'Editar derivación' : 'Derivar'; ?> <span><?php echo HTML::chars($documento->nur); ?></span></h2>
             <small>Cite original: <b><?php echo HTML::chars($documento->cite_original); ?></b>
                 <?php if ($proceso && $proceso->loaded()): ?> &middot; Proceso: <?php echo HTML::chars($proceso->proceso); ?><?php endif; ?>
             </small>
@@ -745,6 +770,14 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
         </div>
     </div>
 </div>
+
+<?php if ($editando): ?>
+    <div class="dr-card dr-editando">
+        <i class="fa fa-pencil"></i>
+        <div><b>Está corrigiendo una derivación que todavía nadie recibió.</b>
+            Puede <b>agregar</b> a las personas que olvidó o <b>cancelar</b> (✕) a quien no correspondía. Cuando alguien la reciba, ya no podrá cambiarse.</div>
+    </div>
+<?php endif; ?>
 
 <!-- pasos del flujo -->
 <ol class="dr-flujo" id="dr-flujo">
@@ -922,6 +955,7 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
             (d.urgente ? '<span class="dr-tag urgente">Urgente</span>' : '') +
             (d.proveido ? '<div class="dr-prov">“' + escapar(d.proveido) + '”</div>' : '') +
             (d.adjuntos ? '<div><i class="fa fa-paperclip"></i> ' + d.adjuntos + '</div>' : '') +
+            (d.recibido ? '<div style="color:#2E9E5B"><i class="fa fa-check"></i> Ya la recibió</div>' : (d.cancelable && !d.nuevo ? '<div style="color:#B7791F"><i class="fa fa-clock-o"></i> No recibido: puede cancelarse</div>' : '')) +
             '</div>';
         if (d.cancelable) {
             html += '<a href="javascript:;" onclick="activar($(this));" class="dr-quitar" title="Cancelar esta derivación"' +
@@ -1125,7 +1159,10 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
             'cargo' => $pv['cargo_receptor'],
             'accion' => $pv['accion'],
             'proveido' => $pv['proveido'],
-            'cancelable' => FALSE,
+            'cancelable' => (int) $pv['estado'] === 1,
+            'id' => (int) $pv['id'],
+            'id_destino' => (int) $pv['derivado_a'],
+            'recibido' => (int) $pv['estado'] !== 1,
         )); ?>));
         <?php endforeach; ?>
 

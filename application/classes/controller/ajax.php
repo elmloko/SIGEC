@@ -1554,7 +1554,7 @@ class Controller_Ajax extends Controller
      * - Derivacion de algo recibido: el seguimiento debe ser de esa hoja de ruta y estar dirigido a el.
      * Devuelve TRUE o el mensaje de error.
      */
-    protected function puede_derivar($nur, $id_seg, $id_doc, $session, $oficial = 0)
+    protected function puede_derivar($nur, $id_seg, $id_doc, $session, $oficial = 0, $destino = 0)
     {
         $documento = ORM::factory('documentos')->where('nur', '=', $nur)->and_where('original', '=', 1)->find();
         if (!$documento->loaded() || (int) $documento->id !== (int) $id_doc) {
@@ -1568,6 +1568,12 @@ class Controller_Ajax extends Controller
             // 2 = pendiente; 4 = ya derivada en este mismo formulario (se agregan mas destinatarios)
             if (!in_array((int) $seg->estado, array(2, 4), TRUE)) {
                 return 'Esta hoja de ruta ya no está pendiente en su bandeja.';
+            }
+            if ((int) $seg->estado === 4 && !$session->get('destino') && !$this->derivacion_editable($documento->nur, (int) $id_seg)) {
+                return 'Esta derivación ya no se puede modificar: los destinatarios ya la recibieron.';
+            }
+            if ($this->ya_derivado_a($documento->nur, (int) $id_seg, $destino)) {
+                return 'Ya derivó esta hoja de ruta a esa persona.';
             }
             if ((int) $oficial > 0) {
                 if ((int) $seg->oficial === 0) {
@@ -1583,13 +1589,32 @@ class Controller_Ajax extends Controller
             return 'Solo quien generó el documento puede derivarlo por primera vez.';
         }
         // ya derivado: solo se permite seguir agregando destinatarios en la misma derivacion
-        if ((int) $documento->estado !== 0 && !$session->get('destino')) {
-            return 'Esta hoja de ruta ya fue derivada.';
+        if ((int) $documento->estado !== 0 && !$session->get('destino') && !$this->derivacion_editable($documento->nur, 0)) {
+            return 'Esta hoja de ruta ya fue derivada y los destinatarios ya la recibieron.';
+        }
+        if ($this->ya_derivado_a($documento->nur, 0, $destino)) {
+            return 'Ya derivó esta hoja de ruta a esa persona.';
         }
         if ((int) $oficial > 0 && $this->ya_derivo_oficial($documento->nur, 0)) {
             return 'La hoja de ruta ya fue derivada como oficial: ahora solo puede enviar copias.';
         }
         return TRUE;
+    }
+
+    /** ¿El usuario tiene derivaciones desde ese paso que todavia no fueron recibidas (estado 1)? Entonces puede corregirlas. */
+    protected function derivacion_editable($nur, $paso)
+    {
+        return DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento WHERE nur = :nur AND id_seguimiento = :paso AND derivado_por = :user AND estado = 1')
+                ->param(':nur', (string) $nur)->param(':paso', (int) $paso)->param(':user', (int) $this->user->id)
+                ->execute()->get('n') > 0;
+    }
+
+    /** ¿Ya se derivo desde ese paso a esa persona? */
+    protected function ya_derivado_a($nur, $paso, $destino)
+    {
+        return DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento WHERE nur = :nur AND id_seguimiento = :paso AND derivado_a = :destino AND derivado_por = :user')
+                ->param(':nur', (string) $nur)->param(':paso', (int) $paso)->param(':destino', (int) $destino)->param(':user', (int) $this->user->id)
+                ->execute()->get('n') > 0;
     }
 
     /** ¿Ya existe una derivacion oficial desde ese paso (id_seguimiento = 0 es la primera derivacion)? */
@@ -1619,10 +1644,10 @@ class Controller_Ajax extends Controller
             $hijo = $_POST['hijo'];
             $prioridad = $_POST['urgente'];
             $session = Session::instance();
-            $permiso = $this->puede_derivar($nur, $id_seg, $id_doc, $session, $oficial);
+            $permiso = $this->puede_derivar($nur, $id_seg, $id_doc, $session, $oficial, $destino);
             if ($permiso !== TRUE) {
                 echo json_encode(array('error' => $permiso));
-                exit;
+                return;
             }
             if ($session->get('destino')) {
                 $usuario = $session->get('destino');
@@ -1961,11 +1986,11 @@ class Controller_Ajax extends Controller
         $seg_verificar = ORM::factory('seguimiento', $id_seg);
         if (!$seg_verificar->loaded() || (int) $seg_verificar->derivado_por !== (int) $this->user->id) {
             echo json_encode(array('error' => 'Solo quien realizó la derivación puede cancelarla.'));
-            exit;
+            return;
         }
         if ((int) $seg_verificar->estado !== 1) {
             echo json_encode(array('error' => 'No se puede cancelar: la hoja de ruta ya fue recibida por el destinatario.'));
-            exit;
+            return;
         }
         $session = Session::instance();
         $usuario = $session->get('destino');
@@ -1977,19 +2002,34 @@ class Controller_Ajax extends Controller
         /* quitar el seguimiento */
         $seguimiento = ORM::factory('seguimiento', $id_seg);
         if ($seguimiento->loaded()) {
-            if (sizeof($usuario) == 0) {
-                if ($seguimiento->id_seguimiento > 0) { //si tienes seguimieto previo el nur debe volver a pendientes
-                    $seg_anterior = ORM::factory('seguimiento', $seguimiento->id_seguimiento);
-                    if ($seg_anterior->oficial == 2)
+            // lo que queda derivado desde ese mismo paso, sin contar el que se cancela (se calcula en la base,
+            // no en la sesion: la sesion se pierde al recargar y dejaba estados inconsistentes)
+            $quedan = DB::query(Database::SELECT, 'SELECT COUNT(*) AS total, SUM(oficial > 0) AS oficiales FROM seguimiento
+                    WHERE nur = :nur AND id_seguimiento = :paso AND derivado_por = :user AND id <> :id')
+                    ->param(':nur', $seguimiento->nur)->param(':paso', (int) $seguimiento->id_seguimiento)
+                    ->param(':user', (int) $this->user->id)->param(':id', (int) $seguimiento->id)
+                    ->execute()->current();
+            $quedan_total = (int) $quedan['total'];
+            $quedan_oficiales = (int) $quedan['oficiales'];
+            if ($seguimiento->id_seguimiento > 0) {
+                // derivacion de algo recibido: vuelve a pendientes si se quito la oficial, o si no queda nada
+                $seg_anterior = ORM::factory('seguimiento', $seguimiento->id_seguimiento);
+                if ($seg_anterior->loaded()) {
+                    if ($seg_anterior->oficial == 2 && $quedan_oficiales == 0) {
                         $seg_anterior->oficial = 1;
-                    $seg_anterior->estado = 2;
-                    $seg_anterior->save();
-                } else {        //si no tiene seguimiento, fue la primera derivacion, entonces el documento debe cambiar el estado
-                    $documento = ORM::factory('documentos', $id_doc);
-                    if ($documento->loaded()) {
-                        $documento->estado = 0;
-                        $documento->save();
+                        $seg_anterior->estado = 2;
+                        $seg_anterior->save();
+                    } elseif ($seg_anterior->oficial != 2 && $quedan_total == 0) {
+                        $seg_anterior->estado = 2;
+                        $seg_anterior->save();
                     }
+                }
+            } elseif ($quedan_oficiales == 0) {
+                // primera derivacion: sin oficial, el documento vuelve a "sin derivar"
+                $documento = ORM::factory('documentos')->where('nur', '=', $seguimiento->nur)->and_where('original', '=', 1)->find();
+                if ($documento->loaded()) {
+                    $documento->estado = 0;
+                    $documento->save();
                 }
             }
             //vitacora

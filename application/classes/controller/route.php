@@ -239,7 +239,8 @@ class Controller_route extends Controller_DefaultTemplate {
                     // ->bind('f', $f)
                     ->bind('oficina', $oficina)
                     ->bind('user', $user)
-                    ->bind('agrupado', $agrupado);
+                    ->bind('agrupado', $agrupado)
+                    ->set('derivacion_editable', $this->derivacion_editable($id) !== NULL);
         } else {
             $this->request->redirect('route/view');
         }
@@ -443,6 +444,23 @@ class Controller_route extends Controller_DefaultTemplate {
     }
 
     /**
+     * Derivacion del usuario en esa hoja de ruta que todavia no fue recibida (estado 1 = "No recibido").
+     * Devuelve la fila (con id_seguimiento = paso desde el que derivo) o NULL.
+     * Si derivo desde el documento (paso 0), solo cuenta si es el autor.
+     */
+    protected function derivacion_editable($nur) {
+        $fila = DB::query(Database::SELECT, 'SELECT s.id, s.id_seguimiento FROM seguimiento s
+                LEFT JOIN seguimiento p ON p.id = s.id_seguimiento
+                LEFT JOIN documentos d ON d.nur = s.nur AND d.original = 1
+                WHERE s.nur = :nur AND s.derivado_por = :user AND s.estado = 1
+                  AND ((s.id_seguimiento = 0 AND d.id_user = :user) OR (s.id_seguimiento > 0 AND p.derivado_a = :user))
+                ORDER BY s.id DESC LIMIT 1')
+                ->param(':nur', (string) $nur)->param(':user', (int) $this->user->id)
+                ->execute()->current();
+        return $fila ? $fila : NULL;
+    }
+
+    /**
      * "Enterado": cierra una copia recibida sin derivarla (la archiva en la carpeta de copias de la oficina).
      * POST id_seg, observaciones. Responde JSON.
      */
@@ -564,8 +582,37 @@ class Controller_route extends Controller_DefaultTemplate {
                             ->bind('proceso', $proceso)
                             ->bind('user', $user)
                             ->bind('errors', $errors);
+                } elseif ($editable = $this->derivacion_editable($nur)) {
+                    // corregir una derivacion propia que todavia nadie recibio (agregar o quitar destinatarios)
+                    $paso = (int) $editable['id_seguimiento'];
+                    $oficial = 1;
+                    $hijo = 0;
+                    if ($paso > 0) {
+                        $anterior = ORM::factory('seguimiento', $paso);
+                        $oficial = $anterior->oficial;
+                        $hijo = $anterior->hijo;
+                    }
+                    $acciones = $this->acciones();
+                    $destinatarios = $this->destinatarios($this->user->id, $this->user->superior);
+                    $id_seguimiento = $paso;
+                    $editando = TRUE;
+                    $this->template->title .= ' / Editar derivación ' . $documento->nur;
+                    $this->template->titulo .= 'Editar derivación ' . $documento->nur;
+                    $this->template->scripts = array('static/js/libs/select2/select2.min.js', 'static/js/libs/bootstrap-datepicker/bootstrap-datepicker.js');
+                    $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all', 'static/css/theme-1/libs/bootstrap-datepicker/datepicker3.css' => 'screen');
+                    $this->template->content = View::factory('hojaruta/frm_derivacion')
+                            ->bind('documento', $documento)
+                            ->bind('acciones', $acciones)
+                            ->bind('destinatarios', $destinatarios)
+                            ->bind('id_seguimiento', $id_seguimiento)
+                            ->bind('oficial', $oficial)
+                            ->bind('hijo', $hijo)
+                            ->bind('proceso', $proceso)
+                            ->bind('user', $user)
+                            ->bind('errors', $errors)
+                            ->bind('editando', $editando);
                 } else {
-                    $this->request->redirect('route/trace/?hr=' . $nur);
+                    $this->request->redirect('route/trace/?hr=' . urlencode($nur));
                 }
             }
         } else {
