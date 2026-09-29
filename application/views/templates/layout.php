@@ -86,23 +86,6 @@
                         </button>
                     </form>
                 </li>
-                <!--
-                <li class="dropdown hidden-xs">
-                    <ul class="dropdown-menu animation-expand">
-                        <li class="dropdown-header">Alertas</li>
-                        <?php foreach ($alertas as $a): ?>
-                            <li>
-                                <a class="alert alert-callout alert-danger"
-                                   href="/route/trace/?hr=<?php echo $a['nur'] ?>">
-                                    <strong><?php echo $a['nur'] ?></strong><br/>
-                                    <small><?php echo $a['proveido'] ?><br/></small>
-                                    <small>Fecha max resp: <b><?php echo $a['fecha'] ?></b></small>
-                                </a>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </li>
-                -->
             </ul><!--end .header-nav-options -->
             <ul class="header-nav header-nav-profile">
                 <li class="dropdown">

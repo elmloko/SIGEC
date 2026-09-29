@@ -39,11 +39,10 @@
     <div class="col-sm-5 col-sm-offset-1 ">
 
         <h3 class="text-light text-center">
-            <img title="" alt="" src="/media/logo.png" typeof="foaf:Image" /><hr>Sistema de Gestión de Correspondencia</a>
+            <img title="" alt="" src="/media/logo.png" typeof="foaf:Image" /><hr>Sistema de Gestión de Correspondencia
         </h3>
-        <p>
-        <p><i> Envie y reciba su correspondencia de manera mas sencilla  y rápida.</i>
-        <i> Permite Gerenar todo tipo de documentos. </i></p>
+        <p><i> Envíe y reciba su correspondencia de manera más sencilla y rápida.</i>
+        <i> Permite generar todo tipo de documentos. </i></p>
     </div><!--end .col -->
 
 <!--

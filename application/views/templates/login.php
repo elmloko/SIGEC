@@ -58,7 +58,7 @@
         <!-- END JAVASCRIPT -->
         <div id="" class="col-lg12 text-center">
             <span class=" opacity-50">
-                <b>MINISTERIO DE OBRAS PÚBLICAS, SERVICIOS Y VIVIENDA | Estado Plurinacional de Bolivia</b>
+                <b>CORREOS DE BOLIVIA | Estado Plurinacional de Bolivia</b>
             </span>
         </div>
     </body>
