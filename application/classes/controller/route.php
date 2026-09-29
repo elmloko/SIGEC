@@ -159,6 +159,7 @@ class Controller_route extends Controller_DefaultTemplate {
                 'fecha' => $documento->fecha_creacion,
                 'codigo' => $documento->cite_original,
                 'id_documento' => $documento->id,
+                'id_user' => $documento->id_user,
                 'tipo' => $tipo->tipo,
                 'proceso' => $proceso->proceso,
                 'referencia' => $documento->referencia,

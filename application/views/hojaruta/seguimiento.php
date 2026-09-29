@@ -610,6 +610,185 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
         font-size: 44px;
         color: #b7c0cc;
     }
+
+    /* hoja de ruta sin derivar */
+    .tr-sd {
+        padding: 22px;
+    }
+    .tr-sd-estado {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .tr-sd-icono {
+        flex: 0 0 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        background: var(--correos-amarillo-suave, #FFF7DD);
+        color: #B7791F;
+    }
+    .tr-sd-estado h4 {
+        margin: 0 0 2px;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--correos-azul-oscuro, #123E73);
+    }
+    .tr-sd-estado p {
+        margin: 0;
+        font-size: 13px;
+        color: #6b7686;
+    }
+    .tr-sd-pasos {
+        display: flex;
+        margin: 18px 0;
+        border-radius: 10px;
+        background: var(--correos-fondo, #F3F5F8);
+        overflow: hidden;
+    }
+    .tr-sd-paso {
+        flex: 1 1 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px 14px;
+        font-size: 12px;
+        color: #7a8594;
+        border-right: 1px solid #fff;
+    }
+    .tr-sd-paso:last-child {
+        border-right: 0;
+    }
+    .tr-sd-paso > span:last-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .tr-sd-paso b {
+        display: block;
+        font-size: 13px;
+        color: #4a5568;
+    }
+    .tr-sd-num {
+        flex: 0 0 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        background: #fff;
+        color: #9aa4b2;
+        border: 2px solid #DCE3EC;
+    }
+    .tr-sd-paso.hecho .tr-sd-num {
+        background: #2E9E5B;
+        border-color: #2E9E5B;
+        color: #fff;
+    }
+    .tr-sd-paso.actual {
+        background: var(--correos-amarillo-suave, #FFF7DD);
+    }
+    .tr-sd-paso.actual .tr-sd-num {
+        border-color: var(--correos-amarillo, #FECB34);
+        color: #8a6100;
+    }
+    .tr-sd-paso.actual b {
+        color: var(--correos-azul-oscuro, #123E73);
+    }
+    .tr-sd-cuerpo {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+    .tr-sd-cuerpo small {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+        color: #8a94a3;
+    }
+    .tr-sd-persona {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .tr-sd-persona img {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--correos-amarillo, #FECB34);
+    }
+    .tr-sd-persona b {
+        display: block;
+        color: #2d3748;
+    }
+    .tr-sd-persona b em {
+        font-style: normal;
+        font-weight: 600;
+        color: var(--correos-azul, #1A549A);
+    }
+    .tr-sd-persona span {
+        font-size: 12px;
+        color: #7a8594;
+    }
+    .tr-sd-archivo {
+        display: block;
+        padding: 7px 10px;
+        margin-bottom: 6px;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--correos-azul-oscuro, #123E73);
+        word-break: break-word;
+    }
+    .tr-sd-archivo:hover {
+        text-decoration: none;
+        border-color: var(--correos-azul, #1A549A);
+        background: var(--correos-azul-suave, #EAF1F9);
+    }
+    .tr-sd-archivo .fa {
+        color: #d32f2f;
+        margin-right: 4px;
+    }
+    .tr-sd-nada {
+        margin: 0;
+        font-size: 13px;
+        color: #9aa4b2;
+    }
+    .tr-sd-acciones {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid #EEF2F7;
+    }
+    .tr-sd-acciones .btn {
+        margin: 0;
+    }
+    .tr-sd-acciones .btn .fa {
+        margin-right: 4px;
+    }
+    @media (max-width: 767px) {
+        .tr-sd-pasos {
+            flex-direction: column;
+        }
+        .tr-sd-cuerpo {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
     @media (max-width: 1199px) {
         .tr-datos,
         .tr-resumen {
@@ -995,12 +1174,78 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
         <?php endif; ?>
     </div>
 
-<?php else: ?>
+<?php else:
+    // aun sin derivar: el documento sigue con quien lo genero
+    $generador = ORM::factory('users', isset($detalle['id_user']) ? $detalle['id_user'] : 0);
+    $es_mio = $generador->loaded() && (int) $generador->id === (int) $user->id;
+    $n_arch = count($archivo);
+    ?>
     <div class="tr-card">
-        <div class="tr-vacio">
-            <i class="md md-label"></i>
-            <h4>Esta hoja de ruta aún no fue derivada</h4>
-            Cuando se derive, aquí verá su recorrido paso a paso.
+        <div class="tr-sd">
+            <div class="tr-sd-estado">
+                <span class="tr-sd-icono"><i class="fa fa-clock-o"></i></span>
+                <div>
+                    <h4>Aún no fue derivada</h4>
+                    <p>
+                        Generada <?php echo $dias_creado === null ? '' : ($dias_creado == 0 ? 'hoy' : 'hace ' . $dias_texto($dias_creado)); ?>
+                        y todavía no salió de la bandeja de quien la creó. Cuando se derive, aquí verá su recorrido paso a paso.
+                    </p>
+                </div>
+            </div>
+
+            <!-- pasos para poder derivar -->
+            <div class="tr-sd-pasos">
+                <div class="tr-sd-paso hecho">
+                    <span class="tr-sd-num"><i class="fa fa-check"></i></span>
+                    <span><b>Documento generado</b><?php echo HTML::chars($detalle['codigo']); ?></span>
+                </div>
+                <div class="tr-sd-paso <?php echo $n_arch > 0 ? 'hecho' : 'actual'; ?>">
+                    <span class="tr-sd-num"><?php echo $n_arch > 0 ? '<i class="fa fa-check"></i>' : '2'; ?></span>
+                    <span><b>Archivo digital</b><?php echo $n_arch > 0 ? $n_arch . ($n_arch == 1 ? ' PDF subido' : ' PDF subidos') : 'Falta subir el PDF'; ?></span>
+                </div>
+                <div class="tr-sd-paso <?php echo $n_arch > 0 ? 'actual' : ''; ?>">
+                    <span class="tr-sd-num">3</span>
+                    <span><b>Derivar</b>Enviar al destinatario</span>
+                </div>
+            </div>
+
+            <div class="tr-sd-cuerpo">
+                <?php if ($generador->loaded()): ?>
+                    <div class="tr-sd-quien">
+                        <small>La tiene</small>
+                        <div class="tr-sd-persona">
+                            <img src="<?php echo $foto($generador->username, $generador->genero); ?>" alt=""/>
+                            <div>
+                                <b><?php echo HTML::chars($generador->nombre); ?><?php echo $es_mio ? ' <em>(usted)</em>' : ''; ?></b>
+                                <span><?php echo HTML::chars($generador->cargo); ?></span>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <div class="tr-sd-archivos">
+                    <small>Archivos digitales</small>
+                    <?php if ($n_arch == 0): ?>
+                        <p class="tr-sd-nada"><i class="fa fa-file-pdf-o"></i> Sin archivos todavía</p>
+                    <?php else: ?>
+                        <?php foreach ($archivo as $a): $nom = substr($a->nombre_archivo, 13); ?>
+                            <a href="#" class="tr-sd-archivo visor-pdf" title="Ver archivo"
+                               data-url="/download/?file=<?php echo (int) $a->id; ?>&amp;ver=1" data-descargar="/download/?file=<?php echo (int) $a->id; ?>"
+                               data-nombre="<?php echo HTML::chars($nom); ?>"><i class="fa fa-file-pdf-o"></i> <?php echo HTML::chars($nom); ?></a>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if ($es_mio): ?>
+                <div class="tr-sd-acciones">
+                    <a href="/documento/edit/<?php echo (int) $detalle['id_documento']; ?>" class="btn btn-default-bright"><i class="fa fa-pencil"></i> Editar documento</a>
+                    <?php if ($n_arch > 0): ?>
+                        <a href="/route/deriv/?hr=<?php echo urlencode($detalle['nur']); ?>" class="btn btn-primary"><i class="fa fa-send-o"></i> Derivar ahora</a>
+                    <?php else: ?>
+                        <a href="/documento/edit/<?php echo (int) $detalle['id_documento']; ?>" class="btn btn-primary"><i class="fa fa-upload"></i> Subir archivo digital</a>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>

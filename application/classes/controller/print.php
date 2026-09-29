@@ -549,60 +549,14 @@ class Controller_Print extends Controller
         if ($auth->logged_in()) {
             require Kohana::find_file('vendor/fpdf17', 'fpdf');
             require Kohana::find_file('vendor/fpdf17', 'code39');
-            //verificamos de que la hoja de ruta es el padre de hojas de ruta hijos
             $user = $auth->get_user();
-
-            $pdf = new PDF_Code39('P', 'mm', 'Letter');
-            $pdf->SetMargins(15, 10, 5);
-            $pdf->AddPage('L');
-            $pdf->SetFont('Arial', '', 10);
-            $pdf->Cell(245, 10, 'Correspondencia Pendiente - Sistema de Gestion de Correspondencia', 1, FALSE, 'C');
-            $pdf->Ln();
-            $pdf->Cell(20, 5, 'Usuario', 1, FALSE, 'L');
-            $pdf->Cell(140, 5, $user->nombre, 1, FALSE, 'L');
-            $pdf->Cell(20, 5, 'Fecha', 'LRB', FALSE, 'L');
-            $pdf->Cell(65, 5, date('d-m-Y H:i:s'), 1, FALSE, 'L');
-            $pdf->Ln();
-            $pdf->Cell(20, 5, 'Cargo', 'LRB', FALSE, 'L');
-            $pdf->Cell(140, 5, $user->cargo, 'LRB', FALSE, 'L');
-            $pdf->Cell(20, 5, 'Correo', 'LRB', FALSE, 'L');
-            $pdf->Cell(65, 5, $user->email, 'LRB', FALSE, 'L');
-            $pdf->Ln(10);
-            //$pdf->
-            $pdf->SetFont('Arial', '', 7);
             $mHojaruta = new Model_Hojasruta();
-            $hijos = $mHojaruta->pendientes($user->id);
-            //titulo
-            $pdf->SetFillColor(240, 245, 255);
-            $pdf->Cell(5, 5, 'N', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(20, 5, 'HOJA RUTA', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(42, 5, 'CITE ORIGINAL', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(75, 5, 'REFERENCIA', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(60, 5, 'REMITENTE', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(17, 5, 'RECEPCION', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(9, 5, 'D->R', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(9, 5, 'R->F', 1, FALSE, 'C', TRUE);
-            $pdf->Cell(10, 5, 'OFICIAL', 1, FALSE, 'C', TRUE);
-            $pdf->Ln();
-            $pdf->SetWidths(array(5, 20, 42, 75, 60, 17, 9, 9, 10));
-            $i = 1;
-            foreach ($hijos as $h) {
-                $pdf->Row(array(
-                    $i,
-                    utf8_decode($h['nur']),
-                    utf8_decode($h['cite_original']),
-                    utf8_decode($h['referencia']),
-                    utf8_decode($h['nombre_emisor'] . "\n" . $h['cargo_emisor']),
-                    utf8_decode($h['fecha_recepcion']),
-                    utf8_decode($h['dias_recepcion']),
-                    utf8_decode($h['dias_ahora']),
-                    utf8_decode($h['oficial']),
-                ));
-                $i++;
-            }
-            $pdf->Output('hoja_ruta_agrupada.pdf', 'I');
+            $filas = $mHojaruta->pendientes($user->id)->as_array();
 
-            //echo $documento->referencia;
+            $pdf = new Pdf_Pendientes('L', 'mm', 'Letter');
+            $pdf->logo = DOCROOT . 'media/LOGO 19-2-26.png';
+            $pdf->generar($user, $filas);
+            $pdf->Output('correspondencia_pendiente_' . date('Ymd_Hi') . '.pdf', 'I');
         } else {
             $this->request->redirect('error404');
         }

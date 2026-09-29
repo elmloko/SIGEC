@@ -132,7 +132,7 @@ class Controller_document extends Controller_DefaultTemplate {
                     ->bind('errors', $errors)
                     ->bind('mensajes', $mensajes);
         } else {
-            $this->template->content = 'El documento no existe';
+            $this->template->content = View::factory('no_access')->set('motivo', 'inexistente');
         }
     }
 
@@ -175,10 +175,10 @@ class Controller_document extends Controller_DefaultTemplate {
                         ->bind('mensajes', $mensajes);
             } else {
 
-                $this->template->content = View::factory('no_access');
+                $this->template->content = View::factory('no_access')->set('codigo', $documento->codigo);
             }
         } else {
-            $this->template->content = 'El documento no existe';
+            $this->template->content = View::factory('no_access')->set('motivo', 'inexistente');
         }
     }
 

@@ -55,6 +55,17 @@ class Model_Auth_User_Token extends ORM {
 	{
 		$this->token = $this->create_token();
 
+		// Con MySQL en modo estricto, las columnas NOT NULL sin valor por defecto hacen fallar el INSERT
+		// (error 1364 "Field 'type' doesn't have a default value" al ingresar con "Recordar").
+		if (array_key_exists('created', $this->_table_columns) AND ! $this->created)
+		{
+			$this->created = time();
+		}
+		if (array_key_exists('type', $this->_table_columns) AND $this->type === NULL)
+		{
+			$this->type = '';
+		}
+
 		return parent::create($validation);
 	}
 

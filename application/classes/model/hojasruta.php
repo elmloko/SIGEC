@@ -52,11 +52,11 @@ class Model_Hojasruta extends ORM {
 RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
             FROM 
             (SELECT *
-            FROM seguimiento WHERE derivado_a='$id' and estado='2') as s 
+            FROM seguimiento WHERE derivado_a = :id and estado='2') as s 
             INNER JOIN documentos as d ON s.nur=d.nur
             INNER JOIN acciones a ON s.accion=a.id
             WHERE d.original='1' ORDER BY s.fecha_recepcion DESC"; //important
-        return db::query(Database::SELECT, $sql)->execute();
+        return db::query(Database::SELECT, $sql)->param(":id", (int) $id)->execute();
     }
 
     public function enviados() {

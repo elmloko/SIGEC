@@ -9,6 +9,7 @@ defined('SYSPATH') or die('No direct script access.');
  */
 class Pdf_Seguimiento extends PDF_Code39 {
 
+    public $titulo = 'SEGUIMIENTO DE HOJA DE RUTA';
     public $hr = '';
     public $impreso_por = '';
     public $logo = '';
@@ -62,7 +63,7 @@ class Pdf_Seguimiento extends PDF_Code39 {
         $this->SetXY($m + 40, 8.5);
         $this->SetFont('Arial', 'B', 13);
         $this->color_texto(self::$azul_oscuro);
-        $this->Cell($ancho - 80, 6, $this->t('SEGUIMIENTO DE HOJA DE RUTA'), 0, 2, 'C');
+        $this->Cell($ancho - 80, 6, $this->t($this->titulo), 0, 2, 'C');
         $this->SetFont('Arial', 'B', 11);
         $this->color_texto(self::$azul);
         $this->Cell($ancho - 80, 6, $this->t($this->hr), 0, 0, 'C');
