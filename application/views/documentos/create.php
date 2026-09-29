@@ -1,343 +1,241 @@
+<?php
+// iconos por tipo de documento
+$icono_tipo = 'fa-file-text-o';
+foreach (array('informe' => 'fa-file-text-o', 'memo' => 'fa-clipboard', 'circular' => 'fa-bullhorn', 'carta' => 'fa-envelope-o',
+    'instructivo' => 'fa-list-ol', 'intructivo' => 'fa-list-ol', 'comunicado' => 'fa-comment-o', 'nota' => 'fa-pencil-square-o') as $clave => $icono) {
+    if (strpos(mb_strtolower($tipo->tipo, 'UTF-8'), $clave) !== FALSE) {
+        $icono_tipo = $icono;
+        break;
+    }
+}
+$con_via = $tipo->via != 0;
+$es_carta = $documento->tipo == 'Carta';
+$iniciales = function ($nombre) {
+    $partes = preg_split('/\s+/u', trim((string) $nombre), -1, PREG_SPLIT_NO_EMPTY);
+    $ini = '';
+    foreach (array_slice($partes, 0, 2) as $p) {
+        $ini .= mb_strtoupper(mb_substr($p, 0, 1, 'UTF-8'), 'UTF-8');
+    }
+    return $ini !== '' ? $ini : '?';
+};
+?>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=1"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=1"></script>
 <script type="text/javascript">
     var stat = 0;
-    var $this;
-    var $cargo;
     $(function () {
         $('#destinatario').focus();
-        $('#destinatario').focus(function () {
-            $this = $(this);
-            $cargo = $('#cargo_des');
-        });
-        $('#via').focus(function () {
-            $this = $(this);
-            $cargo = $('#cargovia');
-        });
-        $('#via2').focus(function () {
-            $this = $(this);
-            $cargo = $('#cargovia2');
-        });
-        $('#remitente').focus(function () {
-            $this = $(this);
-            $cargo = $('#cargo_rem');
-        });
-        $('a.destino1').click(function () {
-            var destino = $(this);
-
-            if ($cargo != undefined) {
-                var nombre = $(this).attr('nombre');
-                var cargo = $(this).attr('cargo');
-                // var a=$this.nodeName;  
-                // alert(index);
-                // alert(foco.val());
-                $this.val(nombre);
-                $cargo.val(cargo);
-            }
-            else {
-                $('#destinatario').val(destino.attr('nombre'));
-                $('#cargo_des').val(destino.attr('cargo'));
-            }
-            //console.log($this);
-            //console.log($('input:eq(' + parseInt(index) + ')').next().next().val(cargo));
-            //console.log($('input:eq(' + parseInt(index) + 1 + ')').val(cargo));
-            //$('input:eq('+index+')').next().val(cargo);            
-            return false;
-        });
         $('#noHojaRuta').click(function () {
             $('#hojaruta').val(0);
-            return true
+            return true;
         });
         $('#cite_sup').click(function () {
             $('#cite_superior').val(1);
             $('#hojaruta').val(0);
             stat = 1;
-            return true
+            return true;
         });
-
         $('#otrovia').click(function () {
+            $('.via2').toggle();
+            return false;
+        });
 
-            $('.via2').toggle(function () {
+        // evita generar dos documentos por doble clic
+        $('#frmCreate').on('submit', function (e) {
+            if (e.isDefaultPrevented() || ($.fn.valid && !$(this).valid())) {
+                return;
+            }
+            if (!$('#proceso').val()) {
+                alert('Elija un tipo de proceso por favor.');
+                $('#proceso').focus();
                 return false;
-            })
-
-        });
-
-
-        $('#addDest').click(function () {
-            var id_user = $(this).attr('rel');
-            eModal.setEModalOptions({
-                loadingHtml: '<span class="fa fa-circle-o-notch fa-spin fa-3x text-primary"></span><h4>Cargando usuarios...</h4>',
-
-            });
-            eModal.iframe('/content/destinos/' + id_user, 'Agregar Destinatario')
-
+            }
+            var $botones = $('.gd-acciones .btn');
+            setTimeout(function () {
+                $botones.prop('disabled', true);
+            }, 0);
+            $('#gd-generando').show();
         });
     });
-    $(function () {
-        //var buttons = ['formatting', '|', 'bold', 'italic', '|', 'unorderedlist', 'orderedlist', 'outdent', 'indent', '|', 'table', 'link', 'alignment', '|', 'horizontalrule', 'underline', 'alignleft', 'aligncenter', 'alignright', 'justify', '|', 'fontcolor', 'backcolor'];
-        // $('#descripcion').redactor({lang: 'es', css: 'docstyle.css', focus: true,
-        //   buttons: buttons});
-//incluir destinatario
 
-        //$('select').select2();
-    });
     function isValidForms() {
-
         if ($('#proceso').val() > 0) {
             if (stat) {
                 stat = 0;
-                if (confirm("Esta seguro que desea generar un numero cite de su area superior.")) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                return true;
+                return confirm("Esta seguro que desea generar un numero cite de su area superior.");
             }
+            return true;
         }
-        else {
-            alert("Escoja un tipo de proceso por favor.");
-            //return false;
-        }
+        alert("Escoja un tipo de proceso por favor.");
+        return false;
     }
     function activar(c) {
-        if (c.checked) {
-            document.getElementById('cite_sup').style.display = "block";
-        } else {
-            document.getElementById('cite_sup').style.display = "none";
-        }
+        document.getElementById('cite_sup').style.display = c.checked ? 'inline-block' : 'none';
     }
 </script>
-<style type="text/css">
-    .via2 {
-        display: none;
-    }
 
-    .destinatario:hover {
-        font-style: italic;
-        font-weight: 600;
-    }
-</style>
 <div class="col-lg-8">
-    <div class="card card-underline ">
-        <form class="form form-validate" action="/documento/generar/<?php echo $documento->action; ?>" method="post"
-              id="frmCreate">
-            <div class="card-head  ">
-                <header><i class="fa fa-plus"></i> Generar <span class="text-primary"> <?php echo $tipo->tipo ?></span>
-                </header>
-                <div class="tools">
-                    <input type="submit" class="btn btn-sm btn-primary-dark" name="submit"
-                           value="Generar Documento con Hoja de Ruta"/>
-                    <input type="submit" id="noHojaRuta"
-                           title="Genera el documento sin hora de ruta para su posterior asignaci[on"
-                           class="btn btn-sm btn-default" name="submit" value="Generar Documento sin Hoja de Ruta"/>
-                    <!--<a href="" class="button" onclick="javascript:history.back(); return false;" >Cancelar</a>-->
-                </div>
-            </div><!--end .card-head -->
-
-            <div class="card-body no-padding  ">
-                <div class="">
-
-                    <div class="col-lg-6 col-md-6">
-                        <?php if ($user->cite_despacho): ?>
-                            <div class="checkbox checkbox-styled">
-                                <label>
-                                    <input type="checkbox" name="cite_despacho" class="" value="1"
-                                           onclick="activar(this);"> <span>Activar Generaci&oacute;n con Cite de Despacho</span>
-
-                                </label>
-                            </div>
-                            <input style="display:none;" type="submit" class="button" name="submit" id="cite_sup"
-                                   value="GENERAR CON CITE DIR/DESPACHO"/>
-                        <?php endif; ?>
-                        <div class="form-group ">
-                            <?php echo Form::select('proceso', $options, '', array('class' => 'required form-control', 'title' => 'Elija un tipo de proceso por favor')); ?>
-                            <br/>
-                            <label for="proceso">Proceso: </label>
-                        </div>
-                        <?php if ($documento->tipo == 'Carta'): ?>
-                            <div class="form-group">
-                                <label>Titulo:</label>
-                                <select name="titulo" class="form-control">
-                                    <option></option>
-                                    <option>Señor</option>
-                                    <option>Señora</option>
-                                    <option>Señores</option>
-                                </select>
-                            </div>
-                        <?php else: ?>
-                            <input type="hidden" name="titulo"/>
-                        <?php endif; ?>
-                        <div class="form-group">
-                            <?php
-                            echo Form::input('destinatario', '', array('id' => 'destinatario', 'class' => 'form-control', 'index' => '101'));
-                            echo Form::label('destinatario', 'Nombre del destinatario:', array('index' => '100'));
-                            ?>
-                        </div>
-                        <div class="form-group">
-                            <?php
-                            echo Form::input('cargo_des', '', array('id' => 'cargo_des', 'size' => 48, 'class' => 'form-control', 'index' => '103'));
-                            echo Form::label('destinatario', 'Cargo Destinatario:', array('class' => 'form', 'index' => '102'));
-                            ?>
-                        </div>
-
-                        <?php if ($tipo->via == 0): ?>
-                            <div class="form-group">
-                                <label>Institución Destinatario</label>
-                                <input type="text" size="40" class="form-control" name="institucion_des"/>
-                                <input type="hidden" name="via"/>
-                                <input type="hidden" name="cargovia"/>
-                            </div>
-                        <?php else: ?>
-
-                            <input type="hidden" size="40" name="institucion_des"/>
-                            <div class="form-group">
-                                <?php
-                                echo Form::input('via', '', array('id' => 'via', 'size' => 48, 'class' => 'form-control '));
-                                echo Form::label('via', 'Via:', array('class' => 'form'));
-                                ?>
-
-                            </div>
-                            <div class="form-group">
-                                <?php
-                                echo Form::input('cargovia', '', array('id' => 'cargovia', 'size' => 48, 'class' => 'form-control '));
-                                echo Form::label('cargovia', 'Cargo Via:', array('class' => 'form'));
-                                ?>
-                                <!--<p class="help-block"><a href="javascript:;" id="otrovia" class=""><i class="fa fa-plus"></i> Agregar otro via</a></p>-->
-                            </div>
-
-                            <div class="form-group via2">
-                                <?php
-                                echo Form::input('via2', '', array('id' => 'via2', 'size' => 48, 'class' => 'form-control '));
-                                echo Form::label('via2', 'Via:', array('class' => 'form'));
-                                ?>
-                            </div>
-                            <div class="form-group via2">
-                                <?php
-                                echo Form::input('cargovia2', '', array('id' => 'cargovia2', 'size' => 48, 'class' => 'form-control required'));
-                                echo Form::label('cargovia2', 'Cargo Via:', array('class' => 'form'));
-                                ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="form-group">
-
-                            <textarea name="referencia" id="referencia" class="form-control required"
-                                      title="Campo requerido"></textarea>
-                            <label for="referencia">Referencia</label>
-                        </div>
-
-
-                    </div>
-
-                    <div class="col-lg-6 col-md-6">
-                        <div class="row">
-                            <div class="col-lg-10 col-md-9">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('remitente', $user->nombre, array('id' => 'remitente', 'size' => 35, 'class' => 'form-control required', 'readonly'));
-                                    echo Form::label('remitente', 'Remitente:', array('class' => 'form', 'readonly'));
-                                    ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 col-md-3">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('moscas', $user->mosca, array('id' => 'moscas', 'class' => 'form-control', 'readonly', 'size' => 5));
-                                    echo Form::hidden('mosca', $user->mosca, array('id' => 'mosca'));
-                                    echo Form::label('mosca', 'Mosca:');
-                                    ?>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="form-group">
-                            <?php
-                            echo Form::input('cargo_rem', $user->cargo, array('id' => 'cargo_rem', 'size' => 48, 'class' => ' form-control', 'readonly'));
-                            echo Form::label('cargo_rem', 'Cargo Remitente:', array('class' => 'form', 'readonly'));
-                            ?>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-4 col-md-4">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('adjuntos', 'Folder', array('id' => 'adjuntos', 'size' => 48, 'class' => ' form-control', 'title' => 'Ejemplo: Lo citado'));
-                                    echo Form::label('adjuntos', 'Adjunto:', array('class' => 'form'));
-                                    ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-8 col-md-8">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('hojas', '1', array('id' => 'hojas', 'class' => 'required form-control', 'title' => 'La casilla está vacía o ingrese número > 0', 'type' => 'number', 'min' => '1'));
-                                    echo Form::label('hojas', 'Nro hojas:', array('class' => 'form'));
-                                    ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-md-4">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('copias', '', array('id' => 'adjuntos', 'class' => 'form-control '));
-                                    echo Form::label('copias', 'Con copia a:', array('class' => 'for'));
-                                    ?>
-                                </div>
-                            </div>
-
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-10">
-                                <?php echo Form::input('addDest', '+Agregar Destinatario', array('class' => 'btn btn-sm btn-default', 'type' => 'button', 'id' => 'addDest', 'rel' => $user->id)); ?>
-
-                                <div id="vias">
-                                    <ul>
-                                        <!-- destinatarios -->
-                                        <?php foreach ($destinatarios as $v) { ?>
-                                            <li class="<?php echo $v['genero'] ?> "><?php echo HTML::anchor('#', $v['nombre'], array('class' => 'destino1 destinatario', 'nombre' => $v['nombre'], 'title' => $v['cargo'], 'cargo' => $v['cargo'], 'via' => '', 'cargo_via' => '')); ?></li>
-                                        <?php } ?>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="hojaruta" value="1" name="hojaruta"/>
-                        <input type="hidden" id="cite_superior" value="0" name="cite_superior"/>
-
-                        <div class="descripcion" style="width: 680px; float: left; ">
-                            <?php
-                            echo Form::hidden('descripcion', '', array('id' => 'descripcion'));
-                            ?>
-                        </div>
-
-                    </div>
-                </div>
+    <form class="form form-validate gd-card" action="/documento/generar/<?php echo HTML::chars($documento->action); ?>" method="post" id="frmCreate">
+        <!-- tipo de documento y proceso -->
+        <div class="gd-cab">
+            <div class="gd-cab-icono"><i class="fa <?php echo $icono_tipo; ?>"></i></div>
+            <div class="gd-cab-titulo">
+                <h2>Generar <?php echo HTML::chars(mb_strtolower($tipo->tipo, 'UTF-8')); ?></h2>
+                <small>Fecha: <?php echo date('d/m/Y'); ?> &middot; el cite se asigna al generar</small>
             </div>
-        </form>
-    </div>
-</div>
-<div class="col-lg-4 ">
-    <div class="card card-underline">
-        <div class="card-head  ">
-            <header><i class="fa fa-fo"></i><span class="text-primary"><i class="fa fa-flash"></i> Tips: </span>
-            </header>
-        </div><!--end .card-head -->
-        <div class="card-body">
-            <p class=" opacity-50">
-
-                <i> Puede generar un documento con hoja de ruta haciendo click en el boton azul [generar documento con
-                    hoja de ruta], tambien puede generarlo sin hoja de ruta para luego elegir de entre los
-                    pendientes.</i>
-            </p>
-
-            <p class=" opacity-50">
-                <i>Puede escribir un destinatario de manera automatica haciendo click en el nombre del destinatario,
-                    esto escribira en destinatario o via dependiendo donde se encuentre ubicado el cursor.</i>
-            </p>
-
-            <p class=" opacity-50">
-                <i>Tambien puede agregar personas a la su lista de destinatarios haciendo click en el boton [ + Agregar
-                    destinatario].</i>
-            </p>
+            <div class="gd-cab-proceso">
+                <label for="proceso">Proceso <span class="gd-req">*</span></label>
+                <?php echo Form::select('proceso', $options, '', array('id' => 'proceso', 'class' => 'required', 'title' => 'Elija un tipo de proceso por favor')); ?>
+            </div>
         </div>
 
-    </div>
+        <!-- encabezado del documento, en el mismo orden que el impreso -->
+        <div class="gd-hoja">
+            <!-- A: -->
+            <div class="gd-fila">
+                <div class="gd-etiqueta">A:</div>
+                <div>
+                    <div class="gd-par<?php echo $es_carta ? ' gd-par-titulo' : ''; ?>">
+                        <?php if ($es_carta): ?>
+                            <select name="titulo" id="titulo" title="Título">
+                                <option value="">Título</option>
+                                <option>Señor</option>
+                                <option>Señora</option>
+                                <option>Señores</option>
+                            </select>
+                        <?php endif; ?>
+                        <?php echo Form::input('destinatario', '', array('id' => 'destinatario', 'autocomplete' => 'off', 'placeholder' => 'Nombre del destinatario')); ?>
+                        <?php echo Form::input('cargo_des', '', array('id' => 'cargo_des', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
+                        <?php if (!$con_via): ?>
+                            <input type="text" name="institucion_des" id="institucion_des" class="gd-completo" autocomplete="off" placeholder="Institución"/>
+                        <?php endif; ?>
+                    </div>
+                    <div class="gd-ayuda"><span>Escríbalo o elíjalo de la libreta de la derecha</span><a href="#" class="gd-limpiar"><i class="fa fa-times"></i> limpiar</a></div>
+                </div>
+            </div>
+            <?php if (!$es_carta): ?>
+                <input type="hidden" name="titulo"/>
+            <?php endif; ?>
+
+            <?php if ($con_via): ?>
+                <input type="hidden" name="institucion_des"/>
+                <!-- VIA: -->
+                <div class="gd-fila">
+                    <div class="gd-etiqueta">VÍA:<small>opcional</small></div>
+                    <div>
+                        <div class="gd-par">
+                            <?php echo Form::input('via', '', array('id' => 'via', 'autocomplete' => 'off', 'placeholder' => 'Nombre')); ?>
+                            <?php echo Form::input('cargovia', '', array('id' => 'cargovia', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
+                        </div>
+                        <div class="gd-ayuda"><span>Déjelo vacío si el documento va directo</span><a href="#" class="gd-limpiar"><i class="fa fa-times"></i> limpiar</a></div>
+                    </div>
+                </div>
+                <div class="gd-fila via2">
+                    <div class="gd-etiqueta">VÍA:</div>
+                    <div class="gd-par">
+                        <?php echo Form::input('via2', '', array('id' => 'via2', 'autocomplete' => 'off', 'placeholder' => 'Nombre')); ?>
+                        <?php echo Form::input('cargovia2', '', array('id' => 'cargovia2', 'class' => 'required', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <input type="hidden" name="via"/>
+                <input type="hidden" name="cargovia"/>
+            <?php endif; ?>
+
+            <!-- DE: -->
+            <div class="gd-fila">
+                <div class="gd-etiqueta">DE:</div>
+                <div class="gd-remitente">
+                    <div class="gd-avatar"><?php echo HTML::chars($iniciales($user->nombre)); ?></div>
+                    <div>
+                        <b><?php echo HTML::chars($user->nombre); ?></b>
+                        <span><?php echo HTML::chars($user->cargo); ?></span>
+                    </div>
+                    <?php if ($user->mosca != ''): ?><span class="gd-mosca" title="Mosca">Mosca: <?php echo HTML::chars($user->mosca); ?></span><?php endif; ?>
+                </div>
+            </div>
+            <?php echo Form::hidden('remitente', $user->nombre, array('id' => 'remitente')); ?>
+            <?php echo Form::hidden('cargo_rem', $user->cargo, array('id' => 'cargo_rem')); ?>
+            <?php echo Form::hidden('mosca', $user->mosca, array('id' => 'mosca')); ?>
+
+            <!-- REF: -->
+            <div class="gd-fila">
+                <div class="gd-etiqueta">REF.: <span class="gd-req">*</span></div>
+                <div>
+                    <textarea name="referencia" id="referencia" class="required" title="Escriba la referencia del documento"
+                              placeholder="Asunto del documento, por ejemplo: Solicitud de mantenimiento de equipos"></textarea>
+                    <div class="gd-ayuda"><span>Asunto que se verá en la bandeja y en la hoja de ruta</span><span><span id="gd-ref-contador">0</span> caracteres</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- anexos -->
+        <div class="gd-anexos">
+            <div>
+                <label for="adjuntos">Adjunto</label>
+                <?php echo Form::input('adjuntos', 'Folder', array('id' => 'adjuntos', 'title' => 'Ejemplo: Lo citado')); ?>
+            </div>
+            <div>
+                <label for="hojas">Hojas <span class="gd-req">*</span></label>
+                <?php echo Form::input('hojas', '1', array('id' => 'hojas', 'class' => 'required', 'title' => 'La casilla está vacía o ingrese número > 0', 'type' => 'number', 'min' => '1')); ?>
+            </div>
+            <div>
+                <label for="copias">Con copia a</label>
+                <?php echo Form::input('copias', '', array('id' => 'copias', 'autocomplete' => 'off', 'placeholder' => 'Opcional')); ?>
+            </div>
+        </div>
+
+        <input type="hidden" id="hojaruta" value="1" name="hojaruta"/>
+        <input type="hidden" id="cite_superior" value="0" name="cite_superior"/>
+        <?php echo Form::hidden('descripcion', '', array('id' => 'descripcion')); ?>
+
+        <div class="gd-acciones">
+            <span class="gd-izq">
+                <?php if ($user->cite_despacho): ?>
+                    <label><input type="checkbox" name="cite_despacho" value="1" onclick="activar(this);"> Usar cite de Dirección / Despacho</label>
+                <?php else: ?>
+                    <span class="gd-req">*</span> Obligatorio
+                <?php endif; ?>
+            </span>
+            <span id="gd-generando"><i class="fa fa-circle-o-notch fa-spin"></i> Generando documento...</span>
+            <?php if ($user->cite_despacho): ?>
+                <input style="display:none;" type="submit" class="btn btn-warning" name="submit" id="cite_sup" value="Generar con cite Dir./Despacho"/>
+            <?php endif; ?>
+            <input type="submit" id="noHojaRuta" class="btn btn-default-bright" name="submit" value="Generar sin hoja de ruta"
+                   title="Genera el documento sin hoja de ruta, para asignársela después"/>
+            <input type="submit" class="btn btn-primary" name="submit" value="Generar con hoja de ruta"
+                   title="Genera el documento y le asigna una hoja de ruta nueva"/>
+        </div>
+    </form>
 </div>
 
-
+<div class="col-lg-4">
+    <div class="gd-card gd-libreta">
+        <div class="gd-libreta-cab">
+            <h3><i class="fa fa-users"></i> Libreta de destinatarios</h3>
+            <p>Clic en una persona para llenar: <b id="gd-objetivo-texto">A (destinatario)</b></p>
+            <div class="gd-libreta-buscar">
+                <i class="fa fa-search"></i>
+                <input type="search" id="gd-buscar" placeholder="Buscar por nombre o cargo..." autocomplete="off"/>
+            </div>
+        </div>
+        <div id="vias">
+            <ul>
+                <?php foreach ($destinatarios as $v): ?>
+                    <li class="<?php echo HTML::chars($v['genero']); ?>">
+                        <a href="#" class="destino1 destinatario" nombre="<?php echo HTML::chars($v['nombre']); ?>" cargo="<?php echo HTML::chars($v['cargo']); ?>"
+                           title="<?php echo HTML::chars($v['cargo']); ?>" via="" cargo_via="">
+                            <span class="gd-avatar"><?php echo HTML::chars($iniciales($v['nombre'])); ?></span>
+                            <span class="gd-persona"><b><?php echo HTML::chars($v['nombre']); ?></b><small><?php echo HTML::chars($v['cargo']); ?></small></span>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <div id="gd-sin-resultados">Nadie coincide con la búsqueda.</div>
+        </div>
+        <div class="gd-libreta-pie">
+            <?php echo Form::input('addDest', '+ Agregar persona a la libreta', array('class' => 'btn btn-sm btn-default-bright btn-block', 'type' => 'button', 'id' => 'addDest', 'rel' => $user->id)); ?>
+            <p><i class="fa fa-lightbulb-o"></i> Haga clic en la fila <b>A</b> o <b>VÍA</b> y luego elija a la persona. Después de generar podrá editar el contenido y subir el archivo.</p>
+        </div>
+    </div>
+</div>

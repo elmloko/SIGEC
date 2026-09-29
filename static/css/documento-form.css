@@ -1,0 +1,410 @@
+/* Formulario de documento (generar y editar): encabezado tipo hoja A / VIA / DE / REF y libreta de destinatarios */
+.via2,
+.gd-fila.via2 {
+    display: none;
+}
+.gd-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(18, 62, 115, .12);
+    margin-bottom: 18px;
+}
+
+/* cabecera: tipo de documento + proceso */
+.gd-cab {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    border-bottom: 3px solid var(--correos-amarillo, #FECB34);
+}
+.gd-cab-icono {
+    flex: 0 0 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    background: var(--correos-azul, #1A549A);
+    color: #fff;
+}
+.gd-cab-titulo {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+.gd-cab h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--correos-azul-oscuro, #123E73);
+}
+.gd-cab small {
+    display: block;
+    font-size: 12px;
+    color: #7a8594;
+}
+.gd-cab-proceso {
+    flex: 0 1 260px;
+}
+.gd-cab-proceso label {
+    display: block;
+    margin: 0 0 3px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #4a5568;
+}
+
+/* hoja: replica el encabezado del documento impreso */
+.gd-hoja {
+    margin: 20px 22px 6px;
+    padding: 6px 22px 10px;
+    border: 1px solid #E3E8EF;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(18, 62, 115, .06);
+}
+.gd-hoja-sub {
+    margin: 12px 0 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: #9aa4b2;
+}
+.gd-fila {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 12px 8px;
+    margin: 0 -8px;
+    border-bottom: 1px dashed #E3E8EF;
+    border-radius: 8px;
+    transition: background .2s;
+}
+.gd-fila:last-child {
+    border-bottom: 0;
+}
+.gd-fila.gd-objetivo {
+    background: var(--correos-amarillo-suave, #FFF7DD);
+}
+.gd-fila.gd-completado {
+    background: #E6F4EC;
+}
+.gd-etiqueta {
+    padding-top: 9px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--correos-azul-oscuro, #123E73);
+}
+.gd-etiqueta small {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #9aa4b2;
+    text-transform: lowercase;
+}
+.gd-par {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+}
+.gd-par-titulo {
+    grid-template-columns: 110px minmax(0, 1fr) minmax(0, 1fr);
+}
+.gd-par .gd-completo {
+    grid-column: 1 / -1;
+}
+.gd-hoja input[type=text],
+.gd-hoja textarea,
+.gd-cab select,
+.gd-hoja select,
+.gd-anexos input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    color: #2d3748;
+    box-shadow: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.gd-hoja input[type=text],
+.gd-hoja select,
+.gd-cab select,
+.gd-anexos input {
+    height: 38px;
+}
+.gd-hoja textarea {
+    min-height: 72px;
+    resize: vertical;
+}
+.gd-hoja input:focus,
+.gd-hoja textarea:focus,
+.gd-hoja select:focus,
+.gd-cab select:focus,
+.gd-anexos input:focus {
+    outline: none;
+    border-color: var(--correos-azul, #1A549A);
+    box-shadow: 0 0 0 3px rgba(26, 84, 154, .12);
+}
+.gd-ayuda {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 11px;
+    color: #9aa4b2;
+}
+.gd-limpiar {
+    font-size: 11px;
+    color: #9aa4b2;
+}
+.gd-limpiar:hover {
+    color: #D32F2F;
+    text-decoration: none;
+}
+.gd-req {
+    color: #D32F2F;
+}
+.gd-hoja label.error,
+.gd-hoja .help-block,
+.gd-anexos label.error,
+.gd-cab label.error {
+    display: block;
+    margin: 3px 0 0;
+    color: #D32F2F;
+    font-size: 11px;
+    font-weight: normal;
+    text-transform: none;
+}
+
+/* DE: remitente fijo */
+.gd-remitente {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 38px;
+}
+.gd-avatar {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--correos-azul, #1A549A);
+    color: #fff;
+}
+.gd-remitente b {
+    display: block;
+    font-size: 14px;
+    color: #2d3748;
+}
+.gd-remitente span {
+    font-size: 12px;
+    color: #7a8594;
+}
+.gd-mosca {
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: var(--correos-fondo, #F3F5F8);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--correos-azul-oscuro, #123E73);
+    white-space: nowrap;
+}
+
+/* anexos */
+.gd-anexos {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) 110px minmax(0, 1.5fr);
+    gap: 12px;
+    margin: 14px 22px 18px;
+}
+.gd-anexos label {
+    display: block;
+    margin: 0 0 3px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #4a5568;
+}
+
+/* acciones */
+.gd-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 22px;
+    border-top: 1px solid #EEF2F7;
+    background: #FAFBFC;
+    border-radius: 0 0 12px 12px;
+}
+.gd-acciones .btn {
+    margin: 0;
+}
+.gd-acciones .gd-izq {
+    margin-right: auto;
+    font-size: 12px;
+    color: #7a8594;
+}
+.gd-acciones .gd-izq label {
+    margin: 0;
+    font-weight: normal;
+    cursor: pointer;
+}
+#gd-generando {
+    display: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--correos-azul, #1A549A);
+}
+
+/* libreta de destinatarios */
+.gd-libreta-cab {
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--correos-amarillo, #FECB34);
+}
+.gd-libreta-cab h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--correos-azul-oscuro, #123E73);
+}
+.gd-libreta-cab p {
+    margin: 0;
+    font-size: 12px;
+    color: #6b7686;
+}
+.gd-libreta-cab p b {
+    color: #8a6100;
+    background: var(--correos-amarillo-suave, #FFF7DD);
+    padding: 0 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.gd-libreta-buscar {
+    position: relative;
+    margin-top: 10px;
+}
+.gd-libreta-buscar .fa {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8a94a3;
+}
+.gd-libreta-buscar input {
+    width: 100%;
+    height: 34px;
+    padding: 4px 10px 4px 30px;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-radius: 17px;
+    background: var(--correos-fondo, #F3F5F8);
+}
+div#vias {
+    height: auto;
+    max-height: 460px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow-y: auto;
+}
+div#vias ul li.hombre,
+div#vias ul li.mujer,
+div#vias ul li.oficinas {
+    list-style: none;
+    list-style-image: none;
+}
+#vias ul {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+}
+#vias li a.destino1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 16px;
+    color: inherit;
+    transition: background .15s;
+}
+#vias li a.destino1:hover {
+    text-decoration: none;
+    background: var(--correos-amarillo-suave, #FFF7DD);
+}
+#vias .gd-avatar {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    font-size: 11px;
+}
+#vias li.mujer .gd-avatar {
+    background: #8B5FBF;
+}
+#vias .gd-persona {
+    min-width: 0;
+    line-height: 1.25;
+}
+#vias .gd-persona b {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2d3748;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#vias .gd-persona small {
+    display: block;
+    font-size: 11px;
+    color: #7a8594;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#gd-sin-resultados {
+    display: none;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: #8a94a3;
+}
+.gd-libreta-pie {
+    padding: 10px 16px 14px;
+    border-top: 1px solid #EEF2F7;
+}
+.gd-libreta-pie p {
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: #8a94a3;
+}
+@media (min-width: 1200px) {
+    .gd-libreta {
+        position: sticky;
+        top: 80px;
+    }
+}
+@media (max-width: 767px) {
+    .gd-fila {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 4px;
+    }
+    .gd-etiqueta {
+        padding-top: 0;
+    }
+    .gd-par,
+    .gd-par-titulo,
+    .gd-anexos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

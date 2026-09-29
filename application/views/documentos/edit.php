@@ -1,168 +1,169 @@
+<?php
+$con_via = $tipo->via != 0;
+$es_carta = $documento->id_tipo == 5;
+$iniciales = function ($nombre) {
+    $partes = preg_split('/\s+/u', trim((string) $nombre), -1, PREG_SPLIT_NO_EMPTY);
+    $ini = '';
+    foreach (array_slice($partes, 0, 2) as $p) {
+        $ini .= mb_strtoupper(mb_substr($p, 0, 1, 'UTF-8'), 'UTF-8');
+    }
+    return $ini !== '' ? $ini : '?';
+};
+$num_archivos = count($archivos);
+$derivado = $documento->estado == 1;
+// para derivar se exige al menos un archivo digital (salvo el usuario de despacho)
+$puede_derivar = $num_archivos > 0 || $user == '95';
+?>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=1"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=1"></script>
 <script type="text/javascript">
-    var stat = 0;
-    var $this;
-    var $cargo;
     $(function () {
-        $('#destinatario').focus();
-        $('#destinatario').focus(function () {
-            $this = $(this);
-            $cargo = $('#cargo_des');
-        });
-        $('#via').focus(function () {
-            $this = $(this);
-            $cargo = $('#cargovia');
-        });
-        $('a.destino1').click(function () {
-            var destino = $(this);
-            if ($cargo != undefined) {
-                var nombre = $(this).attr('nombre');
-                var cargo = $(this).attr('cargo');
-                // var a=$this.nodeName;
-                // alert(index);
-                // alert(foco.val());
-                $this.val(nombre);
-                $cargo.val(cargo);
-            } else {
-                $('#destinatario').val(destino.attr('nombre'));
-                $('#cargo_des').val(destino.attr('cargo'));
-            }
-            //console.log($this);
-            //console.log($('input:eq(' + parseInt(index) + ')').next().next().val(cargo));
-            //console.log($('input:eq(' + parseInt(index) + 1 + ')').val(cargo));
-            //$('input:eq('+index+')').next().val(cargo);
-            return false;
-        });
-        $('#noHojaRuta').click(function () {
-            $('#hojaruta').val(0);
-            return true
-        });
-        $('#cite_sup').click(function () {
-            $('#cite_superior').val(1);
-            $('#hojaruta').val(0);
-            stat = 1;
-            return true
-        });
-        $('#addDest').click(function () {
-            var id_user = $(this).attr('rel');
-            eModal.setEModalOptions({
-                loadingHtml: '<span class="fa fa-circle-o-notch fa-spin fa-3x text-primary"></span><h4>Cargando usuarios...</h4>',
-
-            });
-            eModal.iframe('/content/destinos/' + id_user, 'Agregar Destinatario')
-
-        });
-        /* $("#theTable").tablesorter({sortList:[[1,0]],
-         widgets: ['zebra'],
-         headers: {
-         0: { sorter:false}
-         }
-         }); */
-    });
-    $(function () {
-        /* var tabContainers = $('div.tabs > div');
-         tabContainers.hide().filter(':first').show();
-         $('div.tabs ul.tabNavigation a').click(function() {
-         tabContainers.hide();
-         tabContainers.filter(this.hash).show();
-         $('div.tabs ul.tabNavigation a').removeClass('selected');
-         $(this).addClass('selected');
-         return false;
-         }).filter(':first').click();
-         */
         // el plugin redactor ya no se carga en esta pagina; sin esta verificacion el error detenia el resto de los scripts
         if ($.fn.redactor) {
             $('#descripcion').redactor({lang: 'es', css: 'docstyle.css'});
         }
-        //incluir destinatario
-        $('a.destino').click(function () {
-            var nombre = $(this).attr('nombre');
-            var cargo = $(this).attr('cargo');
-            var via = $(this).attr('via');
-            var cargo_via = $(this).attr('cargo_via');
-            $('#destinatario').val(nombre);
-            $('#cargo_des').val(cargo);
-            $('#via').val(via);
-            $('#cargovia').val(cargo_via);
-            $('#referencia').focus();
-            return false;
-        });
-        $('#btnword').click(function () {
-            $('#word').val(1);
-            return true
 
+        // avisa si se sale (o deriva) sin guardar los cambios
+        var $form = $('#frm-editar');
+        var inicial = $form.serialize();
+        var enviando = false;
+        $form.on('input change', ':input', function () {
+            $('#gd-sin-guardar').toggle($form.serialize() !== inicial);
         });
-        $('#save').click(function () {
-            $('#frmEditar').submit();
+        $form.on('submit', function (e) {
+            if (e.isDefaultPrevented() || ($.fn.valid && !$form.valid())) {
+                return;
+            }
+            enviando = true;
+            $('#gd-guardar').html('<i class="fa fa-circle-o-notch fa-spin"></i> Guardando...');
         });
-        $('#subir').click(function () {
-            var id = $(this).attr('rel');
-            var left = screen.availWidth;
-            var top = screen.availHeight;
-            left = (left - 700) / 2;
-            top = (top - 500) / 2;
-            var r = window.showModalDialog("/archivo/add/" + id, "", "center:0;dialogWidth:600px;dialogHeight:450px;scroll=yes;resizable=yes;status=yes;" + "dialogLeft:" + left + "px;dialogTop:" + top + "px");
-            alert(r);
-            return false;
+        $('.gd-requiere-guardar').click(function () {
+            if ($form.serialize() !== inicial) {
+                if (!confirm('Tiene cambios sin guardar en el documento. ¿Continuar sin guardarlos?')) {
+                    return false;
+                }
+                enviando = true;
+            }
         });
-        // $("input.file").si();
-        $('select').select2();
+        $(window).on('beforeunload', function () {
+            if (!enviando && $form.serialize() !== inicial) {
+                return 'Tiene cambios sin guardar.';
+            }
+        });
+        // subir un archivo recarga la pagina: no avisar en ese caso
+        $('#arch-form').on('submit', function () {
+            enviando = true;
+        });
     });
 
     function msg() {
-        alert("A usted le falta agregar 'ARCHIVO DIGITAL'");
+        alert("Para derivar, primero suba el ARCHIVO DIGITAL (PDF) del documento.");
     }
 
     function validarTipoDeArchivoASubir() {
-
         var file = $("#file1").val();
-
         var ext = file.split(".");
         ext = ext[ext.length - 1].toLowerCase();
-        var arrayExtensions = ["pdf"];
-
-        if (arrayExtensions.lastIndexOf(ext) == -1) {
+        if (["pdf"].lastIndexOf(ext) == -1) {
             alert("Solo debe subir archivos PDF");
             return false;
-        } else {
-            return true;
         }
-
-        /*
-        var file = $("#file1").val();
-        var filesizeBytes = document.getElementById('file1').files[0].size;
-
-        var filesizeKB = (filesizeBytes / 1024 ).toFixed(2);
-        var filesizeMB = (filesizeBytes / (1024 * 1024)).toFixed(2);
-
-        var ext = file.split(".");
-        ext = ext[ext.length - 1].toLowerCase();
-        var arrayExtensions = ["pdf"];
-
-        // Validamos que el tamaño de archivo sea >= 30Kb
-        if (filesizeKB >= 30) {
-            if (arrayExtensions.lastIndexOf(ext) == -1) {
-                alert("Solo debe subir archivos PDF");
-                return false;
-            } else {
-                return true;
-            }
-        }
-        else {
-            alert("Debe subir archivos >= 30 KB");
-            return false;
-        }
-         */
+        return true;
     }
-
 </script>
 <style type="text/css">
-    form#frmCreate {
-        padding: 0 5px;
-        margin: 0;
+    /* ===== Editar documento: cabecera, pasos y acciones ===== */
+    .gd-cab-codigo {
+        display: inline-block;
+        margin-top: 2px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--correos-azul, #1A549A);
+        word-break: break-word;
     }
-
-    /* .cke_contents{height: 500px;}*/
-    /* cke_skin_kama{border: none;}   */
+    .gd-mensaje {
+        margin: 16px 22px 0;
+        padding: 10px 14px;
+        border-radius: 8px;
+        background: #E6F4EC;
+        color: #1E6B3E;
+        font-size: 13px;
+    }
+    .gd-pasos {
+        display: flex;
+        margin: 16px 22px 0;
+        border-radius: 10px;
+        background: var(--correos-fondo, #F3F5F8);
+        overflow: hidden;
+    }
+    .gd-paso {
+        flex: 1 1 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px 14px;
+        font-size: 12px;
+        color: #7a8594;
+        border-right: 1px solid #fff;
+    }
+    .gd-paso:last-child {
+        border-right: 0;
+    }
+    .gd-paso b {
+        display: block;
+        font-size: 13px;
+        color: #4a5568;
+    }
+    .gd-paso-num {
+        flex: 0 0 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        background: #fff;
+        color: #9aa4b2;
+        border: 2px solid #DCE3EC;
+    }
+    .gd-paso.hecho .gd-paso-num {
+        background: #2E9E5B;
+        border-color: #2E9E5B;
+        color: #fff;
+    }
+    .gd-paso.actual {
+        background: var(--correos-amarillo-suave, #FFF7DD);
+    }
+    .gd-paso.actual .gd-paso-num {
+        border-color: var(--correos-amarillo, #FECB34);
+        color: #8a6100;
+    }
+    .gd-paso.actual b {
+        color: var(--correos-azul-oscuro, #123E73);
+    }
+    #gd-sin-guardar {
+        display: none;
+        margin-left: 8px;
+        color: #B7791F;
+        font-weight: 600;
+    }
+    .gd-acciones .btn .fa {
+        margin-right: 4px;
+    }
+    .gd-libreta-edit div#vias {
+        max-height: 320px;
+    }
+    @media (max-width: 767px) {
+        .gd-pasos {
+            flex-direction: column;
+        }
+        .gd-paso {
+            border-right: 0;
+            border-bottom: 1px solid #fff;
+        }
+    }
 
     /* ===== Archivos Digitales ===== */
     .archivos-digitales .arch-contador {
@@ -469,214 +470,160 @@
 <div class="row">
 
     <div class="col-lg-8">
-        <form action="/documento/edit/<?php echo $documento->id; ?>" class="form form-validate" method="post"
-              id="frm-editar">
-            <div class="card card-underline">
-                <?php if (sizeof($mensajes) > 0): ?>
-                    <div class="alert alert-success ">
-                        <p>
-                            <?php foreach ($mensajes as $k => $v): ?>
-                            <strong><?= $k ?>: </strong> <?php echo $v; ?></p>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+        <form action="/documento/edit/<?php echo $documento->id; ?>" class="form form-validate gd-card" method="post" id="frm-editar">
+            <!-- tipo de documento, cite y proceso -->
+            <div class="gd-cab">
+                <div class="gd-cab-icono"><i class="fa fa-pencil"></i></div>
+                <div class="gd-cab-titulo">
+                    <h2>Editar <?php echo HTML::chars(mb_strtolower($tipo->tipo, 'UTF-8')); ?></h2>
+                    <span class="gd-cab-codigo"><?php echo HTML::chars($documento->codigo); ?></span>
+                    <small>
+                        <?php if ($documento->nur != ''): ?>Hoja de ruta <b><?php echo HTML::chars($documento->nur); ?></b> &middot; <?php endif; ?>
+                        Creado el <?php echo $documento->fecha_creacion ? date('d/m/Y H:i', strtotime($documento->fecha_creacion)) : '-'; ?>
+                    </small>
+                </div>
+                <div class="gd-cab-proceso">
+                    <label for="proceso">Proceso <span class="gd-req">*</span></label>
+                    <?php echo Form::select('proceso', $options, $documento->id_proceso, array('id' => 'proceso', 'class' => 'required')); ?>
+                </div>
+            </div>
 
-                <div class="card-head  ">
-                    <header><i class="fa fa-pencil"></i> <?php echo $documento->nur ?> | <span
-                            class="text-primary"> <?php // echo $tipo->tipo    ?><?php echo $documento->codigo ?></span>
-                    </header>
-                    <div class="tools">
-                        <input type="submit" name="documento" value="Editar" class="btn btn-sm btn-primary-dark"/>
+            <?php if (sizeof($mensajes) > 0): ?>
+                <div class="gd-mensaje">
+                    <?php foreach ($mensajes as $k => $v): ?>
+                        <i class="fa fa-check-circle"></i> <strong><?php echo $k; ?></strong> <?php echo $v; ?>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
 
-                        <?php if ($documento->estado == 1) { ?>
+            <!-- en que paso esta el documento -->
+            <div class="gd-pasos">
+                <div class="gd-paso hecho">
+                    <span class="gd-paso-num"><i class="fa fa-check"></i></span>
+                    <span><b>Generado</b>Con cite asignado</span>
+                </div>
+                <div class="gd-paso <?php echo $num_archivos > 0 ? 'hecho' : ($derivado ? '' : 'actual'); ?>">
+                    <span class="gd-paso-num"><?php echo $num_archivos > 0 ? '<i class="fa fa-check"></i>' : '2'; ?></span>
+                    <span><b>Archivo digital</b><?php echo $num_archivos > 0 ? $num_archivos . ($num_archivos == 1 ? ' PDF subido' : ' PDF subidos') : 'Suba el PDF firmado'; ?></span>
+                </div>
+                <div class="gd-paso <?php echo $derivado ? 'hecho' : ($num_archivos > 0 ? 'actual' : ''); ?>">
+                    <span class="gd-paso-num"><?php echo $derivado ? '<i class="fa fa-check"></i>' : '3'; ?></span>
+                    <span><b>Derivado</b><?php echo $derivado ? 'Ya está en camino' : ($documento->nur != '' ? 'Pendiente de derivar' : 'Sin hoja de ruta'); ?></span>
+                </div>
+            </div>
 
-                            <a href="/route/trace/?hr=<?php echo $documento->nur; ?>" class="btn btn-sm btn-success"
-                               title="Ver seguimiento"><i class="md md-verified-user"></i> Ver</a>
-                        <?php } else { ?>
-
-                            <?php
-                            $error_subir_ningun_archivo = false;
-                            ?>
-
-                            <?php if ($documento->nur != '') { ?>
-
-                                <?php if (count($archivos) > 0) { ?>
-                                <?php } else {
-                                    $error_subir_ningun_archivo = true;
-                                    //      Se coloca excepción para el usuario de 'despacho' (no requiere subir adjuntos para derivar)
-                                    if ($user == '95') {
-                                        $error_subir_ningun_archivo = false;
-                                    }
-                                } ?>
-
-                                <!--        Verificamos errores en el formulario -->
-                                <?php if ($error_subir_ningun_archivo == false) { ?>
-
-                                    <a href="/route/deriv/?hr=<?php echo $documento->nur; ?>"
-                                       class="btn btn-sm btn-accent"
-                                       title="Derivar documento"><i class="fa fa-send-o"></i> Derivar</a>
-
-                                <?php } else { ?>
-                                    <a href="javascript:msg();" style="color: #b7260b" class="button"
-                                       title="Derivar documento">
-                                    </a>
-                                <?php } ?>
-
-
-                            <?php } else { ?>
-
-                                <a href="/document/asignar/<?php echo $documento->id; ?>" class="button">Asignar HR</a>
-                            <?php } ?>
-
-                        <?php } ?>
-                        <a href="/plantilla/word/<?php echo $documento->id; ?>" target="_blank"
-                           title="Editar este documento en word" class="btn btn-sm btn-default"><i
-                                class="fa fa-file-word-o"></i> Plantilla</a>
-
-                        <!--<a href="" class="button" onclick="javascript:history.back(); return false;" >Cancelar</a>-->
-
-
-                    </div>
-                </div><!--end .card-head -->
-
-                <div class="card-body no-padding  ">
-                    <div class="col-lg-6 col-md-6">
-                        <div class="form-group">
-                            <?php echo Form::select('proceso', $options, $documento->id_proceso, array('class' => 'required form-control')); ?>
-                            <br/>
-                            <label for="proceso">Proceso: </label>
+            <!-- encabezado del documento, en el mismo orden que el impreso -->
+            <div class="gd-hoja">
+                <?php echo Form::hidden('id_doc', $documento->id); ?>
+                <!-- A: -->
+                <div class="gd-fila">
+                    <div class="gd-etiqueta">A:</div>
+                    <div>
+                        <div class="gd-par<?php echo $es_carta ? ' gd-par-titulo' : ''; ?>">
+                            <?php if ($es_carta): ?>
+                                <?php echo Form::select('titulo', array('' => 'Título', 'Señor' => 'Señor', 'Señora' => 'Señora', 'Señores' => 'Señores'), $documento->titulo, array('id' => 'titulo', 'title' => 'Título')); ?>
+                            <?php endif; ?>
+                            <?php echo Form::input('destinatario', $documento->nombre_destinatario, array('id' => 'destinatario', 'autocomplete' => 'off', 'placeholder' => 'Nombre del destinatario')); ?>
+                            <?php echo Form::input('cargo_des', $documento->cargo_destinatario, array('id' => 'cargo_des', 'class' => 'required', 'autocomplete' => 'off', 'placeholder' => 'Cargo', 'title' => 'Escriba el cargo del destinatario')); ?>
+                            <?php if (!$con_via): ?>
+                                <input type="text" name="institucion_des" id="institucion_des" class="gd-completo" autocomplete="off" placeholder="Institución"
+                                       value="<?php echo HTML::chars($documento->institucion_destinatario); ?>"/>
+                            <?php endif; ?>
                         </div>
-                        <?php if ($documento->id_tipo == 5): ?>
-                            <div class="form-group">
-                                <?php $titulo = array('', 'Señor' => 'Señor', 'Señora' => 'Señora', 'Señores' => 'Señores'); ?>
-                                <?php echo Form::select('titulo', $titulo, $documento->titulo); ?>
-                                <label>Titulo:</label>
-                            </div>
-                        <?php else: ?>
-                            <input type="hidden" name="titulo"/>
-                        <?php endif; ?>
-                        <div class="form-group">
-                            <?php
-                            echo Form::hidden('id_doc', $documento->id);
-                            echo Form::input('destinatario', $documento->nombre_destinatario, array('id' => 'destinatario', 'class' => 'form-control', 'index' => '101'));
-                            echo Form::label('destinatario', 'Nombre del destinatario:', array('index' => '100'));
-                            ?>
-                        </div>
-                        <div class="form-group">
-                            <?php
-                            echo Form::input('cargo_des', $documento->cargo_destinatario, array('id' => 'cargo_des', 'size' => 48, 'class' => 'form-control required', 'index' => '103'));
-                            echo Form::label('destinatario', 'Cargo Destinatario:', array('class' => 'form', 'index' => '102'));
-                            ?>
-                        </div>
-
-                        <?php if ($tipo->via == 0): ?>
-                            <div class="form-group">
-                                <label>Institución Destinatario</label>
-                                <input type="text" size="40" class="form-control"
-                                       value="<?php echo $documento->institucion_destinatario; ?>"
-                                       name="institucion_des"/>
-                                <input type="hidden" name="via"/>
-                                <input type="hidden" name="cargovia"/>
-                            </div>
-                        <?php else: ?>
-
-                            <input type="hidden" size="40" name="institucion_des"/>
-                            <div class="form-group">
-                                <?php
-                                echo Form::input('via', $documento->nombre_via, array('id' => 'via', 'size' => 48, 'class' => 'form-control '));
-                                echo Form::label('via', 'Via:', array('class' => 'form'));
-                                ?>
-                            </div>
-                            <div class="form-group">
-                                <?php
-                                echo Form::input('cargovia', $documento->cargo_via, array('id' => 'cargovia', 'size' => 48, 'class' => 'form-control '));
-                                echo Form::label('cargovia', 'Cargo Via:', array('class' => 'form'));
-                                ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="form-group">
-
-                            <textarea name="referencia" id="referencia"
-                                      class="required form-control"><?php echo $documento->referencia ?></textarea>
-                            <label for="referencia">Referencia</label>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 col-md-6">
-                        <div class="row">
-                            <div class="col-lg-10">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('remitente', $documento->nombre_remitente, array('id' => 'remitente', 'size' => 35, 'class' => 'form-control required', 'readonly'));
-                                    echo Form::label('remitente', 'Remitente:', array('class' => 'form', 'readonly'));
-                                    ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-2">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('mosca', $documento->mosca_remitente, array('id' => 'mosca', 'class' => 'form-control', 'size' => 5, 'readonly'));
-                                    echo Form::label('mosca', 'Mosca:');
-                                    ?>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div class="form-group">
-                            <?php
-                            echo Form::input('cargo_rem', $documento->cargo_remitente, array('id' => 'cargo_rem', 'size' => 48, 'class' => 'required form-control', 'readonly'));
-                            echo Form::label('cargo', 'Cargo Remitente:', array('class' => 'form', 'readonly'));
-                            ?>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-4">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('adjuntos', $documento->adjuntos, array('id' => 'adjuntos', 'size' => 48, 'class' => ' form-control', 'title' => 'Ejemplo: Lo citado'));
-                                    echo Form::label('adjuntos', 'Adjunto:', array('class' => 'form'));
-                                    ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-8">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('hojas', $documento->hojas, array('id' => 'hojas', 'class' => 'required form-control', 'title' => 'La casilla está vacía o ingrese número > 0', 'type' => 'number', 'min' => '1'));
-                                    echo Form::label('hojas', 'Nro hojas:', array('class' => 'form'));
-                                    ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="form-group">
-                                    <?php
-                                    echo Form::input('copias', $documento->copias, array('id' => 'adjuntos', 'class' => 'form-control '));
-                                    echo Form::label('copias', 'Con copia a:', array('class' => 'for'));
-                                    ?>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <?php echo Form::input('addDest', '+ Agregar Destinatario', array('class' => 'btn btn-sm btn-default', 'type' => 'button', 'id' => 'addDest', 'rel' => $user->id)); ?>
-                                <div id="vias">
-                                    <ul>
-                                        <!-- destinatarios -->
-                                        <?php foreach ($destinatarios as $v) { ?>
-                                            <li class="<?php echo $v['genero'] ?> "><?php echo HTML::anchor('#', $v['nombre'], array('class' => 'destino1 destinatario', 'nombre' => $v['nombre'], 'title' => $v['cargo'], 'cargo' => $v['cargo'], 'via' => '', 'cargo_via' => '')); ?></li>
-                                        <?php } ?>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="hojaruta" value="1" name="hojaruta"/>
-                        <input type="hidden" id="cite_superior" value="0" name="cite_superior"/>
-
-                        <div class="descripcion" style="width: 680px; float: left; display: none; ">
-                            <?php
-                            echo Form::hidden('descripcion', '', array('id' => 'descripcion'));
-                            ?>
-                        </div>
+                        <div class="gd-ayuda"><span>Escríbalo o elíjalo de la libreta</span><a href="#" class="gd-limpiar"><i class="fa fa-times"></i> limpiar</a></div>
                     </div>
                 </div>
+                <?php if (!$es_carta): ?>
+                    <input type="hidden" name="titulo"/>
+                <?php endif; ?>
+
+                <?php if ($con_via): ?>
+                    <input type="hidden" name="institucion_des"/>
+                    <!-- VIA: -->
+                    <div class="gd-fila">
+                        <div class="gd-etiqueta">VÍA:<small>opcional</small></div>
+                        <div>
+                            <div class="gd-par">
+                                <?php echo Form::input('via', $documento->nombre_via, array('id' => 'via', 'autocomplete' => 'off', 'placeholder' => 'Nombre')); ?>
+                                <?php echo Form::input('cargovia', $documento->cargo_via, array('id' => 'cargovia', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
+                            </div>
+                            <div class="gd-ayuda"><span>Déjelo vacío si el documento va directo</span><a href="#" class="gd-limpiar"><i class="fa fa-times"></i> limpiar</a></div>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <input type="hidden" name="via"/>
+                    <input type="hidden" name="cargovia"/>
+                <?php endif; ?>
+
+                <!-- DE: -->
+                <div class="gd-fila">
+                    <div class="gd-etiqueta">DE:</div>
+                    <div class="gd-remitente">
+                        <div class="gd-avatar"><?php echo HTML::chars($iniciales($documento->nombre_remitente)); ?></div>
+                        <div>
+                            <b><?php echo HTML::chars($documento->nombre_remitente); ?></b>
+                            <span><?php echo HTML::chars($documento->cargo_remitente); ?></span>
+                        </div>
+                        <?php if ($documento->mosca_remitente != ''): ?><span class="gd-mosca" title="Mosca">Mosca: <?php echo HTML::chars($documento->mosca_remitente); ?></span><?php endif; ?>
+                    </div>
+                </div>
+                <?php echo Form::hidden('remitente', $documento->nombre_remitente, array('id' => 'remitente')); ?>
+                <?php echo Form::hidden('cargo_rem', $documento->cargo_remitente, array('id' => 'cargo_rem')); ?>
+                <?php echo Form::hidden('mosca', $documento->mosca_remitente, array('id' => 'mosca')); ?>
+
+                <!-- REF: -->
+                <div class="gd-fila">
+                    <div class="gd-etiqueta">REF.: <span class="gd-req">*</span></div>
+                    <div>
+                        <textarea name="referencia" id="referencia" class="required" title="Escriba la referencia del documento"
+                                  placeholder="Asunto del documento"><?php echo HTML::chars($documento->referencia); ?></textarea>
+                        <div class="gd-ayuda"><span>Asunto que se verá en la bandeja y en la hoja de ruta</span><span><span id="gd-ref-contador">0</span> caracteres</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- anexos -->
+            <div class="gd-anexos">
+                <div>
+                    <label for="adjuntos">Adjunto</label>
+                    <?php echo Form::input('adjuntos', $documento->adjuntos, array('id' => 'adjuntos', 'title' => 'Ejemplo: Lo citado')); ?>
+                </div>
+                <div>
+                    <label for="hojas">Hojas <span class="gd-req">*</span></label>
+                    <?php echo Form::input('hojas', $documento->hojas, array('id' => 'hojas', 'class' => 'required', 'title' => 'La casilla está vacía o ingrese número > 0', 'type' => 'number', 'min' => '1')); ?>
+                </div>
+                <div>
+                    <label for="copias">Con copia a</label>
+                    <?php echo Form::input('copias', $documento->copias, array('id' => 'copias', 'autocomplete' => 'off', 'placeholder' => 'Opcional')); ?>
+                </div>
+            </div>
+
+            <input type="hidden" id="hojaruta" value="1" name="hojaruta"/>
+            <input type="hidden" id="cite_superior" value="0" name="cite_superior"/>
+            <?php echo Form::hidden('descripcion', '', array('id' => 'descripcion')); ?>
+
+            <div class="gd-acciones">
+                <span class="gd-izq">
+                    <a href="/plantilla/word/<?php echo $documento->id; ?>" target="_blank" class="btn btn-sm btn-default-bright"
+                       title="Descargar la plantilla en Word para redactar el contenido"><i class="fa fa-file-word-o"></i> Plantilla Word</a>
+                    <span id="gd-sin-guardar"><i class="fa fa-exclamation-circle"></i> Cambios sin guardar</span>
+                </span>
+                <button type="submit" name="documento" value="Editar" class="btn btn-primary" id="gd-guardar">
+                    <i class="fa fa-floppy-o"></i> Guardar cambios
+                </button>
+                <?php if ($derivado): ?>
+                    <a href="/route/trace/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-success gd-requiere-guardar" title="Ver seguimiento">
+                        <i class="fa fa-map-marker"></i> Ver seguimiento</a>
+                <?php elseif ($documento->nur == ''): ?>
+                    <a href="/document/asignar/<?php echo $documento->id; ?>" class="btn btn-accent gd-requiere-guardar" title="Asignar una hoja de ruta a este documento">
+                        <i class="fa fa-tag"></i> Asignar hoja de ruta</a>
+                <?php elseif ($puede_derivar): ?>
+                    <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-accent gd-requiere-guardar" title="Derivar documento">
+                        <i class="fa fa-send-o"></i> Derivar</a>
+                <?php else: ?>
+                    <a href="javascript:msg();" class="btn btn-default-bright" title="Primero suba el archivo digital (PDF)" style="opacity:.6">
+                        <i class="fa fa-send-o"></i> Derivar</a>
+                <?php endif; ?>
             </div>
         </form>
     </div>
@@ -753,6 +700,34 @@
                             <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>
+                </div>
+            </div>
+            <!-- libreta de destinatarios -->
+            <div class="gd-card gd-libreta-edit">
+                <div class="gd-libreta-cab">
+                    <h3><i class="fa fa-users"></i> Libreta de destinatarios</h3>
+                    <p>Clic en una persona para llenar: <b id="gd-objetivo-texto">A (destinatario)</b></p>
+                    <div class="gd-libreta-buscar">
+                        <i class="fa fa-search"></i>
+                        <input type="search" id="gd-buscar" placeholder="Buscar por nombre o cargo..." autocomplete="off"/>
+                    </div>
+                </div>
+                <div id="vias">
+                    <ul>
+                        <?php foreach ($destinatarios as $v): ?>
+                            <li class="<?php echo HTML::chars($v['genero']); ?>">
+                                <a href="#" class="destino1 destinatario" nombre="<?php echo HTML::chars($v['nombre']); ?>" cargo="<?php echo HTML::chars($v['cargo']); ?>"
+                                   title="<?php echo HTML::chars($v['cargo']); ?>" via="" cargo_via="">
+                                    <span class="gd-avatar"><?php echo HTML::chars($iniciales($v['nombre'])); ?></span>
+                                    <span class="gd-persona"><b><?php echo HTML::chars($v['nombre']); ?></b><small><?php echo HTML::chars($v['cargo']); ?></small></span>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <div id="gd-sin-resultados">Nadie coincide con la búsqueda.</div>
+                </div>
+                <div class="gd-libreta-pie">
+                    <?php echo Form::input('addDest', '+ Agregar persona a la libreta', array('class' => 'btn btn-sm btn-default-bright btn-block', 'type' => 'button', 'id' => 'addDest', 'rel' => $user->id)); ?>
                 </div>
             </div>
         </div>
