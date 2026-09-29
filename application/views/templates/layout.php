@@ -11,7 +11,7 @@
     })(); </script> <![endif]-->
     <meta http-equiv="Content-Language" content="es"/>
     <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
-    <link rel="shortcut icon" href="<?php echo url::base() . 'media/images/icon.png'; ?>"/>
+    <link rel="shortcut icon" href="<?php echo url::base() . 'media/images/icon.png?v=correos'; ?>"/>
     <title><?php echo $title; ?></title>
     <meta name="keywords" content="<?php echo $meta_keywords; ?>"/>
     <meta name="description" content="<?php echo $meta_description; ?>"/>

@@ -10,7 +10,7 @@
         }
     })(); </script> <![endif]-->
     <meta http-equiv="Content-Language" content="es"/>
-    <link rel="shortcut icon" href="<?php echo url::base() . 'media/images/icon.png'; ?>"/>
+    <link rel="shortcut icon" href="<?php echo url::base() . 'media/images/icon.png?v=correos'; ?>"/>
     <title><?php echo $title; ?></title>
     <meta name="keywords" content="<?php echo $meta_keywords; ?>"/>
     <meta name="description" content="<?php echo $meta_description; ?>"/>

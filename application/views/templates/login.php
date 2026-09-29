@@ -2,6 +2,7 @@
 <html lang="es">
     <head>
         <title>SIGEC - Login</title>
+        <link rel="shortcut icon" href="/media/images/icon.png?v=correos"/>
         <!-- BEGIN META -->
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
