@@ -56,7 +56,9 @@ class Controller_Ajaxd extends Controller
         $pagesize = $_GET['pagesize'];
         $start = $pagenum * $pagesize;
 
-        $query = "SELECT * FROM ( " . $esql . " ) as d LIMIT $start, $pagesize";
+        // el ORDER BY de la subconsulta lo ignora MySQL; el orden por defecto (mas recientes primero) va en la consulta externa
+        $orden_defecto = " ORDER BY fecha_creacion DESC, id DESC";
+        $query = "SELECT * FROM ( " . $esql . " ) as d" . $orden_defecto . " LIMIT $start, $pagesize";
 
         $sql = "SELECT COUNT(*) as found_rows FROM ( " . $esql . " ) as d ";
         $mDocumentos = new Model_Documentos();
@@ -169,7 +171,7 @@ class Controller_Ajaxd extends Controller
                 $rows = mysql_query($sql);
                 $rows = mysql_fetch_assoc($rows);
                 $new_total_rows = $rows['found_rows'];
-                $query = "SELECT * FROM (" . $esql . ") as d " . $where . " LIMIT $start, $pagesize";
+                $query = "SELECT * FROM (" . $esql . ") as d " . $where . $orden_defecto . " LIMIT $start, $pagesize";
                 $total_rows = $new_total_rows;
             }
         }
@@ -303,58 +305,19 @@ class Controller_Ajaxd extends Controller
                 // Ocultamos el boton si ya tiene justificacion
                 if (!empty($resultSet_rechazo)) {
 
-                    // $observacion_rechazo = $resultSet_rechazo[0]['observacion'];
-                    $observacion_rechazo = '';
-
-                    foreach ($resultSet_rechazo as $id => $row1) {
-
+                    // texto plano, una linea por observacion; la vista lo muestra en un unico modal (documentos/index)
+                    $lineas_rechazo = array();
+                    foreach ($resultSet_rechazo as $row1) {
                         $fecha_observacion = new DateTime($row1['fecha_observacion']);
-
-                        $observacion_rechazo .= '[' . $fecha_observacion->format('d/m/Y  H:i') . ']: ' . $row1['observacion'] . '<br>';
+                        $lineas_rechazo[] = '[' . $fecha_observacion->format('d/m/Y H:i') . '] ' . $row1['observacion'];
                     }
 
-                    // Boton "Ver Observacion"
-                    $link .= "<a id='Save' href='#' style='color:red'
-                                     class='fa fa-exclamation-triangle fa-2x'
-                                     title='Ver justificación'
-                                     data-toggle='modal' data-target='#modal-texto-rechazo'></a>";
-
-                    $link .= '  <div title="Justificación de Rechazo" class="modal fade" id="modal-texto-rechazo" role="dialog">
-                                    <div class="modal-dialog">
-                                        <!-- Modal content-->
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <button type="button" class="close"
-                                                        data-dismiss="modal">&times;</button>
-                                                <h4 class="modal-title">JUSTIFICACIÓN DEL RECHAZO</h4>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p>
-                                                    ' . $observacion_rechazo . '
-                                                </p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-default"
-                                                        data-dismiss="modal">Cerrar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <style>
-                                .modal .modal-dialog {
-                                    position: absolute,relative;
-                                    top: 60px;
-                                    z-index: 2;
-                                }
-
-                                #jqxgrid {
-                                    position: relative;
-                                    top: 100px;
-                                    z-index: 1;
-                                }
-                                </style>
-                                ';
+                    // Boton "Ver justificacion": cada fila lleva su propio texto (antes todas abrian el mismo modal
+                    // y se inyectaba CSS que desplazaba la tabla 100px hacia abajo)
+                    $link .= '<a href="#" class="doc-ver-rechazo text-xl" style="color:#d32f2f" title="Ver justificación del rechazo"'
+                        . ' data-nur="' . HTML::chars($row['nur']) . '"'
+                        . ' data-observacion="' . HTML::chars(implode("\n", $lineas_rechazo)) . '">'
+                        . '<i class="fa fa-exclamation-triangle"></i></a>';
                 }
 
                 // === FIN MOSTRAR EL TEXTO DE LA JUSTIFICACION DE RECHAZO ===
