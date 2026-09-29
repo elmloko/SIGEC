@@ -11,6 +11,8 @@ defined('SYSPATH') or die('No direct script access.');
 class RemoteArchivo {
 
     private static $sftp;
+    // si la conexion ya fallo en esta peticion no se reintenta (cada intento esperaba el timeout completo)
+    private static $error_conexion;
 
     public static function is_enabled() {
         if (DIRECTORY_SEPARATOR !== '\\') {
@@ -24,14 +26,25 @@ class RemoteArchivo {
         if (self::$sftp instanceof \phpseclib\Net\SFTP) {
             return self::$sftp;
         }
+        if (self::$error_conexion) {
+            throw new Kohana_Exception(self::$error_conexion);
+        }
 
         require_once DOCROOT . 'vendor/autoload.php';
 
         $config = Kohana::$config->load('archivo')->get('remote');
-        $sftp = new \phpseclib\Net\SFTP($config['host'], $config['port']);
+        $timeout = isset($config['timeout']) ? (int) $config['timeout'] : 5;
+        $sftp = new \phpseclib\Net\SFTP($config['host'], $config['port'], $timeout);
 
-        if (!$sftp->login($config['user'], $config['password'])) {
-            throw new Kohana_Exception('No se pudo conectar por SFTP a :host', array(':host' => $config['host']));
+        try {
+            // phpseclib avisa con user_error() si no puede abrir el socket; se trata como fallo de conexion
+            $ok = @$sftp->login($config['user'], $config['password']);
+        } catch (Exception $e) {
+            $ok = FALSE;
+        }
+        if (!$ok) {
+            self::$error_conexion = 'No se pudo conectar con el servidor de archivos (' . $config['host'] . ').';
+            throw new Kohana_Exception(self::$error_conexion);
         }
 
         return self::$sftp = $sftp;

@@ -20,6 +20,8 @@ return array(
         'enabled' => TRUE,
         'host' => '172.65.10.203',
         'port' => 22,
+        // segundos de espera al conectar; si el servidor no responde se avisa en vez de colgar la pagina
+        'timeout' => 5,
         'user' => 'root',
         // La contraseña vive aparte porque ese archivo no se versiona (ver .gitignore).
         'password' => Kohana::$config->load('archivo_secret')->get('password'),

@@ -15,17 +15,17 @@ class Controller_Download extends Controller
     {
         $remote = RemoteArchivo::is_enabled();
 
-        if ($remote) {
-            if (!RemoteArchivo::exists($file)) {
-                $this->autoRender = false;
-                http_response_code(404);
-                echo 'Archivo no encontrado en el servidor.';
-                return;
-            }
-        } elseif (!is_file($file)) {
-            $this->autoRender = false;
-            http_response_code(404);
-            echo 'Archivo no encontrado en el servidor.';
+        try {
+            $existe = $remote ? RemoteArchivo::exists($file) : is_file($file);
+            $tamanio = $existe ? ($remote ? RemoteArchivo::filesize($file) : filesize($file)) : 0;
+        } catch (Exception $e) {
+            $this->aviso(503, 'Servidor de archivos no disponible',
+                'No se pudo conectar con el servidor donde se guardan los archivos digitales. '
+                . 'Intente nuevamente en unos minutos o comuníquese con el área de sistemas.');
+            return;
+        }
+        if (!$existe) {
+            $this->aviso(404, 'Archivo no encontrado', 'El archivo no existe en el servidor de archivos.');
             return;
         }
 
@@ -38,14 +38,29 @@ class Controller_Download extends Controller
         header("Content-Disposition: " . ($inline ? 'inline' : 'attachment') . "; filename=\"" . str_replace('"', '', $filename) . "\"");
         header("Content-Transfer-Encoding: binary");
 
+        header("Content-Length: " . $tamanio);
         if ($remote) {
-            header("Content-Length: " . RemoteArchivo::filesize($file));
             RemoteArchivo::stream_download($file);
         } else {
-            header("Content-Length: " . filesize($file));
             readfile($file);
         }
         exit;
+    }
+
+    // pagina simple de aviso; se ve bien tanto en el visor (iframe) como abierta directamente
+    private function aviso($codigo, $titulo, $mensaje)
+    {
+        $this->autoRender = false;
+        http_response_code($codigo);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>' . HTML::chars($titulo) . '</title></head>'
+            . '<body style="margin:0;font-family:Arial,sans-serif;background:#F3F5F8;color:#123E73;">'
+            . '<div style="max-width:520px;margin:12vh auto;padding:28px;background:#fff;border-radius:8px;'
+            . 'border-top:4px solid #FECB34;box-shadow:0 1px 4px rgba(18,62,115,.15);text-align:center;">'
+            . '<div style="font-size:40px;line-height:1;margin-bottom:10px;">&#9888;</div>'
+            . '<h2 style="margin:0 0 10px;font-size:20px;">' . HTML::chars($titulo) . '</h2>'
+            . '<p style="margin:0;color:#4a5568;line-height:1.5;">' . HTML::chars($mensaje) . '</p>'
+            . '</div></body></html>';
     }
 
     public function action_file($id = '')

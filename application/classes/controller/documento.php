@@ -329,10 +329,15 @@ class Controller_Documento extends Controller_DefaultTemplate {
             if (isset($_POST['adjuntar'])) {
 
                 $sub_directorio = date('Y_m');
+                $subido = TRUE;
                 if (RemoteArchivo::is_enabled()) {
                     $filename = ($_FILES['archivo']['name'] != '') ? uniqid() . $_FILES['archivo']['name'] : '';
                     if ($filename != '') {
-                        RemoteArchivo::upload($_FILES['archivo']['tmp_name'], $sub_directorio . '/' . $filename);
+                        try {
+                            $subido = (bool) RemoteArchivo::upload($_FILES['archivo']['tmp_name'], $sub_directorio . '/' . $filename);
+                        } catch (Exception $e) {
+                            $subido = FALSE;
+                        }
                     }
                 } else {
                     $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . $sub_directorio;
@@ -345,8 +350,12 @@ class Controller_Documento extends Controller_DefaultTemplate {
                         }
                     }
                     $filename = upload::save($_FILES ['archivo'], NULL, $path);
+                    $subido = (bool) $filename;
                 }
-                if ($_FILES ['archivo']['name'] != '') {
+                if (!$subido) {
+                    // no se registra en la base un archivo que no llego al servidor
+                    $error_archivo = 'No se pudo subir el archivo: no se pudo guardar en el servidor de archivos. Intente nuevamente en unos minutos.';
+                } elseif ($_FILES ['archivo']['name'] != '') {
                     $archivo = ORM::factory('archivos'); //intanciamos el modelo proveedor
                     $archivo->nombre_archivo = basename($filename);
                     $archivo->extension = $_FILES ['archivo'] ['type'];
@@ -446,6 +455,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                     ->bind('user', $this->user)
                     ->bind('options', $options)
                     ->bind('mensajes', $mensajes)
+                    ->bind('error_archivo', $error_archivo)
                     ->bind('archivos', $archivos);
         } else {
          //   $this->template->title .= ' / ' . $documento->codigo;

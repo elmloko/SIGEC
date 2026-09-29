@@ -69,7 +69,10 @@
          return false;
          }).filter(':first').click();
          */
-        $('#descripcion').redactor({lang: 'es', css: 'docstyle.css'});
+        // el plugin redactor ya no se carga en esta pagina; sin esta verificacion el error detenia el resto de los scripts
+        if ($.fn.redactor) {
+            $('#descripcion').redactor({lang: 'es', css: 'docstyle.css'});
+        }
         //incluir destinatario
         $('a.destino').click(function () {
             var nombre = $(this).attr('nombre');
@@ -289,6 +292,70 @@
         background: #d32f2f;
         border-color: #d32f2f;
     }
+
+    /* visor de PDF (modal) */
+    .arch-visor .modal-dialog {
+        width: 94%;
+        max-width: 1200px;
+        margin: 20px auto;
+    }
+    .arch-visor .modal-content {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .arch-visor .modal-header {
+        background: var(--correos-azul, #1A549A);
+        border-bottom: 3px solid var(--correos-amarillo, #FECB34);
+        color: #fff;
+        padding: 10px 16px;
+    }
+    .arch-visor .modal-title {
+        color: #fff;
+        font-size: 15px;
+        word-break: break-word;
+        padding-right: 40px;
+    }
+    .arch-visor .arch-visor-cerrar {
+        color: #fff;
+        opacity: .9;
+        font-size: 30px;
+        line-height: 1;
+        text-shadow: none;
+    }
+    .arch-visor .arch-visor-cerrar:hover {
+        color: var(--correos-amarillo, #FECB34);
+        opacity: 1;
+    }
+    .arch-visor .arch-visor-acciones {
+        margin-top: 6px;
+    }
+    .arch-visor .modal-body {
+        position: relative;
+        padding: 0;
+        background: #525659;
+    }
+    .arch-visor iframe {
+        display: block;
+        width: 100%;
+        height: calc(100vh - 140px);
+        min-height: 300px;
+        border: 0;
+    }
+    .arch-visor .arch-visor-cargando {
+        position: absolute;
+        top: 40%;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: #fff;
+        font-size: 14px;
+    }
+    @media (max-width: 767px) {
+        .arch-visor .modal-dialog {
+            width: auto;
+            margin: 8px;
+        }
+    }
 </style>
 <script type="text/javascript">
     // Archivos Digitales: arrastrar y soltar, vista previa y confirmacion al eliminar
@@ -342,19 +409,62 @@
                 $('#arch-subir').prop('disabled', true);
             }, 0);
         });
+    });
 
-        $('.archivos-digitales').on('click', '.arch-ver', function () {
-            eModal.iframe({
-                url: $(this).data('url'),
-                title: $(this).data('nombre'),
-                size: eModal.size.xl
-            });
+    // Ver / Eliminar: se registran sobre document y fuera de $(function) para que funcionen
+    // aunque otro script de la pagina falle al cargar.
+    $(document).on('click', '.arch-ver', function (e) {
+        e.preventDefault();
+        var url = $(this).attr('data-url');
+        var $visor = $('#arch-visor');
+        if (!$.fn.modal || !$visor.length) {
+            // sin el plugin de modal: abrir el PDF en otra pestaña
+            window.open(url, '_blank');
             return false;
-        }).on('click', '.arch-eliminar', function () {
-            return confirm('¿Eliminar el archivo "' + $(this).data('nombre') + '"?');
-        });
+        }
+        if (!$visor.parent().is('body')) {
+            $visor.appendTo('body'); // fuera de las tarjetas para que el modal quede encima de todo
+        }
+        $('#arch-visor-titulo').text($(this).attr('data-nombre'));
+        $('#arch-visor-descargar').attr('href', $(this).attr('data-descargar'));
+        $('#arch-visor-pestana').attr('href', url);
+        $('#arch-visor-cargando').show();
+        $('#arch-visor-frame').attr('src', url);
+        $visor.modal('show');
+        return false;
+    });
+    $(document).on('click', '.arch-eliminar', function () {
+        return confirm('¿Eliminar el archivo "' + $(this).attr('data-nombre') + '"?');
+    });
+    $(document).on('hidden.bs.modal', '#arch-visor', function () {
+        $('#arch-visor-frame').attr('src', 'about:blank');
     });
 </script>
+
+<!-- visor de PDF de Archivos Digitales -->
+<div class="modal fade arch-visor" id="arch-visor" tabindex="-1" role="dialog" aria-labelledby="arch-visor-titulo">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close arch-visor-cerrar" data-dismiss="modal" aria-label="Cerrar" title="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title"><i class="fa fa-file-pdf-o"></i> <span id="arch-visor-titulo"></span></h4>
+                <div class="arch-visor-acciones">
+                    <a href="#" id="arch-visor-descargar" class="btn btn-xs btn-default-bright"><i class="fa fa-download"></i> Descargar</a>
+                    <a href="#" id="arch-visor-pestana" target="_blank" class="btn btn-xs btn-default-bright"><i class="fa fa-external-link"></i> Abrir en otra pesta&ntilde;a</a>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="arch-visor-cargando" id="arch-visor-cargando">
+                    <i class="fa fa-circle-o-notch fa-spin"></i> Cargando documento...
+                </div>
+                <iframe id="arch-visor-frame" src="about:blank" title="Vista previa del archivo"
+                        onload="document.getElementById('arch-visor-cargando').style.display = 'none';"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row">
 
@@ -579,6 +689,9 @@
                     </header>
                 </div>
                 <div class="card-body">
+                    <?php if (!empty($error_archivo)): ?>
+                        <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> <?php echo HTML::chars($error_archivo); ?></div>
+                    <?php endif; ?>
                     <form method="post" enctype="multipart/form-data" action="" id="arch-form"
                           onsubmit="return validarTipoDeArchivoASubir()">
                         <label for="file1" class="arch-zona" id="arch-zona">
@@ -622,6 +735,7 @@
                                             <?php if ($es_pdf): ?>
                                                 <a href="javascript:void(0);" class="btn btn-xs btn-default-bright arch-ver"
                                                    data-url="/download/?file=<?php echo $a->id; ?>&amp;ver=1"
+                                                   data-descargar="/download/?file=<?php echo $a->id; ?>"
                                                    data-nombre="<?php echo HTML::chars($nombre); ?>" title="Ver sin descargar">
                                                     <i class="fa fa-eye"></i> Ver
                                                 </a>
