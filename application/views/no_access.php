@@ -100,6 +100,13 @@ $inexistente = $motivo === 'inexistente';
         <div class="na-icono na-gris"><i class="fa fa-search"></i></div>
         <h2>Documento no encontrado</h2>
         <p>No existe un documento con ese número. Puede que el enlace esté incompleto o que el documento haya sido eliminado.</p>
+    <?php elseif ($motivo === 'no_autor'): ?>
+        <div class="na-icono"><i class="fa fa-lock"></i></div>
+        <h2>No puede derivar esta hoja de ruta</h2>
+        <?php if ($codigo != ''): ?>
+            <div class="na-cite"><?php echo HTML::chars($codigo); ?></div>
+        <?php endif; ?>
+        <p>Todavía no fue derivada, y la primera derivación solo la puede hacer quien generó el documento.</p>
     <?php else: ?>
         <div class="na-icono"><i class="fa fa-lock"></i></div>
         <h2>Acceso restringido</h2>

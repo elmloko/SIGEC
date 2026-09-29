@@ -442,6 +442,53 @@ class Controller_route extends Controller_DefaultTemplate {
         }
     }
 
+    /**
+     * "Enterado": cierra una copia recibida sin derivarla (la archiva en la carpeta de copias de la oficina).
+     * POST id_seg, observaciones. Responde JSON.
+     */
+    public function action_enterado() {
+        $this->auto_render = FALSE;
+        $this->response->headers('Content-Type', 'application/json; charset=utf-8');
+        $seg = ORM::factory('seguimiento', (int) Arr::get($_POST, 'id_seg', 0));
+        if (!$seg->loaded() || (int) $seg->derivado_a !== (int) $this->user->id) {
+            $this->response->body(json_encode(array('error' => 'Esta hoja de ruta no está en su bandeja.')));
+            return;
+        }
+        if ((int) $seg->oficial !== 0) {
+            $this->response->body(json_encode(array('error' => 'Solo las copias se pueden cerrar con "Enterado". La oficial debe derivarse o archivarse.')));
+            return;
+        }
+        if ((int) $seg->estado !== 2) {
+            $this->response->body(json_encode(array('error' => 'Esta copia ya no está pendiente.')));
+            return;
+        }
+        // carpeta de copias de la oficina (se reutiliza si ya existe una "Copias...")
+        $carpeta = ORM::factory('carpetas')
+                ->where('id_oficina', '=', $this->user->id_oficina)
+                ->and_where('carpeta', 'LIKE', 'copias%')
+                ->order_by('id')
+                ->find();
+        if (!$carpeta->loaded()) {
+            $carpeta = ORM::factory('carpetas');
+            $carpeta->id_oficina = $this->user->id_oficina;
+            $carpeta->carpeta = 'COPIAS PARA CONOCIMIENTO';
+            $carpeta->fecha_creacion = date('Y-m-d H:i:s');
+            $carpeta->save();
+        }
+        $obs = trim((string) Arr::get($_POST, 'observaciones', ''));
+        $archivo = ORM::factory('archivados');
+        $archivo->id_user = $this->user->id;
+        $archivo->nur = $seg->nur;
+        $archivo->id_carpeta = $carpeta->id;
+        $archivo->observaciones = mb_substr('Enterado (copia)' . ($obs !== '' ? ': ' . $obs : ''), 0, 250, 'UTF-8');
+        $archivo->fecha = date('Y-m-d H:i:s');
+        $archivo->save();
+        $seg->estado = 10;
+        $seg->id_archivo = $archivo->id;
+        $seg->save();
+        $this->response->body(json_encode(array('ok' => 1, 'carpeta' => $carpeta->carpeta)));
+    }
+
     public function action_deriv() {
         $nur = Arr::get($_GET, 'hr', 0);
         $documento = ORM::factory('documentos')
@@ -455,7 +502,13 @@ class Controller_route extends Controller_DefaultTemplate {
             $proceso = ORM::factory('procesos', $documento->id_proceso);
             $errors = array();
             $user = $this->user;
-            if ($documento->estado == 0) {
+            if ($documento->estado == 0 && (int) $documento->id_user !== (int) $this->user->id) {
+                // la primera derivacion solo la puede hacer quien genero el documento
+                $this->template->title .= ' / Derivar ' . $documento->nur;
+                $this->template->content = View::factory('no_access')
+                        ->set('codigo', $documento->cite_original)
+                        ->set('motivo', 'no_autor');
+            } elseif ($documento->estado == 0) {
                 $acciones = $this->acciones();
                 $destinatarios = $this->destinatarios($this->user->id, $this->user->superior);
                 $id_seguimiento = 0;

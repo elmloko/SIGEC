@@ -1548,6 +1548,58 @@ class Controller_Ajax extends Controller
         echo json_encode($a_eventos);
     }
 
+    /**
+     * Verifica que el usuario de la sesion pueda derivar la hoja de ruta $nur.
+     * - Primera derivacion (sin seguimiento previo): solo el autor del documento original.
+     * - Derivacion de algo recibido: el seguimiento debe ser de esa hoja de ruta y estar dirigido a el.
+     * Devuelve TRUE o el mensaje de error.
+     */
+    protected function puede_derivar($nur, $id_seg, $id_doc, $session, $oficial = 0)
+    {
+        $documento = ORM::factory('documentos')->where('nur', '=', $nur)->and_where('original', '=', 1)->find();
+        if (!$documento->loaded() || (int) $documento->id !== (int) $id_doc) {
+            return 'La hoja de ruta no existe o no corresponde al documento.';
+        }
+        if ((int) $id_seg > 0) {
+            $seg = ORM::factory('seguimiento', (int) $id_seg);
+            if (!$seg->loaded() || $seg->nur !== $documento->nur || (int) $seg->derivado_a !== (int) $this->user->id) {
+                return 'Esta hoja de ruta no está en su bandeja: no puede derivarla.';
+            }
+            // 2 = pendiente; 4 = ya derivada en este mismo formulario (se agregan mas destinatarios)
+            if (!in_array((int) $seg->estado, array(2, 4), TRUE)) {
+                return 'Esta hoja de ruta ya no está pendiente en su bandeja.';
+            }
+            if ((int) $oficial > 0) {
+                if ((int) $seg->oficial === 0) {
+                    return 'Usted recibió esta hoja de ruta como copia: solo puede derivarla como copia.';
+                }
+                if ($this->ya_derivo_oficial($documento->nur, (int) $id_seg)) {
+                    return 'La hoja de ruta ya fue derivada como oficial: ahora solo puede enviar copias.';
+                }
+            }
+            return TRUE;
+        }
+        if ((int) $documento->id_user !== (int) $this->user->id) {
+            return 'Solo quien generó el documento puede derivarlo por primera vez.';
+        }
+        // ya derivado: solo se permite seguir agregando destinatarios en la misma derivacion
+        if ((int) $documento->estado !== 0 && !$session->get('destino')) {
+            return 'Esta hoja de ruta ya fue derivada.';
+        }
+        if ((int) $oficial > 0 && $this->ya_derivo_oficial($documento->nur, 0)) {
+            return 'La hoja de ruta ya fue derivada como oficial: ahora solo puede enviar copias.';
+        }
+        return TRUE;
+    }
+
+    /** ¿Ya existe una derivacion oficial desde ese paso (id_seguimiento = 0 es la primera derivacion)? */
+    protected function ya_derivo_oficial($nur, $id_seg)
+    {
+        return DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento WHERE nur = :nur AND id_seguimiento = :id AND oficial > 0')
+                ->param(':nur', (string) $nur)->param(':id', (int) $id_seg)
+                ->execute()->get('n') > 0;
+    }
+
     public function action_derivar()
     {
         if (isset($_POST['tipo'])) {
@@ -1560,12 +1612,18 @@ class Controller_Ajax extends Controller
             $proveido = $_POST['proveido'];
             $nur = $_POST['nur'];
             $date = $_POST['fecha'];
-            $user = $_POST['user'];
-            $id_user = $_POST['user'];
+            // el remitente es siempre el usuario de la sesion (antes se tomaba de $_POST['user'] y se podia suplantar)
+            $user = $this->user->id;
+            $id_user = $this->user->id;
             $id_doc = $_POST['document'];
             $hijo = $_POST['hijo'];
             $prioridad = $_POST['urgente'];
             $session = Session::instance();
+            $permiso = $this->puede_derivar($nur, $id_seg, $id_doc, $session, $oficial);
+            if ($permiso !== TRUE) {
+                echo json_encode(array('error' => $permiso));
+                exit;
+            }
             if ($session->get('destino')) {
                 $usuario = $session->get('destino');
                 //verificamos que el usuario no estee en destinatarios ya enviados
@@ -1900,6 +1958,15 @@ class Controller_Ajax extends Controller
         $id_destino = $_POST['destino'];
         $oficial = $_POST['oficial'];
         $id_doc = $_POST['document'];
+        $seg_verificar = ORM::factory('seguimiento', $id_seg);
+        if (!$seg_verificar->loaded() || (int) $seg_verificar->derivado_por !== (int) $this->user->id) {
+            echo json_encode(array('error' => 'Solo quien realizó la derivación puede cancelarla.'));
+            exit;
+        }
+        if ((int) $seg_verificar->estado !== 1) {
+            echo json_encode(array('error' => 'No se puede cancelar: la hoja de ruta ya fue recibida por el destinatario.'));
+            exit;
+        }
         $session = Session::instance();
         $usuario = $session->get('destino');
         unset($usuario[$id_destino]);
