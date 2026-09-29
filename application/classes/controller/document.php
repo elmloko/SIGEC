@@ -159,13 +159,18 @@ class Controller_document extends Controller_DefaultTemplate {
             $this->template->descripcion .= ' Descripcion del documento - ' . $documento->codigo;
             if ($ok) {
                 $tipo = $documento->tipos->tipo;
-//archivo
-                $archivo = ORM::factory('archivos')->where('id_documento', '=', $id)->find_all();
+                // archivos digitales vigentes (los eliminados quedan con estado 0)
+                $archivo = ORM::factory('archivos')->where('id_documento', '=', $id)->and_where('estado', '=', 1)->find_all();
+                $proceso = ORM::factory('procesos', $documento->id_proceso);
+                $nombre_proceso = $proceso->loaded() ? $proceso->proceso : '';
+                $es_autor = ((int) $documento->id_user === (int) $this->user->id);
 
                 $this->template->content = View::factory('documentos/detalle')
                         ->bind('d', $documento)
                         ->bind('tipo', $tipo)
                         ->bind('archivo', $archivo)
+                        ->bind('nombre_proceso', $nombre_proceso)
+                        ->bind('es_autor', $es_autor)
                         ->bind('errors', $errors)
                         ->bind('mensajes', $mensajes);
             } else {
