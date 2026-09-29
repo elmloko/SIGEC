@@ -28,27 +28,6 @@ foreach ($archivo as $a) {
                 return false;
             }
         });
-        // vista previa del PDF en un modal (bootstrap); al cerrar se limpia el visor
-        $(document).on('click', '.det-ver-pdf', function (e) {
-            e.preventDefault();
-            var url = $(this).attr('data-url');
-            var $visor = $('#det-visor');
-            if (!$.fn.modal || !$visor.length) {
-                window.open(url, '_blank');
-                return false;
-            }
-            $visor.appendTo('body');
-            $('#det-visor-titulo').text($(this).attr('data-nombre'));
-            $('#det-visor-descargar').attr('href', $(this).attr('data-descargar'));
-            $('#det-visor-pestana').attr('href', url);
-            $('#det-visor-cargando').show();
-            $('#det-visor-frame').attr('src', url);
-            $visor.modal('show');
-            return false;
-        });
-        $(document).on('hidden.bs.modal', '#det-visor', function () {
-            $('#det-visor-frame').attr('src', 'about:blank');
-        });
     });
 </script>
 <style>
@@ -268,17 +247,6 @@ foreach ($archivo as $a) {
         color: #8a94a3;
     }
 
-    /* visor de PDF */
-    .det-visor .modal-dialog { width: 94%; max-width: 1200px; margin: 20px auto; }
-    .det-visor .modal-content { border-radius: 8px; overflow: hidden; }
-    .det-visor .modal-header { background: var(--correos-azul, #1A549A); border-bottom: 3px solid var(--correos-amarillo, #FECB34); color: #fff; padding: 10px 16px; }
-    .det-visor .modal-title { color: #fff; font-size: 15px; word-break: break-word; padding-right: 40px; }
-    .det-visor .close { color: #fff; opacity: .9; font-size: 30px; text-shadow: none; }
-    .det-visor .close:hover { color: var(--correos-amarillo, #FECB34); opacity: 1; }
-    .det-visor .modal-body { position: relative; padding: 0; background: #525659; }
-    .det-visor iframe { display: block; width: 100%; height: calc(100vh - 140px); min-height: 300px; border: 0; }
-    .det-visor-cargando { position: absolute; top: 40%; left: 0; right: 0; text-align: center; color: #fff; }
-
     @media (max-width: 767px) {
         .det-hoja { padding: 20px 16px; }
         .det-campos th { width: 90px; }
@@ -377,7 +345,7 @@ foreach ($archivo as $a) {
                                 <span class="det-archivo-nombre"><?php echo HTML::chars($a['nombre']); ?></span>
                                 <span class="det-archivo-meta"><?php echo $a['tamanio']; ?><?php if ($a['fecha']): ?> &middot; <?php echo $a['fecha']; ?><?php endif; ?></span>
                                 <?php if ($a['es_pdf']): ?>
-                                    <a href="javascript:void(0);" class="btn btn-xs btn-primary det-ver-pdf"
+                                    <a href="javascript:void(0);" class="btn btn-xs btn-primary visor-pdf"
                                        data-url="/download/?file=<?php echo (int) $a['id']; ?>&amp;ver=1"
                                        data-descargar="/download/?file=<?php echo (int) $a['id']; ?>"
                                        data-nombre="<?php echo HTML::chars($a['nombre']); ?>"><i class="fa fa-eye"></i> Ver</a>
@@ -434,23 +402,4 @@ foreach ($archivo as $a) {
     </div>
 </div>
 
-<!-- visor de PDF -->
-<div class="modal fade det-visor" id="det-visor" tabindex="-1" role="dialog" aria-labelledby="det-visor-titulo">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar" title="Cerrar"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title"><i class="fa fa-file-pdf-o"></i> <span id="det-visor-titulo"></span></h4>
-                <div style="margin-top:6px">
-                    <a href="#" id="det-visor-descargar" class="btn btn-xs btn-default-bright"><i class="fa fa-download"></i> Descargar</a>
-                    <a href="#" id="det-visor-pestana" target="_blank" class="btn btn-xs btn-default-bright"><i class="fa fa-external-link"></i> Abrir en otra pestaña</a>
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="det-visor-cargando" id="det-visor-cargando"><i class="fa fa-circle-o-notch fa-spin"></i> Cargando documento...</div>
-                <iframe id="det-visor-frame" src="about:blank" title="Vista previa del archivo"
-                        onload="document.getElementById('det-visor-cargando').style.display = 'none';"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
+<?php echo View::factory('documentos/visor_pdf'); ?>

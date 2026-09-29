@@ -283,8 +283,6 @@ class Controller_document extends Controller_DefaultTemplate {
     public function action_files() {
         $oArchivo = New Model_archivos();
         $archivo = $oArchivo->listar($this->user->id);
-        $this->template->styles = array('media/css/tablas.css' => 'all');
-        $this->template->scripts = array('media/js/jquery.tablesorter.min.js');
         $this->template->title .= ' / Archivos Digitales';
         $this->template->titulo .= 'Archivos Digitales';
         $this->template->descripcion = 'lista de archivos subidos al sistema';
