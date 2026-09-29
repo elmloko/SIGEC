@@ -1,0 +1,415 @@
+/*
+ * Bandeja de correspondencia (entrada, pendientes, enviados, archivo) con el estilo de Correos de Bolivia.
+ * Las vistas conservan las clases/atributos que usa su JavaScript (.bandeja, #FilterTextBox, .link2, etc.).
+ */
+
+/* ===== barra superior ===== */
+.bj-toolbar {
+    position: sticky;
+    top: 64px;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 18px;
+    margin: -8px 0 16px;
+    background: #fff;
+    border-radius: 10px;
+    border-bottom: 3px solid var(--correos-amarillo, #FECB34);
+    box-shadow: 0 1px 4px rgba(18, 62, 115, .12);
+}
+.bj-toolbar h3 {
+    margin: 0;
+    flex: 1 1 auto;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--correos-azul-oscuro, #123E73);
+    white-space: nowrap;
+}
+.bj-toolbar h3 .md,
+.bj-toolbar h3 .fa {
+    color: var(--correos-azul, #1A549A);
+    margin-right: 6px;
+}
+.bj-contador {
+    display: inline-block;
+    min-width: 26px;
+    padding: 2px 9px;
+    margin-left: 6px;
+    border-radius: 12px;
+    background: var(--correos-azul, #1A549A);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    vertical-align: 3px;
+}
+.bj-buscar {
+    position: relative;
+    flex: 0 1 280px;
+    min-width: 180px;
+}
+.bj-buscar .fa {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8a94a3;
+}
+.bj-buscar input.form-control {
+    height: 34px;
+    padding: 4px 10px 4px 32px;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-radius: 17px;
+    background: var(--correos-fondo, #F3F5F8);
+    box-shadow: none;
+}
+.bj-buscar input.form-control:focus {
+    border-color: var(--correos-azul, #1A549A);
+    background: #fff;
+}
+.bj-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.bj-acciones .btn,
+.bj-acciones .btn-group {
+    margin: 0;
+}
+.bj-acciones sup.badge {
+    top: -1px;
+    margin-left: 3px;
+}
+
+/* filtros rapidos */
+.bj-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+}
+.bj-filtro {
+    padding: 4px 12px;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-radius: 14px;
+    background: #fff;
+    font-size: 12px;
+    color: #4a5568;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.bj-filtro:hover {
+    border-color: var(--correos-azul, #1A549A);
+}
+.bj-filtro.activo {
+    background: var(--correos-azul, #1A549A);
+    border-color: var(--correos-azul, #1A549A);
+    color: #fff;
+}
+.bj-filtro b {
+    margin-left: 3px;
+    color: inherit;
+}
+
+/* ===== lista ===== */
+.bj-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+/* .bandeja: clase original que usan el filtro y el ordenamiento */
+.bj-lista .bandeja.bj-item {
+    /* sin !important: el filtro de texto oculta con .hide() (display:none en linea) */
+    display: flex;
+    position: relative;
+    gap: 16px;
+    width: 100%;
+    padding: 16px 18px 14px 20px;
+    background: #fff;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-left: 5px solid var(--correos-azul, #1A549A);
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(18, 62, 115, .06);
+    transition: box-shadow .15s, border-color .15s;
+}
+/* oculto por los filtros rapidos (independiente del filtro de texto) */
+.bj-lista .bandeja.bj-item.bj-oculto {
+    display: none;
+}
+.bj-lista .bandeja.bj-item:hover {
+    box-shadow: 0 4px 14px rgba(18, 62, 115, .12);
+}
+.bj-item.bj-copia {
+    border-left-color: #9aa4b2;
+}
+.bj-item.bj-urgente {
+    border-left-color: #D32F2F;
+}
+.bj-item-check {
+    flex: 0 0 auto;
+    padding-top: 2px;
+}
+.bj-item-check input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+.bj-item-cuerpo {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.bj-item-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.bj-etiqueta {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+}
+.bj-oficial { background: var(--correos-azul-suave, #EAF1F9); color: var(--correos-azul-oscuro, #123E73); }
+.bj-copia-tag { background: #EEF2F7; color: #4a5568; }
+.bj-urgente-tag { background: #D32F2F; color: #fff; }
+.bj-agrupado-tag { background: var(--correos-amarillo-suave, #FFF7DD); color: #8a6100; }
+a.bj-nur {
+    font-weight: 700;
+    color: var(--correos-azul, #1A549A);
+}
+.bj-dias {
+    margin-left: auto;
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.bj-dias-bajo { background: #E6F4EC; color: #227547; }
+.bj-dias-medio { background: #FFF3DC; color: #B26B00; }
+.bj-dias-alto { background: #FDE8E8; color: #B42318; }
+.bj-item-titulo {
+    display: block;
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+.bj-item-titulo a {
+    color: var(--correos-azul-oscuro, #123E73);
+}
+.bj-item-titulo a:hover {
+    color: var(--correos-azul, #1A549A);
+}
+.bj-item-detalle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 24px;
+    font-size: 13px;
+}
+.bj-persona b {
+    color: #2d3748;
+}
+.bj-persona span,
+.bj-fecha {
+    display: block;
+    font-size: 12px;
+    color: #7a8594;
+}
+.bj-proveido {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--correos-fondo, #F3F5F8);
+    color: #2d3748;
+}
+.bj-proveido .fa {
+    color: var(--correos-azul, #1A549A);
+    margin-right: 4px;
+}
+.bj-proveido small {
+    display: block;
+    margin-top: 2px;
+    font-weight: 600;
+    color: #B26B00;
+}
+/*
+ * Tarjeta en dos columnas: a la izquierda titulo y remitente; a la derecha proveido y botones,
+ * centrados verticalmente respecto de la columna izquierda. La cabecera (etiquetas, hoja de ruta, dias)
+ * ocupa todo el ancho. .bj-item-detalle usa display:contents para que sus hijos entren en la grilla.
+ */
+.bj-item-cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+        "cab cab"
+        "tit der"
+        "per der";
+    grid-template-rows: auto auto 1fr;
+    column-gap: 24px;
+}
+.bj-item-cuerpo > .bj-item-cabecera { grid-area: cab; }
+.bj-item-cuerpo > .bj-item-titulo { grid-area: tit; }
+.bj-item-cuerpo > .bj-item-detalle { display: contents; }
+.bj-item-detalle > .bj-persona { grid-area: per; align-self: start; }
+.bj-item-detalle > .bj-col-derecha { grid-area: der; align-self: center; }
+
+/* columna derecha: proveido y, debajo, los botones de accion */
+.bj-col-derecha {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+.bj-col-derecha .bj-item-pie {
+    margin-top: 0;
+}
+.bj-item-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+}
+.bj-item-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.bj-item-acciones .btn,
+.bj-item-acciones .btn-group {
+    margin: 0;
+}
+.bj-item-acciones sup.badge {
+    top: -1px;
+    margin-left: 3px;
+}
+.bj-item-acciones .bj-ver-rechazo {
+    color: #D32F2F;
+    font-size: 22px;
+    line-height: 1;
+}
+.bj-btn-peligro {
+    background: #fff;
+    border: 1px solid #E5A3A3;
+    color: #B42318;
+}
+.bj-btn-peligro:hover,
+.bj-btn-peligro:focus {
+    background: #D32F2F;
+    border-color: #D32F2F;
+    color: #fff;
+}
+
+/* ===== vacio ===== */
+.bj-vacio {
+    padding: 48px 20px;
+    text-align: center;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(18, 62, 115, .08);
+    color: #7a8594;
+}
+.bj-vacio .fa,
+.bj-vacio .md {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 44px;
+    color: #2E9E5B;
+}
+.bj-vacio h4 {
+    margin: 0 0 4px;
+    color: var(--correos-azul-oscuro, #123E73);
+}
+.bj-sin-resultados {
+    display: none;
+    padding: 24px;
+    text-align: center;
+    color: #7a8594;
+}
+
+/* ===== archivo (carpetas) ===== */
+.bj-carpetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+a.bj-carpeta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-radius: 10px;
+    color: inherit;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+a.bj-carpeta:hover,
+a.bj-carpeta:focus {
+    text-decoration: none;
+    color: inherit;
+    border-color: var(--correos-amarillo, #FECB34);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(18, 62, 115, .12);
+}
+.bj-carpeta-icono {
+    flex: 0 0 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: var(--correos-amarillo-suave, #FFF7DD);
+    color: #C79201;
+}
+.bj-carpeta-texto {
+    min-width: 0;
+}
+.bj-carpeta-nombre {
+    display: block;
+    font-weight: 600;
+    color: #2d3748;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.bj-carpeta-cantidad {
+    display: block;
+    font-size: 12px;
+    color: #7a8594;
+}
+.bj-carpeta-cantidad b {
+    font-size: 18px;
+    color: var(--correos-azul-oscuro, #123E73);
+}
+
+@media (max-width: 767px) {
+    .bj-toolbar {
+        position: static;
+    }
+    .bj-item-detalle {
+        grid-template-columns: 1fr;
+    }
+    /* en pantallas angostas todo en una columna: cabecera, titulo, remitente, proveido y botones */
+    .bj-item-cuerpo {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "cab" "tit" "per" "der";
+        grid-template-rows: auto;
+    }
+    .bj-item-detalle > .bj-col-derecha {
+        margin-top: 10px;
+    }
+    .bj-buscar {
+        flex: 1 1 100%;
+    }
+}

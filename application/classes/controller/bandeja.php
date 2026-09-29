@@ -23,12 +23,20 @@ class Controller_Bandeja extends Controller_DefaultTemplate
         parent::after();
     }
 
+    // estilos y script compartidos de la bandeja (entrada, pendientes, enviados, archivo)
+    private function estilos_bandeja()
+    {
+        $version = '?v=' . @filemtime(DOCROOT . 'static/css/bandeja.css') . @filemtime(DOCROOT . 'static/js/bandeja.js');
+        $this->template->styles['static/css/bandeja.css' . $version] = 'all';
+        $this->template->scripts[] = 'static/js/bandeja.js' . $version;
+    }
+
     public function action_index()
     {
         $oSeg = New Model_Seguimiento();
 //echo $this->user->id;
         $entrada = $oSeg->entrada($this->user->id);
-        $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen');
+        $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen'); $this->estilos_bandeja();
         $this->template->title .= ' de Entrada';
         $this->template->titulo .= 'Entrada';
         $this->template->descripcion = 'lista de Correspondencia que le derivaron.';
@@ -225,7 +233,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                 $mistipos = $oTipo->misTipos($this->user->id);
 
 
-                $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen');
+                $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen'); $this->estilos_bandeja();
                 $this->template->title .= ' / Corresponsdencia Pendientes';
                 $this->template->titulo .= 'Pendientess ';
                 $this->template->descripcion = 'Correspondencia recibida para pronta respuesta';
@@ -260,7 +268,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
             //$mistipos = $oTipo->lista($this->user->id);
             $mistipos = $oTipo->misTipos($this->user->id);
 
-            $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen');
+            $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen'); $this->estilos_bandeja();
             $this->template->title .= ' / Correspondencia Pendiente';
             $this->template->titulo .= 'Pendientes ';
             $this->template->descripcion = 'Correspondencia recibida para pronta respuesta';
@@ -282,7 +290,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
         $this->template->title .= ' / Correspondencia Archivada';
         $this->template->titulo .= 'Archivada ';
         $this->template->descripcion = 'Lista de Carpetas';
-        $this->template->styles = array('media/css/tablas.css' => 'all');
+        $this->template->styles = array('media/css/tablas.css' => 'all'); $this->estilos_bandeja();
         $this->template->content = View::factory('bandeja/archivadores')
             ->bind('carpetas', $carpetas);
     }
@@ -395,7 +403,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
         $info = array();
         $oSeg = New Model_Seguimiento();
         $entrada = $oSeg->enviados($this->user->id);
-        $this->template->styles = array('media/css/tablas.css' => 'all');
+        $this->template->styles = array('media/css/tablas.css' => 'all'); $this->estilos_bandeja();
         $this->template->content = View::factory('bandeja/enviados')
             ->bind('entrada', $entrada)
             ->bind('info', $info);

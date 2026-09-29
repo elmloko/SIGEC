@@ -1,116 +1,78 @@
+<?php
+// conteos para los filtros rapidos
+$n_oficial = $n_copia = $n_urgente = 0;
+foreach ($entrada as $s) {
+    $s->oficial ? $n_oficial++ : $n_copia++;
+    $n_urgente += (int) $s->prioridad > 0 ? 1 : 0;
+}
+$clase_dias = function ($dias) {
+    return $dias > 7 ? 'bj-dias-alto' : ($dias > 2 ? 'bj-dias-medio' : 'bj-dias-bajo');
+};
+?>
 <script type="text/javascript">
-
     $(function () {
+        // filtro de texto
         $("div#entrada .bandeja").each(function () {
-            var t = $(this).text().toLowerCase(); //all row text
-            $("<table class='indexColumn'></table>")
-                .hide().text(t).appendTo(this);
-        });//each tr
+            var t = $(this).text().toLowerCase();
+            $("<table class='indexColumn'></table>").hide().text(t).appendTo(this);
+        });
         $("#FilterTextBox").keyup(function () {
             var s = $(this).val().toLowerCase().split(" ");
-            //show all rows.
             $("div#entrada .bandeja:hidden").show();
             $.each(s, function () {
-                $("div#entrada .bandeja .indexColumn:not(:contains('"
-                    + this + "'))").parent().hide();
-
-                // sobrepone el modal sobre el <body>
-                //$("#myModal").appendTo("body");
-            });//each
-        });//key up.
-
-//archivo y pendientes
-        $('.sel').bind('click', function () {
-            var count = $('input:checked').length;
-            if (count < 1) {
-                $('#opciones').addClass('oculto');
-                $('#sup-group,#sup-archive').removeClass('badge');
-                $('#sup-group,#sup-archive').removeClass('style-default');
-                $('#group,#archive').removeClass('btn-primary-dark').addClass('btn-default ').removeClass('animated').removeClass('bounceIn');
-                $('#group,#archive').attr('title', '');
-
-                $('#sup-group,#sup-archive').text('');
-            }
-            else {
-                $('#sup-group,#sup-archive').addClass('badge');
-                $('#sup-group,#sup-archive').addClass('style-default');
-                $('#sup-group,#sup-archive').text(count);
-                var nurs = '';
-                $('input:checked').each(function () {
-                    if ($(this).is(':checked')) {
-                        nurs = nurs + "\n " + $(this).attr('rel');
-                    }
-                });
-                $('#group,#archive').removeClass('btn-defaul').addClass('btn-primary-dark').addClass('animated').addClass('bounceIn');
-                $('#group').attr('title', 'Agrupar: \n' + nurs)
-                $('#archive').attr('title', 'Archivar: \n' + nurs)
-                //$('#seleciones').html(nurs);
-                //$('#opciones').removeClass('oculto');
-            }
+                $("div#entrada .bandeja .indexColumn:not(:contains('" + this + "'))").parent().hide();
+            });
         });
 
-//modal
-
-        //esto se se refresca la pagina
-        var count = $('input:checked').length;
-        if (count == 0) {
-            $('#opciones').addClass('oculto');
-        }
-        else {
+        // seleccion para agrupar / archivar
+        function actualizarSeleccion() {
+            var count = $('input.sel:checked').length;
             var nurs = '';
-            $('input:checked').each(function () {
-                if ($(this).is(':checked')) {
-                    nurs = nurs + "" + $(this).attr('rel');
-                }
+            $('input.sel:checked').each(function () {
+                nurs += "\n " + $(this).attr('rel');
             });
-            $('#seleciones').html(nurs);
-            $('#opciones').removeClass('oculto');
-
+            $('#sup-group,#sup-archive').text(count > 0 ? count : '').toggleClass('badge style-default', count > 0);
+            $('#group,#archive').toggleClass('btn-primary', count > 0).toggleClass('btn-default-bright', count === 0);
+            $('#group').attr('title', count > 0 ? 'Agrupar:' + nurs : 'Seleccione 2 o más hojas de ruta para agruparlas en un solo proceso');
+            $('#archive').attr('title', count > 0 ? 'Archivar:' + nurs : 'Seleccione 1 o más hojas de ruta para archivarlas');
+            $('.bandeja').each(function () {
+                $(this).toggleClass('bj-seleccionado', $(this).find('input.sel').is(':checked'));
+            });
         }
+        $('.sel').bind('click', actualizarSeleccion);
+        actualizarSeleccion();
+
         $('a#archive').click(function () {
+            if ($('input.sel:checked').length < 1) {
+                alert('Seleccione por lo menos 1 hoja de ruta para archivar');
+                return false;
+            }
             $('#accion').val('0');
             $('form#doa').submit();
         });
         $('a#group').click(function () {
             $('#accion').val('1');
-            var count = $('input:checked').length;
-            if (count > 1)
+            if ($('input.sel:checked').length > 1) {
                 $('form#doa').submit();
-            else {
+            } else {
                 alert('Para poder agrupar debe de seleccionar por lo menos 2 hojas de ruta');
                 return false;
             }
         });
 
-        $('#tipoCorr').change(function () {
-            var tipo = $(this).val();
-            if (tipo != '') {
-                $('.bandeja').hide();
-                $('.' + tipo).fadeIn();
-            }
-            else
-                $('.bandeja').show();
-        });
-        var copia = $('.tipo0').size();
-        var oficial = $('.tipo1').size();
-//alert(copia+':'+oficial);
+        // ordenar por atributo (hojaruta, fecha, oficina, proceso)
         $('a.link2').click(function () {
-            $this = $(this);
+            var $this = $(this);
             var criterio = $this.attr('id');
+            var sortdir;
             if ($this.is('.asc')) {
-                $this.removeClass('asc');
-                $this.addClass('desc');
-                var sortdir = -1;
+                $this.removeClass('asc').addClass('desc');
+                sortdir = -1;
+            } else {
+                $this.addClass('asc').removeClass('desc');
+                sortdir = 1;
             }
-            else {
-
-                $this.addClass('asc');
-                $this.removeClass('desc');
-                var sortdir = 1;
-            }
-            $(this).siblings().removeClass('asc');
-            $(this).siblings().removeClass('desc');
-            //sort
+            $this.closest('li').siblings().find('a').removeClass('asc desc');
             var nurs = $('div.bandeja').get();
             nurs.sort(function (a, b) {
                 var val1 = $(a).attr('' + criterio).toUpperCase();
@@ -120,517 +82,248 @@
             $.each(nurs, function (index, row) {
                 $('form#doa').append(row);
             });
+            $('form#doa').append($('#accion'));
             return false;
         });
         $('#FilterTextBox').focus();
     });
-
-    $(document).ready(function () {
-
-        $('#alerta-avisos').fadeOut('slow', function () {
-            // $('#alerta-avisos').fadeIn('slow');
-        });
-    });
-
 </script>
 <style>
-    sup.badge {
-        top: 0.1cm !important;
+    .bj-item.bj-seleccionado {
+        background: var(--correos-amarillo-suave, #FFF7DD);
+        border-color: var(--correos-amarillo, #FECB34);
     }
 </style>
 
-<?php if (sizeof($entrada) > 0) { ?>
-
-    <div style=";position: fixed; z-index: 10; margin-top: -24px; padding: 2px; background: #fff; width: 100%;"
-         class="col-lg-11 col-md-12">
-
-        <div style="display: none; margin: 0 auto; padding: 0;" class="alert alert-danger" id="alerta-avisos">
-            <?php
-            $mensaje = 'Sr(a): ' . $user->nombre . ', recordarle que a partir de la fecha solo se pueden realizar como máximo 4 derivaciones. Tomar en cuenta esta restricción del Sistema.';
-            echo $mensaje; ?>
+<div class="bj-toolbar">
+    <h3><i class="fa fa-clock-o"></i> Correspondencia pendiente
+        <span class="bj-contador" id="bj-visibles"><?php echo count($entrada); ?></span>
+    </h3>
+    <?php if (count($entrada) > 0): ?>
+        <div class="bj-buscar">
+            <i class="fa fa-search"></i>
+            <input type="text" id="FilterTextBox" name="FilterTextBox" class="form-control" placeholder="Buscar por hoja de ruta, referencia, remitente..."/>
         </div>
-
-        <div class="row">
-            <div class="col-lg-4 col-md-4">
-                <h3><i class="fa fa-clock-o"></i> Correspondencia Pendiente</h3>
+        <div class="bj-acciones">
+            <div class="btn-group">
+                <button data-toggle="dropdown" class="btn ink-reaction btn-sm btn-default-bright dropdown-toggle" type="button" aria-expanded="false">
+                    <i class="fa fa-sort-amount-asc"></i> Ordenar por <i class="fa fa-caret-down"></i>
+                </button>
+                <ul role="menu" class="dropdown-menu dropdown-menu-right">
+                    <li><a href="#" class="link2" id="hojaruta">Hoja de ruta</a></li>
+                    <li><a href="#" class="link2" id="fecha">Fecha</a></li>
+                    <li><a href="#" class="link2" id="oficina">Oficina</a></li>
+                    <li><a href="#" class="link2" id="proceso">Referencia</a></li>
+                </ul>
             </div>
-
-            <div class="col-lg-2 col-md-2"><i class="fa fa-filter"></i> Filtrar:
-                <input type="text" id="FilterTextBox" name="FilterTextBox" class="form-control" size="15"/>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="btn-group ">
-                    <button class="btn ink-reaction btn-sm btn-default" type="button"><i
-                                class="fa fa-sort-alpha-asc"></i> Ordenar por
-                    </button>
-                    <button data-toggle="dropdown" class="btn ink-reaction btn-sm btn-default dropdown-toggle"
-                            type="button" aria-expanded="false"><i class="fa fa-caret-down"></i></button>
-                    <ul role="menu" class="dropdown-menu dropdown-menu-right">
-                        <li><a href="#" class="link2" id="hojaruta">Hoja Ruta</a></li>
-                        <li><a href="#" class="link2" id="fecha">Fecha</a></li>
-                        <li><a href="#" class="link2" id="oficina">Oficina</a></li>
-                        <li><a href="#" class="link2" id="proceso">Proceso</a></li>
-                    </ul>
-                </div>
-                <a href="javascript:;" class="btn btn-sm btn-default" data-toggle="title" id="group"
-                   title="Permite agrupar 2 o + tramites o precesos en uno solo."><i class="fa fa-link"></i> AGRUPAR
-                    <sup class="badge " id="sup-group"></sup>
-                </a>
-                <a href="javascript:;" class="btn btn-sm btn-default" id="archive"
-                   title="Permite arhivar 1 o + tramites o procesos."><i class="fa fa-archive"></i> ARCHIVAR
-                    <sup class="badge " id="sup-group"></sup>
-                </a>
-                <!--<a href="#" id="print_hr" ><img src="/media/images/excel.png" align="absmiddle"  /><b> Generar Excel</b></a>         -->
-
-                <a href="/print/pendientes/?id=<?php echo time(); ?>" target="_blank"
-                   class="btn btn-sm btn-default-bright "><i class="fa fa-print"></i> Imprimir</a>
-
-            </div>
+            <a href="javascript:;" class="btn btn-sm btn-default-bright" id="group"><i class="fa fa-link"></i> Agrupar <sup id="sup-group"></sup></a>
+            <a href="javascript:;" class="btn btn-sm btn-default-bright" id="archive"><i class="fa fa-archive"></i> Archivar <sup id="sup-archive"></sup></a>
+            <a href="/print/pendientes/?id=<?php echo time(); ?>" target="_blank" class="btn btn-sm btn-default-bright"><i class="fa fa-print"></i> Imprimir</a>
         </div>
-    </div>
+        <div class="bj-filtros">
+            <span class="bj-filtro activo" data-filtro="">Todas <b><?php echo count($entrada); ?></b></span>
+            <span class="bj-filtro" data-filtro=".bj-oficial-item">Oficial <b><?php echo $n_oficial; ?></b></span>
+            <span class="bj-filtro" data-filtro=".bj-copia">Copia <b><?php echo $n_copia; ?></b></span>
+            <?php if ($n_urgente): ?>
+                <span class="bj-filtro" data-filtro=".bj-urgente">Urgente <b><?php echo $n_urgente; ?></b></span>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</div>
 
-    <div id="entrada" class="card" style="margin-top: 42px; position: relative;">
-        <form action="/bandeja/doa" method="post" id="doa">
+<?php if (count($entrada) > 0) { ?>
+    <div id="entrada">
+        <form action="/bandeja/doa" method="post" id="doa" class="bj-lista">
             <?php
-            $nro_item = 0;
             foreach ($entrada as $s):
+                $id_seguimiento = $s->id;
+                $nur = $s->nur;
+                $id_usuario = $user->id;
+                $urgente = (int) $s->prioridad > 0;
+                $clases = 'bandeja bj-item tipo' . $s->oficial . ($s->oficial ? ' bj-oficial-item' : ' bj-copia') . ($urgente ? ' bj-urgente' : '');
+
+                // numero de derivaciones del proceso
+                $nro_derivaciones = DB::query(Database::SELECT, "SELECT COUNT(1) AS n FROM seguimiento s USE INDEX (INDEX_NUR)
+                        INNER JOIN users u ON (s.derivado_por = u.id)
+                        WHERE s.nur = :nur AND s.oficial != 0 AND u.nivel != 4")
+                    ->param(':nur', $nur)->execute()->get('n');
+                // numero de justificaciones por retraso
+                $nro_justificaciones = DB::query(Database::SELECT, "SELECT COUNT(1) AS n FROM observacion_seguimiento USE INDEX (IDX_NUR)
+                        WHERE nur = :nur AND id_estado = 2")
+                    ->param(':nur', $nur)->execute()->get('n');
+                // justificaciones de rechazo (con autor)
+                $rechazos = DB::query(Database::SELECT, "SELECT os.observacion, os.fecha_observacion, u.nombre, u.cargo
+                        FROM observacion_seguimiento os USE INDEX (IDX_NUR)
+                        INNER JOIN users u USE KEY (PRIMARY) ON os.id_usuario = u.id
+                        WHERE os.nur = :nur AND os.id_estado = '1'
+                        ORDER BY os.fecha_observacion DESC")
+                    ->param(':nur', $nur)->execute()->as_array();
                 ?>
-                <div class="bandeja tipo<?php echo $s->oficial; ?>" style="display:inline-block; "
-                     oficina="<?php echo $s->de_oficina ?>" proceso="<?php echo $s->referencia ?>"
-                     fecha="<?php echo $s->fecha2; ?>" hojaruta="<?php echo $s->nur; ?>">
-                    <table class="oficial<?php echo $s->oficial; ?> ">
-                        <tr>
-                            <td width="118" rowspan="2" align="center" valign="top"
-                                class="nur<?php echo $s->oficial; ?><?php echo $s->prioridad; ?>">
-                                <div class="oficial<?php echo $s->oficial; ?> ">
-                                    <div class="checkbox checkbox-styled ">
-                                        <label>&nbsp;&nbsp;
-                                            <input type="checkbox" name="id_seg[]" value="<?php echo $s->id; ?>"
-                                                   rel="<?php echo $s->nur; ?>" class="sel">
-
-                                        </label>
-                                    </div>
-
+                <div class="<?php echo $clases; ?>"
+                     oficina="<?php echo HTML::chars($s->de_oficina); ?>" proceso="<?php echo HTML::chars($s->referencia); ?>"
+                     fecha="<?php echo $s->fecha2; ?>" hojaruta="<?php echo HTML::chars($s->nur); ?>">
+                    <div class="bj-item-check">
+                        <input type="checkbox" name="id_seg[]" value="<?php echo $s->id; ?>" rel="<?php echo HTML::chars($s->nur); ?>"
+                               class="sel" title="Seleccionar para agrupar o archivar">
+                    </div>
+                    <div class="bj-item-cuerpo">
+                        <div class="bj-item-cabecera">
+                            <?php if ($urgente): ?><span class="bj-etiqueta bj-urgente-tag">Urgente</span><?php endif; ?>
+                            <span class="bj-etiqueta <?php echo $s->oficial ? 'bj-oficial' : 'bj-copia-tag'; ?>"><?php echo $s->oficial ? 'Oficial' : 'Copia'; ?></span>
+                            <?php if ($s->hijo == 1): ?>
+                                <a href="/bandeja/agrupado/?hr=<?php echo urlencode($s->nur); ?>" class="bj-etiqueta bj-agrupado-tag">Agrupado</a>
+                            <?php endif; ?>
+                            <a href="/route/trace/?hr=<?php echo urlencode($s->nur); ?>" class="bj-nur" title="Ver seguimiento"><?php echo HTML::chars($s->nur); ?></a>
+                            <span class="bj-dias <?php echo $clase_dias((int) $s->dias); ?>" title="Días desde que la recibió"><?php echo (int) $s->dias == 1 ? '1 día' : (int) $s->dias . ' días'; ?></span>
+                        </div>
+                        <span class="bj-item-titulo"><a href="/document/detalle/<?php echo $s->id_doc; ?>"><?php echo HTML::chars($s->referencia); ?></a></span>
+                        <div class="bj-item-detalle">
+                            <div class="bj-persona">
+                                <b><?php echo HTML::chars($s->nombre_emisor); ?></b> &middot; <?php echo HTML::chars($s->cargo_emisor); ?>
+                                <span><?php echo HTML::chars($s->de_oficina); ?></span>
+                                <span class="bj-fecha"><i class="fa fa-calendar-o"></i> <?php echo Date::fecha($s->fecha2); ?></span>
+                            </div>
+                            <div class="bj-col-derecha">
+                                <div class="bj-proveido">
+                                    <i class="fa fa-comments-o"></i><?php echo HTML::chars($s->proveido); ?>
+                                    <?php if ($s->accion != ''): ?><small><?php echo HTML::chars($s->accion); ?></small><?php endif; ?>
                                 </div>
-                            </td>
-                            <td valign="top" colspan="3">
-                                <h4 class="text-primary-dark"><a
-                                            href="/document/detalle/<?php echo $s->id_doc ?>"><?php echo $s->referencia; ?></a>
-                                </h4>
-                            </td>
-
-                        </tr>
-                        <tr>
-                            <td width="50%" colspan="2" valign="top">
-                                <div>
-                                    <span class=" text-light"><b><?php echo $s->nombre_emisor; ?> </b> -
-                                        <?php echo $s->cargo_emisor; ?></span><br/>
-                                    <span class="oficina opacity-75"><?php echo $s->de_oficina; ?></span>
-                                </div>
-                            </td>
-                            <td class="derecha" valign="top">
-                                <span class="proveido text-accent-light"><i
-                                            class=" fa fa-comments-o"></i> <?php echo $s->proveido; ?></span>
-                                <br/><span class=" text-accent-dark"><?php echo $s->accion; ?></span><br/>
-                                <?php if ($s->hijo == 1): ?> <a href="/bandeja/agrupado/?hr=<?php echo $s->nur; ?>"
-                                                                class="link agrupado">Agrupado</a><?php endif; ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="88">
-                                <a href="/route/trace/?hr=<?php echo $s->nur; ?>"
-                                   class="nur<?php echo $s->oficial; ?>"><?php echo $s->nur ?></a>
-                            </td>
-                            <td colspan="2">
-                                <span class=" opacity-75"><?php echo Date::fecha($s->fecha2); ?></span>
-                            </td>
-                            <td>
-
-                                <!-- === BADGE DEL [ NUMERO DE DERIVACIONES ] y [NUMERO DE JUSTIFICACIONES] === -->
-                                <?php
-                                $id_seguimiento = $s->id;
-                                $nur = $s->nur;
-                                $id_usuario = $user->id;
-                                // $estado = $s->estado;
-
-                                // NUMERO DE DERIVACIONES
-                                // Sin Procedimientos Almacenados
-                                $query_nro_derivaciones = " SELECT 
-                                                                COUNT(1) AS nro_derivaciones
-                                                            FROM
-                                                                seguimiento s USE INDEX (INDEX_NUR)
-                                                                    INNER JOIN
-                                                                users u ON (s.derivado_por = u.id)
-                                                            WHERE
-                                                                (s.nur = '$nur')
-                                                                    AND (s.oficial != 0)
-                                                                    AND (u.nivel != 4);";
-
-                                $resultSet_nro_derivaciones = db::query(Database::SELECT, $query_nro_derivaciones, FALSE)
-                                    ->execute()
-                                    ->as_array();
-
-                                $nro_derivaciones = $resultSet_nro_derivaciones[0]['nro_derivaciones'];
-
-                                /*
-                                // SOLUCION (con procedimientos almacenados)
-                                $query_nro_derivaciones = "SELECT nro_derivaciones_por_hoja_de_ruta(:hr) AS nro_derivaciones";
-                                $resultSet_nro_derivaciones = DB::query(Database::SELECT, $query_nro_derivaciones)->bind(':hr', $nur)->execute();
-
-                                $nro_derivaciones = $resultSet_nro_derivaciones[0]['nro_derivaciones'];
-                                //
-                                */
-
-                                $titulo_boton_derivar = 'El proceso tiene: ' . $nro_derivaciones . ' derivacion(es)';
-
-                                // NUMERO DE JUSTIFICACIONES
-                                $query_nro_justificaciones = "  SELECT
-                                                                    COUNT(1) AS nro_justificaciones
-                                                                FROM
-                                                                    observacion_seguimiento USE INDEX (IDX_NUR)
-                                                                WHERE
-                                                                    (nur = '$nur') AND (id_estado = 2);";
-
-                                $resultSet_nro_justificaciones = db::query(Database::SELECT, $query_nro_justificaciones, FALSE)
-                                    ->execute()
-                                    ->as_array();
-
-                                $nro_justificaciones = $resultSet_nro_justificaciones[0]['nro_justificaciones'];
-
-                                $titulo_boton_justificar = 'El proceso tiene: ' . $nro_justificaciones . ' justificacion(es)';
-                                ?>
-
-                                <span class="opciones">
-
-                                    <?php if (intval($nro_derivaciones) >= 0) { ?>
-
-                                        <a href="/route/deriv/?hr=<?php echo $s->nur; ?>"
-                                           class=" btn btn-sm btn-primary-dark"
-                                           title="<?php echo $titulo_boton_derivar; ?>"
-                                           id_nur="<?php echo $s->nur; ?>" id_seg="<?php echo $s->id; ?>"
-                                           nuri="<?php echo $s->nur ?>"><i class="fa fa-share"></i> Derivar
-
-                                            <sup class="badge style-default"
-                                                 id="badge-numero-derivaciones"><?php echo $nro_derivaciones; ?></sup>
-                                        </a>
-                                    <?php } else { ?>
-
-                                        <a href="/route/deriv/?hr=<?php echo $s->nur; ?>"
-                                           class=" btn btn-sm btn-primary-dark"
-                                           title="<?php echo $titulo_boton_derivar; ?>"
-                                           id_nur="<?php echo $s->nur; ?>" id_seg="<?php echo $s->id; ?>"
-                                           nuri="<?php echo $s->nur ?>" disabled="disabled"><i class="fa fa-share"></i>
-                                            Derivar
-
-                                            <sup style="background-color: red; color: yellow;"
-                                                 class="badge style-default"
-                                                 id="badge-numero-derivaciones"><?php echo $nro_derivaciones; ?></sup>
-                                        </a>
-                                    <?php } ?>
-
-                                    <!-- === OBSERVACION DE JUSTIFICACION === -->
-                                    <?php
-                                    $query = "  SELECT
-                                                    *
-                                                FROM
-                                                    observacion_seguimiento USE INDEX (IDX_ID_SEGUIMIENTO , IDX_NUR , IDX_ID_ESTADO)
-                                                WHERE
-                                                    (id_seguimiento = '$id_seguimiento')
-                                                        AND (nur = '$nur')
-                                                        AND (id_usuario = '$id_usuario')
-                                                        AND (id_estado = '2');";
-
-                                    $resultSet = db::query(Database::SELECT, $query, FALSE)
-                                        ->execute()
-                                        ->as_array();
-
-                                    // Ocultamos el boton si ya tiene una justificacion
-                                    // if (empty($resultSet)) {
-                                    ?>
-
-                                    <!-- Boton JUSTIFICAR -->
-                                         <a href="#"
-                                            class="btn btn-sm btn-primary-dark btn-modal-justificacion"
-                                            data-toggle="modal"
-                                            title="<?php echo $titulo_boton_justificar; ?>"
-                                            data-id-seguimiento="<?php echo $id_seguimiento; ?>"
-                                            data-nur="<?php echo $nur; ?>"
-                                            data-id-usuario="<?php echo $id_usuario; ?>"
-                                            data-target="#myModal-<?php echo $id_seguimiento; ?>">
-                                                <i class="fa fa-share"></i>JUSTIFICAR
-
-                                            <sup class="badge style-default"
-                                                 id="badge-numero-justificaciones"><?php echo $nro_justificaciones; ?></sup>
-                                        </a>
-
-                                    <!-- Modal -->
-                                            <div class="modal fade"
-                                                 id="myModal-<?php echo $id_seguimiento; ?>" role="dialog">
-                                                <div class="modal-dialog">
-                                                    <!-- Modal content-->
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            <h4 class="modal-title">JUSTIFICACIÓN POR EL RETRASO</h4>
-                                                        </div>
-                                                        <div class="modal-body">
-
-                                                            <p>
-                                                                Ingrese una justificación, por la cual su persona tiene un
-                                                                retraso en la derivación.
-                                                            </p>
-                                                            <textarea style="height: 100px; width: 100%;" type="text"
-                                                                      class="form-control texto-justificacion"
-                                                                      id="texto-justificacion-<?php echo $id_seguimiento; ?>"
-                                                                      name="texto-justificacion"
-                                                                      size="15"
-                                                                      placeholder="Ingrese su justificación..."></textarea>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button id="btn-insertar-justificacion" type="button"
-                                                                    class="btn btn-default"
-                                                                    onclick="guardar_justificacion()">GUARDAR
-                                                            </button>
-                                                            <button type="button" class="btn btn-default"
-                                                                    data-dismiss="modal">Cerrar
-                                                            </button>
-
-                                                            <input type="hidden" class="id_seguimiento"
-                                                                   value="<?php echo $id_seguimiento; ?>"/>
-
-                                                            <input type="hidden" class="nur"
-                                                                   value="<?php echo $nur; ?>"/>
-                                                            <input type="hidden" class="id_user"
-                                                                   value="<?php echo $id_usuario; ?>"/>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                    <!-- [FIN] MODAL 2 -->
-
-                                    <?php
-                                    // }
-                                    ?>
-                                    <!-- === FIN OBSERVACION DE JUSTIFICACION === -->
-
+                                <div class="bj-item-pie">
+                                <div class="bj-item-acciones">
+                                    <a href="/route/deriv/?hr=<?php echo urlencode($s->nur); ?>" class="btn btn-sm btn-primary"
+                                       title="El proceso tiene <?php echo (int) $nro_derivaciones; ?> derivación(es)"
+                                       id_nur="<?php echo HTML::chars($s->nur); ?>" id_seg="<?php echo $s->id; ?>" nuri="<?php echo HTML::chars($s->nur); ?>">
+                                        <i class="fa fa-share"></i> Derivar <sup class="badge style-default"><?php echo (int) $nro_derivaciones; ?></sup></a>
+    
                                     <div class="btn-group">
-                                        <button class="btn ink-reaction btn-sm btn-default" type="button">Responder
-                                            con
+                                        <button data-toggle="dropdown" class="btn ink-reaction btn-sm btn-default-bright dropdown-toggle" type="button" aria-expanded="false">
+                                            <i class="fa fa-reply"></i> Responder con <i class="fa fa-caret-down"></i>
                                         </button>
-                                        <button data-toggle="dropdown"
-                                                class="btn ink-reaction btn-sm btn-default dropdown-toggle"
-                                                type="button" aria-expanded="false"><i class="fa fa-caret-down"></i>
-                                        </button>
-                                        <ul role="menu" class="dropdown-menu dropdown-menu-right">
+                                        <ul role="menu" class="dropdown-menu">
                                             <?php foreach ($tipos as $t): ?>
-
-                                                <li>
-                                                    <a href="/route/responder/?id_seg=<?php echo $s->id; ?>&d=<?php echo $t['id']; ?>&n=<?php echo $s->nur; ?>"><?php echo $t['tipo'] ?></a>
-                                                </li>
+                                                <li><a href="/route/responder/?id_seg=<?php echo $s->id; ?>&amp;d=<?php echo $t['id']; ?>&amp;n=<?php echo urlencode($s->nur); ?>"><?php echo HTML::chars($t['tipo']); ?></a></li>
                                             <?php endforeach; ?>
                                         </ul>
                                     </div>
+    
+                                    <a href="#" class="btn btn-sm btn-default-bright btn-modal-justificacion" data-toggle="modal"
+                                       title="El proceso tiene <?php echo (int) $nro_justificaciones; ?> justificación(es)"
+                                       data-id-seguimiento="<?php echo $id_seguimiento; ?>" data-nur="<?php echo HTML::chars($nur); ?>"
+                                       data-id-usuario="<?php echo $id_usuario; ?>" data-target="#myModal-<?php echo $id_seguimiento; ?>">
+                                        <i class="fa fa-pencil-square-o"></i> Justificar <sup class="badge style-default"><?php echo (int) $nro_justificaciones; ?></sup></a>
+    
+                                    <?php if ($rechazos): ?>
+                                        <a href="#" class="bj-ver-rechazo" title="Ver justificación de rechazo" data-toggle="modal"
+                                           data-target="#modal-texto-rechazo-<?php echo $id_seguimiento; ?>"><i class="fa fa-exclamation-triangle"></i></a>
+                                    <?php endif; ?>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                    <!-- === MOSTRAR EL TEXTO DE LA JUSTIFICACION DE RECHAZO === -->
-                                    <?php
-                                    /*
-                                    $query_rechazo = "  SELECT
-                                                            *
-                                                        FROM
-                                                            observacion_seguimiento
-                                                        WHERE
-                                                            (nur = '$nur')
-                                                                AND (id_estado = '1')
-                                                        ORDER BY fecha_observacion DESC";
-                                    */
+                    <!-- modal: justificacion por retraso -->
+                    <div class="modal fade" id="myModal-<?php echo $id_seguimiento; ?>" role="dialog">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">Justificación por el retraso</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Ingrese una justificación por la cual tiene un retraso en la derivación de la hoja de ruta
+                                        <b><?php echo HTML::chars($nur); ?></b>.</p>
+                                    <textarea style="height: 100px; width: 100%;" class="form-control texto-justificacion"
+                                              id="texto-justificacion-<?php echo $id_seguimiento; ?>" name="texto-justificacion"
+                                              placeholder="Ingrese su justificación..."></textarea>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                    <button type="button" class="btn btn-primary" onclick="guardar_justificacion()">Guardar</button>
+                                    <input type="hidden" class="id_seguimiento" value="<?php echo $id_seguimiento; ?>"/>
+                                    <input type="hidden" class="nur" value="<?php echo HTML::chars($nur); ?>"/>
+                                    <input type="hidden" class="id_user" value="<?php echo $id_usuario; ?>"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                    $query_rechazo = "  SELECT 
-                                                            os.*, u.nombre, u.cargo
-                                                        FROM
-                                                            observacion_seguimiento os USE INDEX (IDX_NUR)
-                                                                INNER JOIN
-                                                            users u USE KEY (PRIMARY) ON os.id_usuario = u.id
-                                                        WHERE
-                                                            (os.nur = '$nur')
-                                                                AND (os.id_estado = '1')
-                                                        ORDER BY fecha_observacion DESC;";
-
-                                    $resultSet_rechazo = db::query(Database::SELECT, $query_rechazo, FALSE)
-                                        ->execute()
-                                        ->as_array();
-
-                                    // Ocultamos el boton si ya tiene justificacion
-                                    if (!empty($resultSet_rechazo)) {
-
-                                        // $observacion_rechazo = $resultSet_rechazo[0]['observacion'];
-                                        $observacion_rechazo = '';
-
-                                        foreach ($resultSet_rechazo as $id => $row) {
-                                            $id_modal_observacion = "modal-texto-rechazo" . '-';
-                                            $id_modal_observacion .= $row['id'];
-
-                                            $fecha_observacion = new DateTime($row['fecha_observacion']);
-
-                                            //$observacion_rechazo .= '[' . $fecha_observacion->format('d/m/Y  H:i') . ']: ' . $row['observacion'] . '<br>';
-
-                                            $tab = '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;';
-                                            $observacion_rechazo .= '[' . $fecha_observacion->format('d/m/Y  H:i:s') . ']: '
-                                                . $row['observacion'] . '<br>'
-                                                . $tab
-                                                . '- ' . $row['nombre'] . '<br>'
-                                                . $tab
-                                                . '- ' . $row['cargo'] . '<br>';
-                                        }
-
-                                        // solo creamos el boton de 'exclamacion' si tuviera una observacion
-                                        if (strlen($observacion_rechazo) > 0) {
-                                            ?>
-
-                                            <a title="Ver Justificación de Rechazo" href="#"
-                                               style="color:red"
-                                               class="fa fa-exclamation-triangle fa-2x"
-                                               data-toggle="modal"
-                                               data-target="<?php echo '#' . $id_modal_observacion; ?>"></a>
-
-                                            <!-- Modal -->
-
-
-
-
-
-
-                                            <div class="modal fade" id="<?php echo $id_modal_observacion; ?>"
-                                                 role="dialog">
-                                                <div class="modal-dialog">
-                                                    <!-- Modal content-->
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <button type="button" class="close"
-                                                                    data-dismiss="modal">&times;</button>
-                                                            <h4 class="modal-title">JUSTIFICACIÓN DEL RECHAZO</h4>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p>
-                                                                <?php echo $observacion_rechazo; ?>
-                                                            </p>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-default"
-                                                                    data-dismiss="modal">Cerrar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <?php
-                                        }
-                                    }
-                                    ?>
-                                    <!-- === FIN MOSTRAR TEXTO DE LA JUSTIFICACION DE RECHAZO === -->
-
-                                </span>
-                            </td>
-                        </tr>
-                        <?php
-                        //$dias = floor((($segundos / 3600) / 24));
-                        switch ($s->dias) {
-                            case 0:
-                                $color = "style-success";
-                                break;
-                            case 1:
-                                $color = "style-success";
-                                break;
-                            case 2:
-                                $color = "style-warning";
-                                break;
-                            default:
-                                $color = "style-danger";
-                                break;
-                        }
-                        ?>
-                        <sup class="badge pull-2 <?php echo $color; ?> pull-right"><?php echo $s->dias; ?>
-                            dias</sup>
-                    </table>
-
-                    <?php // $segundos = (time() - strtotime($s->fecha2));
-                    ?>
+                    <?php if ($rechazos): ?>
+                        <!-- modal: justificaciones de rechazo -->
+                        <div class="modal fade" id="modal-texto-rechazo-<?php echo $id_seguimiento; ?>" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title"><i class="fa fa-exclamation-triangle" style="color:#D32F2F"></i> Justificación del rechazo
+                                            <small><?php echo HTML::chars($nur); ?></small></h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <?php foreach ($rechazos as $r): ?>
+                                            <p>
+                                                <b><?php echo date('d/m/Y H:i', strtotime($r['fecha_observacion'])); ?></b> &middot;
+                                                <?php echo HTML::chars($r['nombre']); ?> <small class="text-muted">(<?php echo HTML::chars($r['cargo']); ?>)</small><br/>
+                                                <?php echo nl2br(HTML::chars($r['observacion'])); ?>
+                                            </p>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php
-                $nro_item++;
-            endforeach; ?>
+            <?php endforeach; ?>
             <?php echo Form::hidden('accion', '', array('id' => 'accion')); ?>
         </form>
     </div>
-
+    <div class="bj-sin-resultados">No hay correspondencia que coincida con la búsqueda.</div>
 <?php } else { ?>
-    <div class="alert alert-info">
-        <p>
-            <i class="fa fa-info-circle"></i> Lista Vacia!, Usted no tiene correspondencia pendiente.</p>
+    <div class="bj-vacio">
+        <i class="fa fa-check-circle"></i>
+        <h4>¡Al día!</h4>
+        No tiene correspondencia pendiente.
     </div>
 <?php } ?>
 
 <script>
-
     $(document).ready(function () {
-        $(".btn-modal-justificacion").click(function (event) {
-
-            console.log('id-seguimiento:', $(this).data('id-seguimiento'));
-            console.log('nur:', $(this).data('nur'));
-            console.log('id-usuario:', $(this).data('id-usuario'));
-
-            var id_seguimiento = $(this).data('id-seguimiento');
-            var nur = $(this).data('nur');
-            var id_usuario = $(this).data('id-usuario');
-
-            $(".id_seguimiento").val(id_seguimiento);
-            $(".nur").val(nur);
-            $(".id_user").val(id_usuario);
-
-            //$('#myModal').modal('show');
-            // sobrepone el modal sobre el <body>
-            $('#myModal').appendTo("body").modal('show');
+        // los modales se mueven al <body> para que queden encima de todo
+        $(document).on('click', '.btn-modal-justificacion, .bj-ver-rechazo', function () {
+            if ($(this).is('.btn-modal-justificacion')) {
+                $(".id_seguimiento").val($(this).data('id-seguimiento'));
+                $(".nur").val($(this).data('nur'));
+                $(".id_user").val($(this).data('id-usuario'));
+            }
+            $($(this).data('target')).appendTo("body").modal('show');
+            return false;
         });
     });
 
-    // === OBSERVACION DE JUSTIFICACION ===
+    // justificacion por retraso
     function guardar_justificacion() {
         var id_seguimiento = $('.id_seguimiento').val();
-        var nur = $('.nur').val();
-        var observacion = $('#texto-justificacion-' + id_seguimiento).val();
-        var id_user = $('.id_user').val();
-
-        console.log('id_seguimiento:', id_seguimiento);
-        console.log('nur:', nur);
-        console.log('observacion:', observacion);
-        console.log('id_user:', id_user);
-
+        var observacion = $.trim($('#texto-justificacion-' + id_seguimiento).val());
         if (observacion.length > 0) {
-
             $.ajax({
                 type: "POST",
                 data: {
                     id_seguimiento: id_seguimiento,
-                    nur: nur,
+                    nur: $('.nur').val(),
                     observacion: observacion,
-                    id_usuario: id_user
+                    id_usuario: $('.id_user').val()
                 },
                 url: "/ajax/guardar_justificacion",
-                // dataType: "html",
-                success: function (data) {
+                success: function () {
                     location.reload(true);
                 }
             });
-        }
-        else {
+            $('.texto-justificacion').val('');
+            $('#myModal-' + id_seguimiento).modal('hide');
+        } else {
             alert("(*) Usted debe llenar una justificación de retraso");
         }
-
-        $('.texto-justificacion').val('');
-        $('#myModal').modal('toggle');
     }
-    // === FIN OBSERVACION DE JUSTIFICACION ===
 </script>
-
