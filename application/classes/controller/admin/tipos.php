@@ -26,13 +26,22 @@ class Controller_Admin_Tipos extends Controller_AdminTemplate {
         $this->template->scripts = array('media/js/select-chain.js', 'static/js/libs/select2/select2.min.js');
         $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
 
-        $tipos = ORM::factory('tipos')->find_all();
+        $tipos = ORM::factory('tipos')->order_by('activo', 'DESC')->order_by('tipo')->find_all();
+        // cuantos documentos hay de cada tipo y a cuanta gente se le permite generarlo
+        $uso = DB::query(Database::SELECT, 'SELECT t.id,
+                    (SELECT COUNT(*) FROM documentos WHERE id_tipo = t.id) AS documentos,
+                    (SELECT COUNT(*) FROM usertipo u INNER JOIN users s ON s.id = u.id_user
+                        WHERE u.id_tipo = t.id AND s.habilitado = 1) AS usuarios
+                FROM tipos t')
+                ->execute()->as_array('id');
         $session = Session::instance();
         $mensaje = $session->get_once('tipo_mensaje', '');
         $error = $session->get_once('tipo_error', '');
 
+        $this->template->titulo .= 'Tipos de documento';
         $this->template->content = View::factory('admin/config/tipo_documentos')
                 ->bind('tipos', $tipos)
+                ->set('uso', $uso)
                 ->bind('mensaje', $mensaje)
                 ->bind('error', $error);
     }

@@ -426,16 +426,72 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
         font-weight: 600;
         font-size: 12px;
     }
+    /* acciones que solo ve el administrador, separadas de lo que hace el usuario */
     .tr-admin {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 10px;
+        align-items: center;
+        gap: 7px;
+        margin-top: 12px;
         padding-top: 10px;
         border-top: 1px dashed var(--correos-borde, #DCE3EC);
     }
     .tr-admin .btn {
         margin: 0;
+    }
+    .tr-admin-etq {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-right: 2px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #8a94a3;
+        white-space: nowrap;
+    }
+    .tr-admin-etq .fa {
+        color: #B7791F;
+    }
+    .tr-acc {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 28px;
+        padding: 0 11px;
+        border: 1px solid #D5DCE6;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        color: #1A549A;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .12s, border-color .12s, color .12s;
+    }
+    .tr-acc:hover,
+    .tr-acc:focus {
+        background: #EEF3FA;
+        border-color: #B9C8DC;
+        color: #123E73;
+        text-decoration: none;
+    }
+    .tr-acc .fa,
+    .tr-acc .md {
+        font-size: 12px;
+        opacity: .85;
+    }
+    /* accion que deshace algo: se distingue del resto */
+    .tr-acc.deshacer {
+        border-color: #F0D7A8;
+        background: #FFF9EC;
+        color: #92400E;
+    }
+    .tr-acc.deshacer:hover {
+        background: #FDECC8;
+        border-color: #E0BC77;
+        color: #7A5A00;
     }
     /* mapa del recorrido */
     .tr-mapa-card {
@@ -1086,28 +1142,29 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
 
                         <?php if ($es_admin): ?>
                             <div class="tr-admin">
+                                <span class="tr-admin-etq"><i class="fa fa-shield"></i> Administrador</span>
                                 <?php if ($estado === 1): ?>
                                     <form method="post" action="/admin/hojasruta/revertir/<?php echo (int) $detalle['id_documento']; ?>" style="display:inline;">
                                         <input type="hidden" name="confirmar" value="1"/>
-                                        <button type="submit" data-nur="<?php echo HTML::chars($s->nur); ?>" class="btn btn-xs btn-warning btn-revertir-hr-trace"
-                                                title="Revertir esta derivación (solo si aún no fue recibida)"><i class="md md-undo"></i> Revertir</button>
+                                        <button type="submit" data-nur="<?php echo HTML::chars($s->nur); ?>" class="tr-acc deshacer btn-revertir-hr-trace"
+                                                title="Deshacer esta derivación: el documento vuelve con quien lo envió. Solo se puede mientras no lo reciban."><i class="md md-undo"></i> Deshacer derivación</button>
                                     </form>
                                 <?php endif; ?>
                                 <?php if ((int) $s->oficial > 0): ?>
-                                    <a href="/admin/hojasruta/agregar/<?php echo $id_seguimiento; ?>" class="btn btn-xs btn-info"
-                                       title="Agregar un destinatario en copia que <?php echo HTML::chars($s->nombre_emisor); ?> olvidó incluir"><i class="md md-person-add"></i> Agregar destinatario</a>
+                                    <a href="/admin/hojasruta/agregar/<?php echo $id_seguimiento; ?>" class="tr-acc"
+                                       title="Agregar un destinatario en copia que <?php echo HTML::chars($s->nombre_emisor); ?> olvidó incluir"><i class="md md-person-add"></i> Agregar copia</a>
                                 <?php endif; ?>
                                 <?php if (!$archivos_paso): ?>
-                                    <a href="/admin/hojasruta/crearinforme/<?php echo $id_seguimiento; ?>?nur=<?php echo urlencode($detalle['nur']); ?>" class="btn btn-xs btn-default-bright"
-                                       title="Crear el informe de este paso"><i class="fa fa-pencil"></i> Informe</a>
+                                    <a href="/admin/hojasruta/crearinforme/<?php echo $id_seguimiento; ?>?nur=<?php echo urlencode($detalle['nur']); ?>" class="tr-acc"
+                                       title="Adjuntar el informe de este paso"><i class="fa fa-plus"></i> Adjuntar informe</a>
                                 <?php endif; ?>
                                 <?php foreach ($archivos_paso as $af): ?>
                                     <a href="/admin/hojasruta/editarinforme/<?php echo (int) $af->id_documento; ?>?seg=<?php echo $id_seguimiento; ?>&amp;nur=<?php echo urlencode($detalle['nur']); ?>"
-                                       class="btn btn-xs btn-default-bright" title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i> Editar informe</a>
+                                       class="tr-acc" title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i> Editar informe</a>
                                 <?php endforeach; ?>
                                 <?php foreach ($documentos_paso as $d): ?>
                                     <a href="/admin/hojasruta/editarinforme/<?php echo (int) $d->id; ?>?seg=<?php echo $id_seguimiento; ?>&amp;nur=<?php echo urlencode($detalle['nur']); ?>"
-                                       class="btn btn-xs btn-default-bright" title="Editar este informe (datos, fecha y adjunto)"><i class="fa fa-pencil"></i> <?php echo HTML::chars($d->codigo); ?></a>
+                                       class="tr-acc" title="Editar los datos, la fecha y el adjunto de <?php echo HTML::chars($d->codigo); ?>"><i class="fa fa-pencil"></i> <?php echo HTML::chars($d->codigo); ?></a>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>

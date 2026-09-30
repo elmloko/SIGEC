@@ -331,6 +331,12 @@ $n = function ($v) {
 
 <div class="col-lg-12">
     <div class="hl-card">
+        <?php if (!empty($aviso)): ?>
+            <div style="display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 16px;border-radius:12px;background:#E6F6EC;color:#1E7B45;font-size:13px">
+                <i class="fa fa-check-circle" style="margin-top:2px"></i>
+                <span><?php echo HTML::chars($aviso); ?></span>
+            </div>
+        <?php endif; ?>
         <div class="hl-cab">
             <div class="hl-cab-icono"><i class="fa fa-tags"></i></div>
             <div class="hl-cab-texto">

@@ -48,63 +48,82 @@ class Controller_Admin_Config extends Controller_AdminTemplate
     //nuevo tipo y edicion de tipos
     public function action_tipo($id = '')
     {
-        $tipo_doc = array();
-        if ($id != '') {
-            $tipo = ORM::factory('tipos')->where('id', '=', $id)->find();
-            if ($tipo->loaded()) {
-                $tipo_doc = array(
-                    'id' => $tipo->id,
-                    'tipo' => $tipo->tipo,
-                    'plural' => $tipo->plural,
-                    'abreviatura' => $tipo->abreviatura,
-                    'action' => $tipo->action,
-                    'via' => $tipo->via,
-                    'descripcion' => $tipo->descripcion,
-                    'cite_tipo' => $tipo->cite_tipo,
-                    'cite_propio' => $tipo->cite_propio,
-                    'cite' => $tipo->cite,
-                    'template' => $tipo->template,
-                    'template_via' => $tipo->template_via,
-                    'template_via2' => $tipo->template_via2,
-                );
-            }
+        $error = '';
+        // el id sale de la URL, no del formulario
+        $t = ($id !== '') ? ORM::factory('tipos', (int) $id) : ORM::factory('tipos');
+        $nuevo = !$t->loaded();
+        $campos = array('tipo', 'plural', 'abreviatura', 'action', 'descripcion', 'cite_tipo', 'cite', 'template', 'template_via');
+        $datos = array();
+        foreach ($campos as $c) {
+            $datos[$c] = $nuevo ? '' : (string) $t->$c;
         }
+        $datos['via'] = $nuevo ? 0 : (int) $t->via;
+        $datos['cite_propio'] = $nuevo ? 0 : (int) $t->cite_propio;
+        $datos['activo'] = $nuevo ? 1 : (int) $t->activo;
+
         if (isset($_POST['submit'])) {
-
-            $documento = ORM::factory('tipos', $_POST['id']);
-
-            $documento->abreviatura = $_POST['abreviatura'];
-            $documento->tipo = $_POST['tipo'];
-            $documento->plural = $_POST['plural'];
-            $documento->action = $_POST['action'];
-            if ($_POST['via'] != "1") {
-                $_POST['via'] = "0";
+            foreach ($campos as $c) {
+                $datos[$c] = trim(Arr::get($_POST, $c, ''));
             }
-            $documento->via = $_POST['via'];
-            $documento->descripcion = $_POST['descripcion'];
-            $documento->cite_tipo = $_POST['cite_tipo'];
-            if ($_POST['cite_propio'] != "1") {
-                $_POST['cite_propio'] = "0";
+            $datos['abreviatura'] = strtoupper($datos['abreviatura']);
+            $datos['via'] = isset($_POST['via']) ? 1 : 0;
+            $datos['cite_propio'] = isset($_POST['cite_propio']) ? 1 : 0;
+            $datos['activo'] = isset($_POST['activo']) ? 1 : 0;
+
+            if ($datos['tipo'] === '') {
+                $error = 'Escriba el nombre del tipo de documento.';
+            } elseif ($datos['plural'] === '') {
+                $error = 'Escriba el nombre en plural.';
+            } elseif (!preg_match('/^[a-z0-9_-]{2,30}$/', $datos['action'])) {
+                $error = 'El identificador solo admite letras minúsculas, números, guion y guion bajo (de 2 a 30 caracteres).';
+            } else {
+                $repetido = ORM::factory('tipos')->where('action', '=', $datos['action']);
+                if (!$nuevo) {
+                    $repetido->where('id', '<>', $t->id);
+                }
+                if ($repetido->find()->loaded()) {
+                    $error = 'Ya existe otro tipo con el identificador <b>' . HTML::chars($datos['action']) . '</b>.';
+                } elseif (!$nuevo AND $datos['activo'] === 0 AND (int) $t->activo === 1) {
+                    $usados = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM usertipo u
+                                INNER JOIN users s ON s.id = u.id_user
+                                WHERE u.id_tipo = :id AND s.habilitado = 1')
+                            ->param(':id', (int) $t->id)->execute()->get('n');
+                    if ($usados > 0) {
+                        $error = 'No se desactivó: todavía hay ' . $usados . ' persona' . ($usados == 1 ? '' : 's') . ' con permiso para generar este tipo. Quíteselo primero en «Documentos permitidos».';
+                    }
+                }
             }
-            $documento->cite_propio = $_POST['cite_propio'];
-            $documento->cite = $_POST['cite'];
-            $documento->template = $_POST['template'];
-            $documento->template_via = $_POST['template_via'];
-            $documento->save();
-            //var_dump($_POST);
 
-            // RELOAD PAGE
-            $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/admin/tipos";
-
-            echo '<script>window.location = "' . $url . '";</script>';
-            die;
+            if ($error === '') {
+                foreach ($datos as $k => $v) {
+                    $t->$k = $v;
+                }
+                $t->save();
+                $this->save($this->user->id_entidad, $this->user->id,
+                        'Administrador ' . ($nuevo ? 'creo' : 'edito') . ' el tipo de documento <b>' . $t->tipo . '</b>');
+                Session::instance()->set('tipo_mensaje', $nuevo
+                        ? 'Se creó el tipo de documento ' . $t->tipo . '.'
+                        : 'Se guardaron los cambios de ' . $t->tipo . '.');
+                $this->request->redirect('/admin/tipos');
+            }
         }
-        $this->template->scripts = array('media/js/select-chain.js', 'static/js/libs/select2/select2.min.js');
-        $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
 
-        $tipos = ORM::factory('tipos')->find_all();
+        $uso = array('documentos' => 0, 'usuarios' => 0);
+        if (!$nuevo) {
+            $uso = DB::query(Database::SELECT, 'SELECT
+                        (SELECT COUNT(*) FROM documentos WHERE id_tipo = :id) AS documentos,
+                        (SELECT COUNT(*) FROM usertipo u INNER JOIN users s ON s.id = u.id_user
+                            WHERE u.id_tipo = :id AND s.habilitado = 1) AS usuarios')
+                    ->param(':id', (int) $t->id)->execute()->current();
+        }
+
+        $this->template->titulo .= $nuevo ? 'Nuevo tipo de documento' : 'Editar tipo de documento';
         $this->template->content = View::factory('admin/config/tipo_config')
-            ->bind('tipo', $tipo_doc);
+            ->set('t', $t)
+            ->set('nuevo', $nuevo)
+            ->set('datos', $datos)
+            ->set('uso', $uso)
+            ->set('error', $error);
     }
 
 }

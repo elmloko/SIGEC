@@ -281,6 +281,16 @@ foreach ($archivo as $a) {
     </div>
 </div>
 
+<?php if (!empty($como_admin)): ?>
+    <!-- aviso: se abrio con el rol de administrador, sin intervenir en la hoja de ruta -->
+    <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;padding:11px 14px;border-radius:11px;background:#FFF7DD;color:#7A5A00;font-size:13px">
+        <i class="fa fa-shield" style="margin-top:2px"></i>
+        <span>Está viendo este documento con su <b>rol de administrador</b>: usted no interviene en esta hoja de ruta. La consulta queda registrada en la bitácora.
+            <a href="/admin/hojasruta/editar/<?php echo (int) $d->id; ?>" style="color:#7A5A00;text-decoration:underline">Editar los datos de este documento</a>.
+        </span>
+    </div>
+<?php endif; ?>
+
 <div class="row">
     <!-- hoja del documento -->
     <div class="col-lg-8 det-principal">

@@ -53,17 +53,28 @@ class Controller_Admin_Oficinas extends Controller_AdminTemplate
     public function action_lista($id = '')
     {
         $entidad = ORM::factory('entidades')->where('id', '=', $id)->and_where('estado', '=', 1)->find();
-        $id_entidad = 13;
-        $nombre_entidad = "Lista de todas las oficinas";
+        // sin filtro el selector debe quedar en "Todas las entidades", no en una fija
+        $id_entidad = '';
+        $nombre_entidad = 'Lista de todas las oficinas';
         if ($entidad->loaded()) {
             $id_entidad = $entidad->id;
             $nombre_entidad = $entidad->entidad;
         }
-        $mOficinas = new Model_Oficinas();
-        $oficinas = $mOficinas->listaOficinas($id);
+        // se listan todas, activas e inactivas: antes las inactivas desaparecian y no habia
+        // forma de volver a activarlas desde la pantalla
+        $oficinas = DB::query(Database::SELECT, 'SELECT o.id, o.padre, o.oficina, o.sigla, o.estado,
+                    e.entidad, e.id AS id_entidad,
+                    (SELECT COUNT(*) FROM users WHERE id_oficina = o.id AND habilitado = 1) AS usuarios,
+                    (SELECT oficina FROM oficinas p WHERE p.id = o.padre) AS nombre_padre
+                FROM oficinas o
+                INNER JOIN entidades e ON o.id_entidad = e.id'
+                . ($entidad->loaded() ? ' WHERE e.id = :id' : '')
+                . ' ORDER BY e.entidad, o.oficina')
+                ->param(':id', (int) $id)
+                ->execute()->as_array();
         //lista entidades
         $options = array();
-        $entidades = ORM::factory('entidades')->where('estado', '=', 1)->find_all();
+        $entidades = ORM::factory('entidades')->where('estado', '=', 1)->order_by('entidad')->find_all();
         foreach ($entidades as $e) {
             $options[$e->id] = $e->entidad;
         }
@@ -89,10 +100,15 @@ class Controller_Admin_Oficinas extends Controller_AdminTemplate
         }
         */
 
+        $session = Session::instance();
+        $this->template->titulo .= 'Oficinas';
         $this->template->content = View::factory('admin/oficinas/lista')
             ->bind('oficinas', $oficinas)
             ->bind('options', $options)
             ->bind('id_entidad', $id_entidad)
+            ->set('filtrada', $entidad->loaded())
+            ->set('mensaje', $session->get_once('oficina_mensaje', ''))
+            ->set('error', $session->get_once('oficina_error', ''))
             ->bind('entidad', $nombre_entidad);
     }
 
@@ -205,31 +221,60 @@ class Controller_Admin_Oficinas extends Controller_AdminTemplate
         }
 
         if (isset($_POST['edit'])) {
+            $nueva_sigla = strtoupper(trim($_POST['sigla']));
+            $nuevo_nombre = trim($_POST['oficina']);
+            $nuevo_padre = (int) Arr::get($_POST, 'padre', 0);
+            $nuevo_estado = isset($_POST['estado']) ? 1 : 0;
 
-            $sigla2 = trim($_POST['sigla']);
-            $sigla = ORM::factory('oficinas')->where('sigla', '=', $sigla2)->find();
-            if ($sigla->loaded()) {
-                $error['Error'] = 'Ya existe una oficina con la sigla <b>' . $_POST['sigla'] . '</b>, escriba otra por favor.';
-            } else {
-                $oficina->sigla = $sigla2;
+            if ($nuevo_nombre === '') {
+                $error['Error'] = 'Escriba el nombre de la oficina.';
+            } elseif ($nueva_sigla === '') {
+                $error['Error'] = 'Escriba la sigla de la oficina.';
+            } elseif (ORM::factory('oficinas')->where('sigla', '=', $nueva_sigla)
+                    ->where('id', '<>', $oficina->id)->find()->loaded()) {
+                // antes se comparaba contra TODAS las oficinas, incluida esta misma:
+                // guardar sin tocar la sigla siempre daba "ya existe" y la sigla no se guardaba
+                $error['Error'] = 'Ya existe otra oficina con la sigla <b>' . HTML::chars($nueva_sigla) . '</b>.';
+            } elseif ($nuevo_padre === (int) $oficina->id) {
+                $error['Error'] = 'Una oficina no puede depender de sí misma.';
+            } elseif ($nuevo_estado === 0 AND (int) $oficina->estado === 1) {
+                $activos = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM users WHERE id_oficina = :id AND habilitado = 1')
+                        ->param(':id', (int) $oficina->id)->execute()->get('n');
+                if ($activos > 0) {
+                    $error['Error'] = 'No se desactivó: la oficina todavía tiene ' . $activos . ' usuario' . ($activos == 1 ? '' : 's') . ' activo' . ($activos == 1 ? '' : 's') . '.';
+                }
             }
 
-            //$oficina->id_entidad = $_POST['id_entidad'];
-            $oficina->padre = $_POST['padre'];
-            $oficina->oficina = $_POST['oficina'];
-            if ($_POST['estado'] != '1') {
-                $_POST['estado'] = 0;
+            if (sizeof($error) == 0) {
+                $oficina->sigla = $nueva_sigla;
+                $oficina->padre = $nuevo_padre;
+                $oficina->oficina = $nuevo_nombre;
+                $oficina->estado = $nuevo_estado;
+                $oficina->save();
+                $this->save($this->user->id_entidad, $this->user->id, 'Administrador edito la oficina <b>' . $oficina->oficina . '</b>');
+                Session::instance()->set('oficina_mensaje', 'Se guardaron los cambios de ' . $oficina->oficina . '.');
+                $this->request->redirect('/admin/oficinas/lista/' . (int) $oficina->id_entidad);
             }
-            $estado = $_POST['estado'];
-            $oficina->estado = $estado;
-            $oficina->save();
-            $this->request->redirect('/admin/oficinas/lista');
+            // se conserva lo que escribio para no perderlo al mostrar el error
+            $nombre_oficina = $nuevo_nombre;
+            $sigla = $nueva_sigla;
+            $id_padre_oficina = $nuevo_padre;
+            $estado = $nuevo_estado;
         }
 
+        $usuarios = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM users WHERE id_oficina = :id AND habilitado = 1')
+                ->param(':id', (int) $oficina->id)->execute()->get('n');
+        $hijas = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM oficinas WHERE padre = :id')
+                ->param(':id', (int) $oficina->id)->execute()->get('n');
+
+        $this->template->titulo .= 'Editar oficina';
         $this->template->scripts = array('media/js/select-chain.js', 'static/js/libs/select2/select2.min.js');
         $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
         $this->template->content = View::factory('admin/oficinas/editar')
             ->bind('options', $options)
+            ->set('oficina', $oficina)
+            ->set('usuarios', $usuarios)
+            ->set('hijas', $hijas)
             ->bind('entidades', $entidades)
             ->bind('nombre_oficina', $nombre_oficina)
             ->bind('id_entidad', $id_entidad)
@@ -242,17 +287,37 @@ class Controller_Admin_Oficinas extends Controller_AdminTemplate
     }
 
     // eliminacion logica de oficina
+    // desactiva o vuelve a activar una oficina. Antes bastaba con abrir el enlace: cualquier
+    // clic (o el prefetch del navegador) desactivaba la oficina, asi que ahora exige un POST.
     public function action_remove($id = '')
     {
-        $id_oficina = $id;
+        $session = Session::instance();
+        $oficina = ORM::factory('oficinas', (int) $id);
+        if ($this->request->method() !== Request::POST OR !$oficina->loaded()) {
+            $this->request->redirect('/admin/oficinas/lista');
+        }
+        $volver = '/admin/oficinas/lista/' . (int) $oficina->id_entidad;
 
-        $oficina = ORM::factory('oficinas')
-            ->where('id', '=', $id_oficina)
-            ->find();
-        $oficina->estado = '0';
-        $oficina->save();
-
-        $this->request->redirect('/admin/oficinas/lista');
+        if ((int) $oficina->estado === 1) {
+            // con gente activa dentro, desactivarla la deja sin bandeja ni destinatarios
+            $usuarios = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM users WHERE id_oficina = :id AND habilitado = 1')
+                    ->param(':id', (int) $oficina->id)
+                    ->execute()->get('n');
+            if ($usuarios > 0) {
+                $session->set('oficina_error', 'No se desactivó ' . $oficina->oficina . ': todavía tiene ' . $usuarios . ' usuario' . ($usuarios == 1 ? '' : 's') . ' activo' . ($usuarios == 1 ? '' : 's') . '. Trasládelos o deles de baja primero.');
+                $this->request->redirect($volver);
+            }
+            $oficina->estado = 0;
+            $oficina->save();
+            $this->save($this->user->id_entidad, $this->user->id, 'Administrador desactivo la oficina <b>' . $oficina->oficina . '</b>');
+            $session->set('oficina_mensaje', 'Se desactivó la oficina ' . $oficina->oficina . '.');
+        } else {
+            $oficina->estado = 1;
+            $oficina->save();
+            $this->save($this->user->id_entidad, $this->user->id, 'Administrador activo la oficina <b>' . $oficina->oficina . '</b>');
+            $session->set('oficina_mensaje', 'Se activó la oficina ' . $oficina->oficina . '.');
+        }
+        $this->request->redirect($volver);
     }
 
     public function action_oficinas($id = '')

@@ -80,6 +80,7 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             ->bind('anios', $anios)
             ->bind('tipos', $tipos)
             ->bind('estados', $estados)
+            ->set('aviso', Session::instance()->get_once('hr_aviso', ''))
             ->set('q', $filtros['q']);
     }
     // editar los datos del documento asociado a la hoja de ruta
@@ -93,13 +94,75 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             $this->request->redirect('/admin/hojasruta/lista');
         }
 
+        // adjuntar un archivo digital al documento
+        if (isset($_POST['adjuntar']) AND !empty($_FILES['archivo']['name'])) {
+            try {
+                $sub_directorio = date('Y_m');
+                if (RemoteArchivo::is_enabled()) {
+                    $filename = uniqid() . $_FILES['archivo']['name'];
+                    RemoteArchivo::upload($_FILES['archivo']['tmp_name'], $sub_directorio . '/' . $filename);
+                } else {
+                    $path = rtrim(Kohana::$config->load('archivo')->get('path'), '/\\') . '/' . $sub_directorio;
+                    if (!is_dir($path) AND !mkdir($path, 0777, TRUE)) {
+                        throw new Exception('No se pudo crear la carpeta de archivos.');
+                    }
+                    $filename = upload::save($_FILES['archivo'], NULL, $path);
+                }
+                $nuevo = ORM::factory('archivos');
+                $nuevo->nombre_archivo = basename($filename);
+                $nuevo->extension = $_FILES['archivo']['type'];
+                $nuevo->tamanio = $_FILES['archivo']['size'];
+                $nuevo->id_user = $this->user->id;
+                $nuevo->id_documento = $documento->id;
+                $nuevo->sub_directorio = $sub_directorio;
+                $nuevo->fecha = date('Y-m-d H:i:s');
+                $nuevo->estado = 1;
+                $nuevo->save();
+                $this->save($this->user->id_entidad, $this->user->id, 'Administrador adjunto un archivo al documento <b>' . $documento->codigo . '</b> (hoja de ruta ' . $documento->nur . ')');
+                $info['Exito!'] = 'Se adjuntó el archivo.';
+            } catch (Exception $e) {
+                Kohana::$log->add(Log::ERROR, 'adjuntar archivo: ' . $e->getMessage());
+                $error['Error'] = 'No se pudo subir el archivo.';
+            }
+        }
+
+        // quitar un archivo digital (baja logica: el archivo queda en el servidor)
+        if (isset($_POST['quitar_archivo'])) {
+            $arch = ORM::factory('archivos', (int) $_POST['quitar_archivo']);
+            if ($arch->loaded() AND (int) $arch->id_documento === (int) $documento->id) {
+                $arch->estado = 0;
+                $arch->save();
+                $this->save($this->user->id_entidad, $this->user->id, 'Administrador quito el archivo <b>' . substr($arch->nombre_archivo, 13) . '</b> del documento ' . $documento->codigo);
+                $info['Exito!'] = 'Se quitó el archivo digital.';
+            } else {
+                $error['Error'] = 'Ese archivo no pertenece a este documento.';
+            }
+        }
+
         if (isset($_POST['editar'])) {
             $nur_original = $documento->nur;
             $nuevo_nur = trim($_POST['nur']);
             $nuevo_codigo = trim($_POST['codigo']);
+            $nueva_fecha = trim($_POST['fecha_creacion']);
+
+            if ($nuevo_nur === '') {
+                $error['Error'] = 'El número de hoja de ruta no puede quedar vacío.';
+            } elseif ($nuevo_codigo === '') {
+                $error['Error'] = 'El código del documento no puede quedar vacío.';
+            } elseif (trim($_POST['referencia']) === '') {
+                $error['Error'] = 'La referencia no puede quedar vacía.';
+            } else {
+                // la fecha se guarda tal cual en la base: si no es valida rompe el expediente
+                $f = date_create($nueva_fecha);
+                if (!$f OR $f->format('Y-m-d H:i:s') !== $nueva_fecha) {
+                    $error['Error'] = 'La fecha de creación debe tener el formato AAAA-MM-DD HH:MM:SS (por ejemplo ' . date('Y-m-d H:i:s') . ').';
+                } elseif ($f->format('Y') < 2000 OR $f > new DateTime('+1 day')) {
+                    $error['Error'] = 'La fecha de creación está fuera de lo razonable: revise el año.';
+                }
+            }
 
             // validamos que el codigo no se duplique con otro documento
-            if ($nuevo_codigo !== $documento->codigo) {
+            if (sizeof($error) == 0 AND $nuevo_codigo !== $documento->codigo) {
                 $existe_codigo = ORM::factory('documentos')
                     ->where('codigo', '=', $nuevo_codigo)
                     ->and_where('id', '!=', $documento->id)
@@ -119,21 +182,36 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
 
             if (sizeof($error) == 0) {
                 if ($nuevo_nur !== $nur_original) {
-                    $enur_old = Database::instance()->escape($nur_original);
-                    $enur_new = Database::instance()->escape($nuevo_nur);
+                    // el cambio toca seis tablas: o se hace entero o no se hace, para no partir el expediente
+                    $db = Database::instance();
+                    $db->begin();
+                    try {
+                        $enur_old = $db->escape($nur_original);
+                        $enur_new = $db->escape($nuevo_nur);
 
-                    db::query(Database::UPDATE, 'UPDATE seguimiento SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
-                    db::query(Database::UPDATE, 'UPDATE agrupaciones SET padre = ' . $enur_new . ' WHERE padre = ' . $enur_old)->execute();
-                    db::query(Database::UPDATE, 'UPDATE agrupaciones SET hijo = ' . $enur_new . ' WHERE hijo = ' . $enur_old)->execute();
-                    db::query(Database::UPDATE, 'UPDATE hojasruta SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
-                    db::query(Database::UPDATE, 'UPDATE documentos SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
-                    db::query(Database::UPDATE, 'UPDATE nurs SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
+                        db::query(Database::UPDATE, 'UPDATE seguimiento SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
+                        db::query(Database::UPDATE, 'UPDATE agrupaciones SET padre = ' . $enur_new . ' WHERE padre = ' . $enur_old)->execute();
+                        db::query(Database::UPDATE, 'UPDATE agrupaciones SET hijo = ' . $enur_new . ' WHERE hijo = ' . $enur_old)->execute();
+                        db::query(Database::UPDATE, 'UPDATE hojasruta SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
+                        db::query(Database::UPDATE, 'UPDATE documentos SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
+                        db::query(Database::UPDATE, 'UPDATE nurs SET nur = ' . $enur_new . ' WHERE nur = ' . $enur_old)->execute();
+                        $db->commit();
+                    } catch (Exception $e) {
+                        $db->rollback();
+                        Kohana::$log->add(Log::ERROR, 'cambio de NUR: ' . $e->getMessage());
+                        $error['Error'] = 'No se pudo cambiar el número de hoja de ruta: no se modificó nada.';
+                    }
 
-                    $this->save($this->user->id_entidad, $this->user->id, 'Administrador cambio el NUR ' . $nur_original . ' a ' . $nuevo_nur . ' (actualizacion en cascada)');
+                    if (sizeof($error) == 0) {
+                        $this->save($this->user->id_entidad, $this->user->id, 'Administrador cambio el NUR ' . $nur_original . ' a ' . $nuevo_nur . ' (actualizacion en cascada)');
 
-                    // recargamos el documento porque su nur ya cambio directamente en la BD
-                    $documento = ORM::factory('documentos')->where('id', '=', $id)->find();
+                        // recargamos el documento porque su nur ya cambio directamente en la BD
+                        $documento = ORM::factory('documentos')->where('id', '=', $id)->find();
+                    }
                 }
+            }
+
+            if (sizeof($error) == 0) {
 
                 $documento->codigo = $nuevo_codigo;
                 $documento->cite_original = trim($_POST['cite_original']);
@@ -151,11 +229,26 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             }
         }
 
+        // que arrastra consigo el cambio de numero: se le muestra al administrador antes de guardar
+        $alcance = DB::query(Database::SELECT, 'SELECT
+                    (SELECT COUNT(*) FROM seguimiento WHERE nur = :nur) AS pasos,
+                    (SELECT COUNT(*) FROM documentos WHERE nur = :nur) AS documentos,
+                    (SELECT COUNT(*) FROM agrupaciones WHERE padre = :nur OR hijo = :nur) AS agrupaciones')
+                ->param(':nur', (string) $documento->nur)
+                ->execute()->current();
+        $autor = ORM::factory('users', $documento->id_user);
+        $archivos = ORM::factory('archivos')->where('id_documento', '=', $documento->id)
+                ->and_where('estado', '=', 1)->order_by('fecha')->find_all();
+
         $this->template->title .= ' / Editar ' . $documento->nur;
         $this->template->titulo .= ' Editar ' . $documento->nur;
         $this->template->descripcion .= ' Editar los datos del documento de la hoja de ruta';
         $this->template->content = View::factory('admin/hojasruta/editar')
             ->bind('documento', $documento)
+            ->set('alcance', $alcance)
+            ->set('autor', $autor->loaded() ? $autor->nombre : '')
+            ->set('archivos', $archivos)
+            ->set('aviso_error', Session::instance()->get_once('hr_aviso_error', ''))
             ->bind('error', $error)
             ->bind('info', $info);
     }
@@ -545,23 +638,35 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             $this->save($this->user->id_entidad, $this->user->id, 'Administrador elimino DEFINITIVAMENTE la hoja de ruta ' . $nur . ' (documento ' . $codigo . ')');
 
             if ($nur !== '' && $nur !== NULL) {
-                $enur = Database::instance()->escape($nur);
+                // se borran cinco tablas: o cae todo el expediente o no cae nada
+                $db = Database::instance();
+                $db->begin();
+                try {
+                    $enur = $db->escape($nur);
 
-                $ids_documentos = array();
-                $docs = ORM::factory('documentos')->where('nur', '=', $nur)->find_all();
-                foreach ($docs as $d) {
-                    $ids_documentos[] = (int) $d->id;
-                }
-                if (!empty($ids_documentos)) {
-                    db::query(Database::DELETE, 'DELETE FROM archivos WHERE id_documento IN (' . implode(',', $ids_documentos) . ')')->execute();
-                }
+                    $ids_documentos = array();
+                    $docs = ORM::factory('documentos')->where('nur', '=', $nur)->find_all();
+                    foreach ($docs as $d) {
+                        $ids_documentos[] = (int) $d->id;
+                    }
+                    if (!empty($ids_documentos)) {
+                        db::query(Database::DELETE, 'DELETE FROM archivos WHERE id_documento IN (' . implode(',', $ids_documentos) . ')')->execute();
+                    }
 
-                db::query(Database::DELETE, 'DELETE FROM seguimiento WHERE nur = ' . $enur)->execute();
-                db::query(Database::DELETE, 'DELETE FROM agrupaciones WHERE padre = ' . $enur . ' OR hijo = ' . $enur)->execute();
-                db::query(Database::DELETE, 'DELETE FROM hojasruta WHERE nur = ' . $enur)->execute();
-                db::query(Database::DELETE, 'DELETE FROM documentos WHERE nur = ' . $enur)->execute();
-                db::query(Database::DELETE, 'DELETE FROM nurs WHERE nur = ' . $enur)->execute();
+                    db::query(Database::DELETE, 'DELETE FROM seguimiento WHERE nur = ' . $enur)->execute();
+                    db::query(Database::DELETE, 'DELETE FROM agrupaciones WHERE padre = ' . $enur . ' OR hijo = ' . $enur)->execute();
+                    db::query(Database::DELETE, 'DELETE FROM hojasruta WHERE nur = ' . $enur)->execute();
+                    db::query(Database::DELETE, 'DELETE FROM documentos WHERE nur = ' . $enur)->execute();
+                    db::query(Database::DELETE, 'DELETE FROM nurs WHERE nur = ' . $enur)->execute();
+                    $db->commit();
+                } catch (Exception $e) {
+                    $db->rollback();
+                    Kohana::$log->add(Log::ERROR, 'eliminar hoja de ruta: ' . $e->getMessage());
+                    Session::instance()->set('hr_aviso_error', 'No se pudo eliminar la hoja de ruta ' . $nur . ': no se borró nada.');
+                    $this->request->redirect('/admin/hojasruta/editar/' . (int) $id);
+                }
             }
+            Session::instance()->set('hr_aviso', 'Se eliminó definitivamente la hoja de ruta ' . ($nur !== '' ? $nur : $codigo) . '.');
         }
 
         $this->request->redirect('/admin/hojasruta/lista');

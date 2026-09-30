@@ -142,6 +142,7 @@ class Controller_document extends Controller_DefaultTemplate {
         $documento = ORM::factory('documentos')->where('id', '=', $id)->find();
         if ($documento->loaded()) {
             $ok = true;
+            $como_admin = FALSE;
             if ($documento->estado == 1) { //si esta derivado entonces el documento solo pueden ver aquellos quienes intevienen en el seguimiento
                 $ok = false;
                 $seguimiento = ORM::factory('seguimiento')
@@ -153,6 +154,13 @@ class Controller_document extends Controller_DefaultTemplate {
                 }
                 if ($this->user->super != 0)
                     $ok = true;
+                // el administrador puede abrir cualquier documento, pero queda registrado en la bitacora
+                if (!$ok AND (int) $this->user->nivel === 5) {
+                    $ok = TRUE;
+                    $como_admin = TRUE;
+                    $this->save($this->user->id_entidad, $this->user->id,
+                            'Abrió como administrador el documento <b>' . $documento->codigo . '</b> (hoja de ruta ' . $documento->nur . '), en el que no interviene');
+                }
             }
             $this->template->title .= ' / ' . $documento->codigo;
             $this->template->titulo .=$documento->codigo;
@@ -171,6 +179,7 @@ class Controller_document extends Controller_DefaultTemplate {
                         ->bind('archivo', $archivo)
                         ->bind('nombre_proceso', $nombre_proceso)
                         ->bind('es_autor', $es_autor)
+                        ->set('como_admin', $como_admin)
                         ->bind('errors', $errors)
                         ->bind('mensajes', $mensajes);
             } else {
