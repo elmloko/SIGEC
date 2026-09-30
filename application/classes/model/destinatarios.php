@@ -18,7 +18,7 @@ class Model_Destinatarios extends ORM
     public function destinos($id_user)
     {
         $sql = "  SELECT 
-                    u.id, u.nombre, u.cargo, u.genero, o.oficina, e.entidad
+                    u.id, u.nombre, u.cargo, u.genero, u.username, o.oficina, e.entidad
                 FROM
                     destinatarios d
                         INNER JOIN
@@ -28,7 +28,7 @@ class Model_Destinatarios extends ORM
                         INNER JOIN
                     entidades e ON e.id = o.id_entidad
                 WHERE
-                    d.id_usuario = '$id_user'
+                    d.id_usuario = '" . (int) $id_user . "'
                         AND u.habilitado = '1'
                 ORDER BY u.nombre";
         return $this->_db->query(database::SELECT, $sql, TRUE);

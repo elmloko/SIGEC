@@ -357,23 +357,24 @@ class Controller_User extends Controller_DefaultTemplate
     {
         $o_destinos = New Model_Destinatarios();
         $destinatarios = $o_destinos->destinos($this->user->id);
+        // la libreta del formulario de documentos tambien incluye, sola, al superior y a los dependientes
+        $automaticos = DB::query(Database::SELECT, "SELECT w.id, w.nombre, w.cargo, w.genero, w.username, o.oficina,
+                    IF(w.id = u.superior, 'Superior', 'Dependiente') AS relacion
+                FROM users u
+                INNER JOIN users w ON (w.id = u.superior OR w.superior = u.id)
+                LEFT JOIN oficinas o ON o.id = w.id_oficina
+                WHERE u.id = :u AND w.habilitado = 1 AND w.id <> u.id
+                ORDER BY relacion DESC, w.nombre")
+                ->param(':u', (int) $this->user->id)->execute()->as_array();
         $this->template->title .= 'Destinatarios';
-        $this->template->titulo .= 'Destinatarios';
+        $this->template->titulo .= 'Mis destinatarios';
         $this->template->descripcion .= 'Lista de destinatarios permitidos';
-        $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/style.css' => 'all');
-        $this->template->scripts = array(
-            'media/js/jquery.tablesorter.min.js',
-            'static/js/perfil.js',
-            'static/plugins/dropzone/dropzone.min.js',
-            'static/plugins/jscrop/js/jquery.Jcrop.js',
-            'static/js/eModal.min.js',
-        );
-
+        $this->template->scripts = array('static/js/eModal.min.js');
         $this->template->content = View::factory('user/destinatarios')
             ->bind('destinatarios', $destinatarios)
+            ->bind('automaticos', $automaticos)
             ->bind('user', $this->user);
     }
-
     public function action_xdes()
     {
         $id_usuario = (int) Arr::get($_GET, 'id_user', 0);
@@ -390,6 +391,9 @@ class Controller_User extends Controller_DefaultTemplate
             if ($destino->loaded()) {
                 $destino->delete();
             }
+        }
+        if (Arr::get($_GET, 'volver') === 'destinatarios') {
+            $this->request->redirect('/user/destinatarios');
         }
         $this->request->redirect('/user/profile/' . ($id_usuario !== (int) $this->user->id ? $id_usuario : ''));
     }
