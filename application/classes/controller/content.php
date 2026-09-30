@@ -15,8 +15,17 @@ class Controller_content extends Controller_Minitemplate {
             $this->user = $auth->get_user();
             parent::before();
         } else {
-            
+            // sin sesion (p.ej. vencio mientras el modal estaba abierto): antes la accion seguia y usaba
+            // $this->user = NULL -> error 500. Ahora se muestra un aviso para volver a ingresar.
+            parent::before();
+            $this->request->action('sin_sesion');
         }
+    }
+
+    public function action_sin_sesion() {
+        $this->response->status(401);
+        $this->template->title = 'Sesión vencida';
+        $this->template->content = View::factory('sesion_vencida');
     }
 
     public function action_destinos($id = '') {
@@ -35,8 +44,13 @@ class Controller_content extends Controller_Minitemplate {
     }
 
     public function action_destinosadmin($id = '') {
+        // solo el administrador puede armar la lista de otro usuario
+        if ((int) $this->user->nivel !== 5) {
+            throw new Http_Exception_404('No encontrado');
+        }
+        $usuario = ORM::factory('users', (int) $id);
         $o_destinatarios = New Model_Destinatarios();
-        $destinos = $o_destinatarios->destinos_nuevos($id);
+        $destinos = $o_destinatarios->destinos_nuevos((int) $id, $usuario->id_entidad);
         //$this->template->styles = array('media/css/tablas.css' => 'all');
         //$this->template->scripts = array('media/js/jquery.tablesorter.min.js');
         $this->template->content = View::factory('user/lista_usuarios')
