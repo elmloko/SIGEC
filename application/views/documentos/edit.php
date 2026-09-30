@@ -10,7 +10,10 @@ $iniciales = function ($nombre) {
     return $ini !== '' ? $ini : '?';
 };
 $num_archivos = count($archivos);
-$derivado = $documento->estado == 1;
+// estado real segun el seguimiento (documentos.estado no cambia en las respuestas)
+$envio = isset($envio) ? $envio : EstadoDocumento::de($documento);
+$derivado = $envio['derivado'];
+$bloqueado = $envio['recibido'];
 // para derivar se exige al menos un archivo digital (salvo el usuario de despacho)
 $puede_derivar = $num_archivos > 0 || $user == '95';
 ?>
@@ -23,6 +26,13 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
             $('#descripcion').redactor({lang: 'es', css: 'docstyle.css'});
         }
 
+        <?php if ($bloqueado): ?>
+        // ya recibido: todo el formulario queda de solo lectura (el servidor tampoco acepta cambios)
+        $('#frm-editar').addClass('gd-solo-lectura')
+            .find('input[type=text], input[type=number], textarea').prop('readonly', true).end()
+            .find('select').prop('disabled', true);
+        $('.gd-fila').removeClass('gd-objetivo');
+        <?php endif; ?>
         // avisa si se sale (o deriva) sin guardar los cambios
         var $form = $('#frm-editar');
         var inicial = $form.serialize();
@@ -142,6 +152,61 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
     }
     .gd-paso.actual b {
         color: var(--correos-azul-oscuro, #123E73);
+    }
+    .gd-aviso {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin: 14px 22px 0;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--correos-amarillo-suave, #FFF7DD);
+        font-size: 13px;
+        color: #6b5a1e;
+    }
+    .gd-aviso > .fa {
+        flex: 0 0 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        color: #B7791F;
+    }
+    .gd-aviso b {
+        color: #8a6100;
+    }
+    .gd-aviso-bloqueado {
+        background: var(--correos-azul-suave, #EAF1F9);
+        color: #37506f;
+    }
+    .gd-aviso-bloqueado > .fa {
+        color: var(--correos-azul, #1A549A);
+    }
+    .gd-aviso-bloqueado b {
+        color: var(--correos-azul-oscuro, #123E73);
+    }
+    /* solo lectura */
+    .gd-solo-lectura input,
+    .gd-solo-lectura textarea,
+    .gd-solo-lectura select {
+        background: #F7F9FB !important;
+        border-color: #EEF2F7 !important;
+        color: #4a5568 !important;
+        cursor: default;
+    }
+    .gd-solo-lectura .gd-limpiar,
+    .gd-solo-lectura .gd-ayuda > span:first-child {
+        display: none;
+    }
+    .arch-bloqueado {
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: var(--correos-azul-suave, #EAF1F9);
+        font-size: 12.5px;
+        color: #37506f;
     }
     #gd-sin-guardar {
         display: none;
@@ -475,7 +540,7 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
             <div class="gd-cab">
                 <div class="gd-cab-icono"><i class="fa fa-pencil"></i></div>
                 <div class="gd-cab-titulo">
-                    <h2>Editar <?php echo HTML::chars(mb_strtolower($tipo->tipo, 'UTF-8')); ?></h2>
+                    <h2><?php echo $bloqueado ? 'Ver' : 'Editar'; ?> <?php echo HTML::chars(mb_strtolower($tipo->tipo, 'UTF-8')); ?><?php if ($bloqueado): ?> <small style="display:inline;font-size:12px;color:#1A549A"><i class="fa fa-lock"></i> solo lectura</small><?php endif; ?></h2>
                     <span class="gd-cab-codigo"><?php echo HTML::chars($documento->codigo); ?></span>
                     <small>
                         <?php if ($documento->nur != ''): ?>Hoja de ruta <b><?php echo HTML::chars($documento->nur); ?></b> &middot; <?php endif; ?>
@@ -508,9 +573,25 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                 </div>
                 <div class="gd-paso <?php echo $derivado ? 'hecho' : ($num_archivos > 0 ? 'actual' : ''); ?>">
                     <span class="gd-paso-num"><?php echo $derivado ? '<i class="fa fa-check"></i>' : '3'; ?></span>
-                    <span><b>Derivado</b><?php echo $derivado ? 'Ya está en camino' : ($documento->nur != '' ? 'Pendiente de derivar' : 'Sin hoja de ruta'); ?></span>
+                    <span><b>Derivado</b><?php echo $bloqueado ? 'Recibido por el destinatario' : ($derivado ? 'Enviado, aún no recibido' : ($documento->nur != '' ? 'Pendiente de derivar' : 'Sin hoja de ruta')); ?></span>
                 </div>
             </div>
+
+            <?php if ($bloqueado): ?>
+                <div class="gd-aviso gd-aviso-bloqueado">
+                    <i class="fa fa-lock"></i>
+                    <div><b>Solo lectura.</b> Este documento ya fue derivado el <?php echo date('d/m/Y H:i', strtotime($envio['fecha'])); ?> y el destinatario lo recibió: ya no se puede modificar ni cambiar sus archivos.
+                        <?php if ($envio['sin_recibir'] > 0): ?>
+                            <br/>Aún <?php echo $envio['sin_recibir'] == 1 ? 'hay 1 destinatario que no lo recibió' : 'hay ' . $envio['sin_recibir'] . ' destinatarios que no lo recibieron'; ?>: puede <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>&amp;editar=1">cancelar esas copias o agregar otras</a>.
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php elseif ($derivado): ?>
+                <div class="gd-aviso">
+                    <i class="fa fa-clock-o"></i>
+                    <div><b>Enviado, todavía sin recibir.</b> Aún puede corregir el documento o <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>&amp;editar=1">editar la derivación</a>. Cuando lo reciban quedará en solo lectura.</div>
+                </div>
+            <?php endif; ?>
 
             <!-- encabezado del documento, en el mismo orden que el impreso -->
             <div class="gd-hoja">
@@ -608,21 +689,32 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                        title="Descargar la plantilla en Word para redactar el contenido"><i class="fa fa-file-word-o"></i> Plantilla Word</a>
                     <span id="gd-sin-guardar"><i class="fa fa-exclamation-circle"></i> Cambios sin guardar</span>
                 </span>
-                <button type="submit" name="documento" value="Editar" class="btn btn-primary" id="gd-guardar">
-                    <i class="fa fa-floppy-o"></i> Guardar cambios
-                </button>
-                <?php if ($derivado): ?>
-                    <a href="/route/trace/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-success gd-requiere-guardar" title="Ver seguimiento">
+                <?php if ($bloqueado): ?>
+                    <?php if ($envio['sin_recibir'] > 0): ?>
+                        <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>&amp;editar=1" class="btn btn-warning" title="Cancelar las copias que aún no se recibieron o agregar otras">
+                            <i class="fa fa-copy"></i> Corregir copias</a>
+                    <?php endif; ?>
+                    <a href="/route/trace/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-primary" title="Ver por dónde va la hoja de ruta">
                         <i class="fa fa-map-marker"></i> Ver seguimiento</a>
-                <?php elseif ($documento->nur == ''): ?>
-                    <a href="/document/asignar/<?php echo $documento->id; ?>" class="btn btn-accent gd-requiere-guardar" title="Asignar una hoja de ruta a este documento">
-                        <i class="fa fa-tag"></i> Asignar hoja de ruta</a>
-                <?php elseif ($puede_derivar): ?>
-                    <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-accent gd-requiere-guardar" title="Derivar documento">
-                        <i class="fa fa-send-o"></i> Derivar</a>
                 <?php else: ?>
-                    <a href="javascript:msg();" class="btn btn-default-bright" title="Primero suba el archivo digital (PDF)" style="opacity:.6">
-                        <i class="fa fa-send-o"></i> Derivar</a>
+                    <button type="submit" name="documento" value="Editar" class="btn btn-primary" id="gd-guardar">
+                        <i class="fa fa-floppy-o"></i> Guardar cambios
+                    </button>
+                    <?php if ($derivado): ?>
+                        <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>&amp;editar=1" class="btn btn-warning gd-requiere-guardar" title="Agregar o quitar destinatarios mientras nadie lo reciba">
+                            <i class="fa fa-pencil"></i> Editar derivación</a>
+                        <a href="/route/trace/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-default-bright gd-requiere-guardar" title="Ver seguimiento">
+                            <i class="fa fa-map-marker"></i> Seguimiento</a>
+                    <?php elseif ($documento->nur == ''): ?>
+                        <a href="/document/asignar/<?php echo $documento->id; ?>" class="btn btn-accent gd-requiere-guardar" title="Asignar una hoja de ruta a este documento">
+                            <i class="fa fa-tag"></i> Asignar hoja de ruta</a>
+                    <?php elseif ($puede_derivar): ?>
+                        <a href="/route/deriv/?hr=<?php echo urlencode($documento->nur); ?>" class="btn btn-accent gd-requiere-guardar" title="Derivar documento">
+                            <i class="fa fa-send-o"></i> Derivar</a>
+                    <?php else: ?>
+                        <a href="javascript:msg();" class="btn btn-default-bright" title="Primero suba el archivo digital (PDF)" style="opacity:.6">
+                            <i class="fa fa-send-o"></i> Derivar</a>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </form>
@@ -639,6 +731,9 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                     <?php if (!empty($error_archivo)): ?>
                         <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> <?php echo HTML::chars($error_archivo); ?></div>
                     <?php endif; ?>
+                    <?php if ($bloqueado): ?>
+                        <div class="arch-bloqueado"><i class="fa fa-lock"></i> El destinatario ya recibió estos archivos: no se pueden cambiar.</div>
+                    <?php else: ?>
                     <form method="post" enctype="multipart/form-data" action="" id="arch-form"
                           onsubmit="return validarTipoDeArchivoASubir()">
                         <label for="file1" class="arch-zona" id="arch-zona">
@@ -654,6 +749,7 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                             <i class="fa fa-upload"></i> Subir archivo
                         </button>
                     </form>
+                    <?php endif; ?>
 
                     <?php if (count($archivos) == 0): ?>
                         <div class="arch-vacio">
@@ -690,10 +786,12 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                                             <a href="/download/?file=<?php echo $a->id; ?>" class="btn btn-xs btn-default-bright" title="Descargar">
                                                 <i class="fa fa-download"></i> Descargar
                                             </a>
+                                            <?php if (!$bloqueado): ?>
                                             <a href="/archivo/eliminar/<?php echo $a->id; ?>" class="btn btn-xs btn-default-bright arch-eliminar"
                                                data-nombre="<?php echo HTML::chars($nombre); ?>" title="Eliminar">
                                                 <i class="fa fa-trash-o"></i> Eliminar
                                             </a>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </li>
@@ -702,6 +800,7 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                     <?php endif; ?>
                 </div>
             </div>
+            <?php if (!$bloqueado): ?>
             <!-- libreta de destinatarios -->
             <div class="gd-card gd-libreta-edit">
                 <div class="gd-libreta-cab">
@@ -730,6 +829,7 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                     <?php echo Form::input('addDest', '+ Agregar persona a la libreta', array('class' => 'btn btn-sm btn-default-bright btn-block', 'type' => 'button', 'id' => 'addDest', 'rel' => $user->id)); ?>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 

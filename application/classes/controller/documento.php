@@ -303,6 +303,12 @@ class Controller_Documento extends Controller_DefaultTemplate {
         $mensajes = array();
         $documento = ORM::factory('documentos')->where('id', '=', $id)->and_where('id_user', '=', $this->user->id)->find();
         if ($documento->loaded()) {
+            // una vez recibido por el destinatario, el documento y sus archivos ya no se modifican
+            $envio = EstadoDocumento::de($documento);
+            if ($envio['recibido'] && (isset($_POST['referencia']) || isset($_POST['adjuntar']))) {
+                $error_archivo = 'Este documento ya fue recibido por el destinatario: no se puede modificar.';
+                $_POST = array();
+            }
             //si se envia los datos modificados entonces guardamamos
             if (isset($_POST['referencia'])) {
                 $documento->nombre_destinatario = $_POST['destinatario'];
@@ -456,6 +462,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                     ->bind('options', $options)
                     ->bind('mensajes', $mensajes)
                     ->bind('error_archivo', $error_archivo)
+                    ->bind('envio', $envio)
                     ->bind('archivos', $archivos);
         } else {
          //   $this->template->title .= ' / ' . $documento->codigo;

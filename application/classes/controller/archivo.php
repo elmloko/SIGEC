@@ -32,7 +32,11 @@ class Controller_archivo extends Controller_DefaultTemplate {
                     ->where('id', '=', $id)
                     ->and_where('id_user', '=', $this->user->id)
                     ->find();
-            if ($archivo->loaded()) {
+            $envio = $archivo->loaded() ? EstadoDocumento::de(ORM::factory('documentos', $archivo->id_documento)) : NULL;
+            if ($envio && $envio['recibido']) {
+                // el archivo ya viajo con la hoja de ruta y el destinatario lo recibio
+                $this->template->content = 'Este archivo ya fue recibido por el destinatario y no se puede eliminar.';
+            } elseif ($archivo->loaded()) {
                 $archivo->estado = 0;
                 $archivo->save();
                 $this->request->redirect('documento/edit/' . $archivo->id_documento);

@@ -1584,7 +1584,8 @@ class Controller_Ajax extends Controller
             if (!in_array((int) $seg->estado, array(2, 4), TRUE)) {
                 return 'Esta hoja de ruta ya no está pendiente en su bandeja.';
             }
-            if ((int) $seg->estado === 4 && !$session->get('destino') && !$this->derivacion_editable($documento->nur, (int) $id_seg)) {
+            // las copias (solo para conocimiento) se pueden agregar despues; la oficial solo mientras nadie la reciba
+            if ((int) $seg->estado === 4 && (int) $oficial > 0 && !$session->get('destino') && !$this->derivacion_editable($documento->nur, (int) $id_seg)) {
                 return 'Esta derivación ya no se puede modificar: los destinatarios ya la recibieron.';
             }
             if ($this->ya_derivado_a($documento->nur, (int) $id_seg, $destino)) {
@@ -1604,7 +1605,7 @@ class Controller_Ajax extends Controller
             return 'Solo quien generó el documento puede derivarlo por primera vez.';
         }
         // ya derivado: solo se permite seguir agregando destinatarios en la misma derivacion
-        if ((int) $documento->estado !== 0 && !$session->get('destino') && !$this->derivacion_editable($documento->nur, 0)) {
+        if ((int) $documento->estado !== 0 && (int) $oficial > 0 && !$session->get('destino') && !$this->derivacion_editable($documento->nur, 0)) {
             return 'Esta hoja de ruta ya fue derivada y los destinatarios ya la recibieron.';
         }
         if ($this->ya_derivado_a($documento->nur, 0, $destino)) {
