@@ -213,7 +213,7 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
                 $documento->referencia = $_POST['descripcion'];
                 $documento->adjuntos = $_POST['adjunto'];
                 $documento->original = 1;
-                $documento->hojas = $_POST['hojas'];
+                $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
                 // $documento->id_proceso=Arr::get($_POST,'proceso',1);
                 $documento->fecha_creacion = date('Y-m-d H:i:s');
                 $documento->id_user = $this->user->id;
@@ -346,7 +346,7 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
             $documento->institucion_remitente = $_POST['institucionrem'];
             $documento->referencia = $_POST['descripcion'];
             $documento->adjuntos = $_POST['adjunto'];
-            $documento->hojas = $_POST['hojas'];
+            $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
             // $documento->id_proceso=Arr::get($_POST,'proceso',1);
             $documento->id_proceso = 4;
             $documento->save();

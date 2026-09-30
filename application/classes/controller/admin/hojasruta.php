@@ -328,7 +328,8 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             $documento->cargo_remitente = trim(Arr::get($_POST, 'cargo_rem', ''));
             $documento->mosca_remitente = trim(Arr::get($_POST, 'mosca', ''));
             $documento->copias = trim(Arr::get($_POST, 'copias', ''));
-            $documento->hojas = trim(Arr::get($_POST, 'hojas', ''));
+            // la columna es numerica: con la base en modo estricto, un texto como "." hace fallar el guardado
+            $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
             $documento->nombre_via = trim(Arr::get($_POST, 'via', ''));
             $documento->cargo_via = trim(Arr::get($_POST, 'cargovia', ''));
             $nueva_fecha_creacion = trim(Arr::get($_POST, 'fecha_creacion', ''));

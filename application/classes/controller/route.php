@@ -498,7 +498,7 @@ class Controller_route extends Controller_DefaultTemplate {
         $archivo->id_user = $this->user->id;
         $archivo->nur = $seg->nur;
         $archivo->id_carpeta = $carpeta->id;
-        $archivo->observaciones = mb_substr('Enterado (copia)' . ($obs !== '' ? ': ' . $obs : ''), 0, 250, 'UTF-8');
+        $archivo->observaciones = mb_substr('Enterado (copia)' . ($obs !== '' ? ': ' . $obs : ''), 0, 1000, 'UTF-8');
         $archivo->fecha = date('Y-m-d H:i:s');
         $archivo->save();
         $seg->estado = 10;

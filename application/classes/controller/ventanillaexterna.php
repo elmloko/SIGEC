@@ -137,7 +137,7 @@ class Controller_Ventanillaexterna extends Controller
             $documento->institucion_remitente = $_POST['institucionrem'];
             $documento->referencia = $_POST['descripcion'];
             $documento->adjuntos = $_POST['adjunto'];
-            $documento->hojas = $_POST['hojas'];
+            $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
             // $documento->id_proceso=Arr::get($_POST,'proceso',1);
             $documento->id_proceso = 4;
             $documento->save();

@@ -157,7 +157,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                             $archivo->id_user = $this->user->id;
                             $archivo->nur = $seg->nur;
                             $archivo->id_carpeta = $id_carpeta;
-                            $archivo->observaciones = $_POST['observaciones'];
+                            $archivo->observaciones = mb_substr(trim((string) Arr::get($_POST, 'observaciones', '')), 0, 1000, 'UTF-8');
                             $archivo->fecha = date('Y-m-d H:i:s');
                             $archivo->save();
                             $seg->estado = 10;
@@ -175,7 +175,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                         $carpeta->id_user = $this->user->id;
                         $carpeta->nur = $seg->nur;
                         $carpeta->id_carpeta = $_POST['carpeta_lista'];
-                        $carpeta->observaciones = $_POST['observaciones'];
+                        $carpeta->observaciones = mb_substr(trim((string) Arr::get($_POST, 'observaciones', '')), 0, 1000, 'UTF-8');
                         $carpeta->fecha = date('Y-m-d H:i:s');
                         $carpeta->save();
                         $seg->estado = 10;

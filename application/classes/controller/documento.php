@@ -129,7 +129,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->contenido = $_POST['descripcion'];
                 $documento->fecha_creacion = date('Y-m-d H:i:s');
                 $documento->adjuntos = $_POST['adjuntos'];
-                $documento->hojas = $_POST['hojas'];
+                $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
                 $documento->copias = $_POST['copias'];
                 $documento->nombre_via = $_POST['via'];
                 $documento->cargo_via = $_POST['cargovia'];
@@ -324,7 +324,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
 //                   $documento->fecha_creacion=  time(); //fecha y hora en formato int
                 $documento->adjuntos = $_POST['adjuntos'];
                 $documento->copias = $_POST['copias'];
-                $documento->hojas = $_POST['hojas'];
+                $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
                 $documento->nombre_via = $_POST['via'];
                 $documento->cargo_via = $_POST['cargovia'];
                 $documento->id_proceso = $_POST['proceso'];
