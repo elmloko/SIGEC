@@ -80,6 +80,51 @@ class Controller_Search extends Controller_DefaultTemplate {
         }
     }
 
+    /**
+     * Busqueda rapida de la barra superior (?q=).
+     * - Numero de hoja de ruta existente (2026-01109, AGBC/2026-01711) -> su seguimiento.
+     * - Cite existente -> busqueda avanzada por cite.
+     * - Cualquier otro texto -> busqueda avanzada por referencia, en todas las fechas.
+     */
+    public function action_rapida() {
+        $q = trim((string) Arr::get($_GET, 'q', ''));
+        if ($q === '') {
+            $this->request->redirect('search/advanced');
+        }
+        if (preg_match('#^([a-z]+/)?\d{4}-\d{3,6}$#i', $q)) {
+            $nur = strtoupper($q);
+            // se prueba tal cual, con los ceros completos ("2026-1711" -> "2026-01711")
+            // y con y sin el prefijo de la entidad ("AGBC/")
+            $prefijo = '';
+            if (strpos($nur, '/') !== FALSE) {
+                list($prefijo, $nur) = explode('/', $nur, 2);
+                $prefijo .= '/';
+            }
+            list($anio, $numero) = explode('-', $nur, 2);
+            $numeros = array_unique(array($numero, str_pad(ltrim($numero, '0'), 5, '0', STR_PAD_LEFT)));
+            $candidatos = array();
+            foreach ($numeros as $num) {
+                foreach (array_unique(array($prefijo, '', 'AGBC/')) as $p) {
+                    $candidatos[] = $p . $anio . '-' . $num;
+                }
+            }
+            $candidatos = array_values(array_unique($candidatos));
+            foreach ($candidatos as $c) {
+                $existe = DB::query(Database::SELECT, 'SELECT 1 FROM documentos WHERE nur = :nur AND original = 1 LIMIT 1')
+                        ->param(':nur', $c)->execute()->count();
+                if ($existe) {
+                    $this->request->redirect('route/trace/?hr=' . urlencode($c));
+                }
+            }
+            $this->request->redirect('search/advanced?buscar=1&todas=1&nur=' . urlencode($q));
+        }
+        $es_cite = DB::query(Database::SELECT, 'SELECT 1 FROM documentos WHERE cite_original = :c LIMIT 1')
+                ->param(':c', $q)->execute()->count();
+        // un texto con "/" o "N°" se trata como (parte de un) cite: "0093/2026", "INF/AGBC/DAF"
+        $campo = ($es_cite || preg_match('#/|\bn\s*[°º]#iu', $q)) ? 'cite_original' : 'referencia';
+        $this->request->redirect('search/advanced?buscar=1&todas=1&' . $campo . '=' . urlencode($q));
+    }
+
     public function action_documentos() {
         $this->template->titulo.="Busqueda basica";
         $this->template->descripcion.="Busqueda rapida";

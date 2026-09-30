@@ -47,73 +47,7 @@
 <body class="<?php echo $menubar; ?> header-fixed ">
 
 <!-- BEGIN HEADER-->
-<header id="header">
-    <div class="headerbar">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="headerbar-left">
-            <ul class="header-nav header-nav-options">
-                <li class="header-nav-brand">
-                    <div class="brand-holder">
-                        <a href="/">
-                            <span class="text-lg text-bold text-primary">CORRESPONDENCIA - CORREOS DE BOLIVIA</span>
-                        </a>
-                    </div>
-                </li>
-                <li>
-                    <a class="btn btn-icon-toggle menubar-toggle" data-toggle="menubar" href="javascript:void(0);">
-                        <i class="fa fa-bars"></i>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="headerbar-right">
-            <ul class="header-nav header-nav-options">
-                <li>
-                    <!-- Search form -->
-                    <!-- <form class="navbar-search" role="search" action="/search" method="GET">
-                    <form class="navbar-search" role="search" action="/search">
-
-                        <div class="form-group">
-                            <input type="text" class="form-control" name="q" placeholder="Hoja de ruta">
-                        </div>
-                        <button type="submit" class="btn btn-icon-toggle ink-reaction"><i class="fa fa-search"></i></button>
-                    </form>
-                    -->
-
-                    <form action="/search/advanced">
-                        <button type="submit" class="btn btn-icon-toggle ink-reaction"><i class="fa fa-search"></i>
-                        </button>
-                    </form>
-                </li>
-            </ul><!--end .header-nav-options -->
-            <ul class="header-nav header-nav-profile">
-                <li class="dropdown">
-                    <a href="javascript:void(0);" class="dropdown-toggle ink-reaction" data-toggle="dropdown">
-                        <?php if (file_exists(DOCROOT . 'static/fotos/' . $usuario->username . '.jpg')): ?>
-                            <img src="/static/fotos/<?php echo $usuario->username ?>.jpg?<?php echo time() ?>" alt=""/>
-                            <?php
-                        else:
-                            ?>
-                            <img src="/static/fotos/<?php echo $usuario->genero . '.jpg' ?>" alt=""/>
-                        <?php endif; ?>
-                        <span class="profile-info">
-                                <?php echo $usuario->nombre; ?>
-                            <small><?php echo $usuario->email ?></small>
-                            </span>
-                    </a>
-                    <ul class="dropdown-menu animation-dock">
-                        <li class="dropdown-header">Opciones de usuario</li>
-                        <li><a href="/user/profile"><i class="fa fa-fw fa-cube text-success"></i> Perfil</a></li>
-                        <li><a href="/user/pass"><i class="fa fa-fw fa-unlock-alt text-primary"></i> Cambiar Contrase&ntilde;a</a>
-                        </li>
-                        <li><a href="/user/logout"><i class="fa fa-fw fa-power-off text-danger"></i> Salir</a></li>
-                    </ul><!--end .dropdown-menu -->
-                </li><!--end .dropdown -->
-            </ul><!--end .header-nav-profile -->
-        </div><!--end #header-navbar-collapse -->
-    </div>
-</header>
+<?php echo View::factory('templates/cabecera')->set('usuario', $usuario)->set('titulo', isset($titulo) ? $titulo : ''); ?>
 <!-- END HEADER-->
 
 <!-- BEGIN BASE-->
