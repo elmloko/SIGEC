@@ -5,6 +5,11 @@ defined('SYSPATH') or die('Acceso denegado');
 class Controller_login extends Controller_Mintemplate {
 
     public function action_index() {
+        // El formulario de acceso debe refrescarse para tomar cambios de estilo y sesión.
+        $this->response->headers('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $this->response->headers('Pragma', 'no-cache');
+        $this->response->headers('Expires', '0');
+
         $errors = array();
         $auth = Auth::instance();
         if ($auth->logged_in()) {
