@@ -6,53 +6,48 @@ class Controller_Admin_Otorgar extends Controller_Minitemplate
 {
     protected $user;
 
+    // se abre dentro de un modal del panel: solo para administradores
     public function before()
     {
+        parent::before();
         $auth = Auth::instance();
-        //si el usuario esta logeado entocnes mostramos el menu
-        if ($auth->logged_in()) {
-            //$session = Session::instance();
-            //$this->user = $session->get('auth_user');
-            $this->user = $auth->get_user();
-            parent::before();
-        } else {
-
+        if (!$auth->logged_in() OR (int) $auth->get_user()->nivel !== 5 OR (int) $auth->get_user()->habilitado !== 1) {
+            $this->request->redirect('/login');
         }
+        $this->user = $auth->get_user();
     }
 
-    public function action_index($id = '')
+    public function action_index($id = 0)
     {
-        $user = ORM::factory('users', array('id' => $id));
-        $rango_de_ids = array(1, $id);
-
-        if ($user->loaded()) {
-            $users_all = ORM::factory('users')
-                ->where('id', 'NOT IN', $rango_de_ids)
-                ->order_by('nombre', 'desc')
-                ->find_all();
-
-            $query_usuarios_que_reciben_plazos = "  SELECT 
-                                                        *
-                                                    FROM
-                                                        usuarios_habilitados_plazos
-                                                    WHERE
-                                                        id_usuario_padre = '$id'";
-            $result_query = DB::query(Database::SELECT, $query_usuarios_que_reciben_plazos)->execute();
-
-            $usuarios_que_reciben_plazos = array();
-            foreach ($result_query as $usuario) {
-                $usuarios_que_reciben_plazos[$usuario['id_usuario_hijo']] = $usuario['id_usuario_hijo'];
-            }
-
-            $this->template->content = View::factory('admin/otorgar_plazos')
-                ->bind('user', $user)
-                ->bind('users_all', $users_all)
-                ->bind('usuarios_que_reciben_plazos', $usuarios_que_reciben_plazos);
-        } else {
+        $user = ORM::factory('users', (int) $id);
+        if (!$user->loaded()) {
             $this->template->content = 'Usuario inexistente';
+            return;
         }
+        // a quienes ya les puede asignar plazos
+        $elegidos = array();
+        $filas = DB::query(Database::SELECT, 'SELECT id_usuario_hijo FROM usuarios_habilitados_plazos WHERE id_usuario_padre = :id')
+                ->param(':id', (int) $user->id)
+                ->execute();
+        foreach ($filas as $f) {
+            $elegidos[(int) $f['id_usuario_hijo']] = (int) $f['id_usuario_hijo'];
+        }
+        // personas activas, mas las ya elegidas aunque esten de baja (para no perderlas al guardar)
+        $personas = DB::query(Database::SELECT, 'SELECT u.id, u.nombre, u.cargo, u.habilitado, o.oficina
+                FROM users u
+                LEFT JOIN oficinas o ON o.id = u.id_oficina
+                WHERE u.id <> :id AND (u.habilitado = 1 OR u.id IN (
+                        SELECT id_usuario_hijo FROM usuarios_habilitados_plazos WHERE id_usuario_padre = :id))
+                ORDER BY u.nombre')
+                ->param(':id', (int) $user->id)
+                ->execute()->as_array();
+        $oficina = ORM::factory('oficinas', $user->id_oficina);
+
+        $this->template->content = View::factory('admin/otorgar_plazos')
+                ->bind('user', $user)
+                ->set('personas', $personas)
+                ->set('elegidos', $elegidos)
+                ->set('oficina', $oficina->loaded() ? $oficina->oficina : '');
     }
 
 }
-
-?>

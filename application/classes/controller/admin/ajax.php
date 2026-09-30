@@ -57,60 +57,84 @@ class Controller_Admin_ajax extends Controller
 
     public function action_addDocumentos()
     {
-        if ($this->request->is_ajax()) {
-            $tipos = $_POST['tipos'];
-            $id_user = $_POST['id_user'];
-            // var_dump($tipos);
-            //eliminamos los documentos asignados
-            $oTipos = new Model_Tipos();
-            $oTipos->quitar($id_user);
-            foreach ($tipos as $k => $v) {
-                try {
-                    $user = ORM::factory('users', $id_user);
-                    //$user->id;
-                    $user->add('tipo', $v);
-                    $user->save();
-                } catch (Exception $exc) {
-                    echo $exc->getTraceAsString();
-                }
-            }
-
-
-            //echo json_encode($);
-        } else {
+        $this->auto_render = FALSE;
+        if (!$this->request->is_ajax()) {
             $this->request->redirect('error404');
+            return;
         }
+        // sin ningun tipo marcado tambien es una respuesta valida: se le quitan todos los permisos
+        $tipos = Arr::get($_POST, 'tipos', array());
+        if (!is_array($tipos)) {
+            $tipos = array($tipos);
+        }
+        $user = ORM::factory('users', (int) Arr::get($_POST, 'id_user', 0));
+        if (!$user->loaded()) {
+            echo json_encode(array('ok' => FALSE, 'msg' => 'El usuario no existe.'));
+            return;
+        }
+        // solo tipos de documento que existan y esten activos
+        $validos = DB::query(Database::SELECT, 'SELECT id FROM tipos WHERE activo = 1')->execute()->as_array('id', 'id');
+        $guardar = array_unique(array_intersect(array_map('intval', $tipos), array_map('intval', $validos)));
+        try {
+            $oTipos = new Model_Tipos();
+            $oTipos->quitar($user->id);
+            foreach ($guardar as $v) {
+                $user->add('tipo', $v);
+            }
+            $user->save();
+        } catch (Exception $e) {
+            Kohana::$log->add(Log::ERROR, 'addDocumentos: ' . $e->getMessage());
+            echo json_encode(array('ok' => FALSE, 'msg' => 'No se pudo guardar. Intente de nuevo.'));
+            return;
+        }
+        echo json_encode(array('ok' => TRUE, 'cantidad' => count($guardar)));
     }
 
     public function action_otorgarPlazosDeRespuestaAUsuarios()
     {
-        if ($this->request->is_ajax()) {
-
-            $id_user = $_POST['id_user'];
-            $id_usuarios = $_POST['id_usuarios_que_reciben_plazos'];
-
-            $sql = "DELETE FROM usuarios_habilitados_plazos 
-                    WHERE
-                        id_usuario_padre = '$id_user';";
-            $result_query_quitar_privilegios = DB::query(Database::DELETE, $sql)->execute();
-
-            foreach ($id_usuarios as $key => $value) {
-
-                try {
-                    $sql_insertar = " INSERT INTO usuarios_habilitados_plazos (id_usuario_padre, id_usuario_hijo)
-                                      VALUES ('$id_user', '$value')";
-
-                    $result_query_insertar = DB::query(Database::DELETE, $sql_insertar)->execute();
-                    echo json_encode($result_query_insertar);
-
-                } catch (Exception $exc) {
-                    echo $exc->getTraceAsString();
-                }
-            }
-        } else {
+        $this->auto_render = FALSE;
+        if (!$this->request->is_ajax()) {
             $this->request->redirect('error404');
+            return;
         }
-    }    
+        $user = ORM::factory('users', (int) Arr::get($_POST, 'id_user', 0));
+        if (!$user->loaded()) {
+            echo json_encode(array('ok' => FALSE, 'msg' => 'El usuario no existe.'));
+            return;
+        }
+        // sin nadie marcado tambien es valido: se le quita el privilegio por completo
+        $elegidos = Arr::get($_POST, 'id_usuarios_que_reciben_plazos', array());
+        if (!is_array($elegidos)) {
+            $elegidos = array($elegidos);
+        }
+        $elegidos = array_unique(array_filter(array_map('intval', $elegidos)));
+        // solo personas que existan, y nunca uno mismo
+        $validos = array();
+        if ($elegidos) {
+            $filas = DB::query(Database::SELECT, 'SELECT id FROM users WHERE id IN (' . implode(',', $elegidos) . ') AND id <> :id')
+                    ->param(':id', (int) $user->id)
+                    ->execute();
+            foreach ($filas as $f) {
+                $validos[] = (int) $f['id'];
+            }
+        }
+        try {
+            DB::query(Database::DELETE, 'DELETE FROM usuarios_habilitados_plazos WHERE id_usuario_padre = :id')
+                    ->param(':id', (int) $user->id)
+                    ->execute();
+            foreach ($validos as $v) {
+                DB::query(Database::INSERT, 'INSERT INTO usuarios_habilitados_plazos (id_usuario_padre, id_usuario_hijo) VALUES (:padre, :hijo)')
+                        ->param(':padre', (int) $user->id)
+                        ->param(':hijo', $v)
+                        ->execute();
+            }
+        } catch (Exception $e) {
+            Kohana::$log->add(Log::ERROR, 'otorgarPlazos: ' . $e->getMessage());
+            echo json_encode(array('ok' => FALSE, 'msg' => 'No se pudo guardar. Intente de nuevo.'));
+            return;
+        }
+        echo json_encode(array('ok' => TRUE, 'cantidad' => count($validos)));
+    }
 
     public function action_alta()
     {
