@@ -1478,17 +1478,32 @@ class Controller_Ajax extends Controller
 
     public function action_addUser()
     {
-        $id_user = $_POST['id'];
-        $destinos = explode(';', $_POST['destinos']);
-        foreach ($destinos as $k => $v) {
-            if ($v != '') {
+        // solo a la propia lista (o a la de cualquiera, si es administrador); antes se tomaba el id del formulario
+        $id_user = (int) Arr::get($_POST, 'id', 0);
+        if ($id_user <= 0 || ($id_user !== (int) $this->user->id && (int) $this->user->nivel !== 5)) {
+            $id_user = (int) $this->user->id;
+        }
+        $agregados = array();
+        foreach (array_unique(explode(';', (string) Arr::get($_POST, 'destinos', ''))) as $v) {
+            $v = (int) $v;
+            if ($v <= 0 || $v === $id_user) {
+                continue;
+            }
+            // sin duplicados
+            $existe = ORM::factory('destinatarios')->where('id_usuario', '=', $id_user)->and_where('id_destino', '=', $v)->find();
+            if (!$existe->loaded()) {
                 $destino = ORM::factory('destinatarios');
                 $destino->id_usuario = $id_user;
                 $destino->id_destino = $v;
                 $destino->save();
             }
+            $u = ORM::factory('users', $v);
+            if ($u->loaded()) {
+                $agregados[] = array('id' => (int) $u->id, 'nombre' => $u->nombre, 'cargo' => $u->cargo, 'genero' => $u->genero, 'username' => $u->username);
+            }
         }
-        echo true;
+        $this->response->headers('Content-Type', 'application/json; charset=utf-8');
+        echo json_encode(array('ok' => 1, 'agregados' => $agregados));
     }
 
     public function action_theme()

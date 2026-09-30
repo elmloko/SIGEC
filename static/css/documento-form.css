@@ -408,3 +408,8 @@ div#vias ul li.oficinas {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+/* personas recien agregadas a la libreta */
+#vias li.gd-nuevo a.destino1 {
+    background: #E6F4EC;
+    transition: background 1s;
+}

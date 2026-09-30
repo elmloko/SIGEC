@@ -20,16 +20,18 @@ class Controller_content extends Controller_Minitemplate {
     }
 
     public function action_destinos($id = '') {
-        if ($id != '') {
-            $o_destinatarios = New Model_Destinatarios();
-            $destinos = $o_destinatarios->destinos_nuevos($this->user->id, $this->user->id_entidad);
-            //$this->template->styles = array('media/css/tablas.css' => 'all');
-            //$this->template->scripts = array('media/js/jquery.tablesorter.min.js');
-            $this->template->content = View::factory('user/lista_usuarios')
-                    ->bind('destinos', $destinos)
-                    ->bind('id', $id);
+        // la lista es del usuario de la sesion; el administrador puede armar la de otro usuario
+        $id = (int) $id;
+        if ($id <= 0 || ($id !== (int) $this->user->id && (int) $this->user->nivel !== 5)) {
+            $id = (int) $this->user->id;
         }
-        echo 'Error 404';
+        $usuario = ORM::factory('users', $id);
+        $o_destinatarios = New Model_Destinatarios();
+        $destinos = $o_destinatarios->destinos_nuevos($id, $usuario->id_entidad);
+        $this->template->title = 'Agregar destinatarios';
+        $this->template->content = View::factory('user/lista_usuarios')
+                ->bind('destinos', $destinos)
+                ->bind('id', $id);
     }
 
     public function action_destinosadmin($id = '') {

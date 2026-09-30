@@ -16,7 +16,7 @@ class Controller_User extends Controller_DefaultTemplate
 
     public function after()
     {
-        $this->template->menutop = View::factory('templates/menutop')->bind('menus', $this->menus)->set('controller', 'dashboard');
+        $this->template->menutop = View::factory('templates/menutop')->bind('menus', $this->menus)->set('controller', 'user');
         $this->template->nombre = $this->user->nombre;
         $this->template->username = $this->user->username;
         $this->template->email = $this->user->email;
@@ -72,142 +72,160 @@ class Controller_User extends Controller_DefaultTemplate
     {
         $errors = array();
         $info = array();
-        if ($id == "") {
+        // el administrador (nivel 5) puede ver y editar el perfil de otros; el resto, solo el suyo
+        if ($id != "" && (int) $this->user->nivel === 5) {
+            $user = ORM::factory('users', array('id' => (int) $id));
+        } else {
             $user = ORM::factory('users', array('id' => $this->user->id));
-
-        } else {
-            if ($this->user->nivel == 5) {
-                $user = ORM::factory('users', array('id' => $id));
-            } else {
-                $user = ORM::factory('users', array('id' => $this->user->id));
-            }
         }
-        if ($user->loaded()) {
-
-            //cambiar datos personales
-            if (isset($_POST['submit-usuario'])) {
-                $user->nombre = $_POST['nombre'];
-                $user->cargo = $_POST['cargo'];
-                $user->mosca = $_POST['mosca'];
-                // $user->email = $_POST['email'];
-                // $user->genero = $_POST['genero'];
-                if ($user->save()) {
-                    $info[] = 'Sus datos fueron cambiados correctamente';
-                } else {
-                    $errors[] = 'Ocurrio un error, vuelva a inentarlo';
-                }
-            }
-            //cambiar contraseña
-            if (isset($_POST['submit-pass'])) {
-                $auth = Auth::instance();
-                $pass_old = $auth->hash_password($_POST['pass_old']);
-                if ($pass_old == $this->user->password) { //verificamos que el password anterior coincida
-                    if ($_POST['pass_new'] == $_POST['pass_new2']) {
-                        $user = ORM::factory('users', array('id' => $user->id));
-                        if ($user->loaded()) {
-                            $user->password = $auth->hash_password($_POST['pass_new']);
-                            $user->save();
-                            $info[] = 'Su contraseña fue  cambiado correctamente';
-                            //vitacora
-                            $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' ' . $this->user->cargo . ' cambio su contrase&ntilde;');
-                        }
-                    } else {
-                        $errors[] = 'Las contraseñas no coinciden';
-                    }
-                } else {
-                    $errors[] = 'La contraseña anterior es incorrecta';
-                }
-            }
-            if (isset($_POST['scrop'])) {
-                //$this->view->disable();
-                $targ_w = $targ_h = 180;
-                $targ_w = 180;
-                $targ_h = 180;
-                $jpeg_quality = 90;
-
-                //$src =  "/var/www/sigec/static/fotos/tmp/" . $user->username . '.jpg';
-                $src = "/srv/sigec/static/fotos/tmp/" . $user->username . '.jpg';
-                $img_r = imagecreatefromjpeg($src);
-                $dst_r = ImageCreateTrueColor($targ_w, $targ_h);
-
-                imagecopyresampled($dst_r, $img_r, 0, 0, $_POST['x1'], $_POST['y1'], $targ_w, $targ_h, $_POST['w'], $_POST['h']);
-                //header('Content-type: image/jpeg');
-                imagejpeg($dst_r, "/srv/sigec/static/fotos/" . $user->username . '.jpg', $jpeg_quality);
-                //imagejpeg($dst_r, "/var/www/sigec/static/fotos/" . $user->username . '.jpg', $jpeg_quality);
-                imagedestroy($dst_r);
-                unlink($src);
-                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' ' . $this->user->cargo . ' modificó su foto de perfil');
-                //$this->request->redirect('user/profile');
-                // $_POST=array();
-            }
-
-            ///*************************************************
-            // DESTINATARIOS
-            ////**************************************
-            $mUsers = New Model_Users();
-            $destinatarios = $mUsers->destinatarios($user->id);
-            $vista = 'user/profile';
-            //$user = $this->user;
-            if ($user->id == $this->user->id || $this->user->nivel == 5) {
-                $this->template->styles = array(
-                    'static/plugins/dropzone/css/dropzone.css' => 'screen',
-                    'static/plugins/dropzone/css/basic.css' => 'screen',
-                    'static/css/perfil.css' => 'screen'
-                );
-                $this->template->scripts = array(
-                    'static/js/perfil.js',
-                    'static/plugins/dropzone/dropzone.min.js',
-                    'static/plugins/jscrop/js/jquery.Jcrop.js',
-                    'static/js/eModal.min.js',
-                );
-                $vista = 'user/profile';
-            }
-            $this->template->content = View::factory($vista)
-                ->bind('user', $user)
-                ->bind('destinatarios', $destinatarios)
-                ->bind('errors', $errors)
-                ->bind('info', $info);
-        } else {
+        if (!$user->loaded()) {
             $this->request->redirect('user/profile');
         }
+        $es_propio = ((int) $user->id === (int) $this->user->id);
+        $dir_fotos = DOCROOT . 'static/fotos/';
+
+        //cambiar datos personales
+        if (isset($_POST['submit-usuario'])) {
+            $nombre = trim((string) Arr::get($_POST, 'nombre', ''));
+            if ($nombre === '') {
+                $errors[] = 'El nombre no puede quedar vacío.';
+            } else {
+                $user->nombre = $nombre;
+                $user->cargo = trim((string) Arr::get($_POST, 'cargo', ''));
+                $user->mosca = trim((string) Arr::get($_POST, 'mosca', ''));
+                if ($user->save()) {
+                    $info[] = 'Los datos se guardaron correctamente.';
+                } else {
+                    $errors[] = 'Ocurrió un error, vuelva a intentarlo.';
+                }
+            }
+        }
+        //cambiar contraseña
+        if (isset($_POST['submit-pass'])) {
+            $auth = Auth::instance();
+            $pass_old = $auth->hash_password($_POST['pass_old']);
+            if ($pass_old == $this->user->password) { //verificamos que el password anterior coincida
+                if ($_POST['pass_new'] == $_POST['pass_new2']) {
+                    $user->password = $auth->hash_password($_POST['pass_new']);
+                    $user->save();
+                    $info[] = 'Su contraseña fue cambiada correctamente.';
+                    //vitacora
+                    $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' ' . $this->user->cargo . ' cambio su contrase&ntilde;');
+                } else {
+                    $errors[] = 'Las contraseñas no coinciden.';
+                }
+            } else {
+                $errors[] = 'La contraseña anterior es incorrecta.';
+            }
+        }
+        // recortar la foto subida (queda en static/fotos/tmp/ hasta recortarla)
+        if (isset($_POST['scrop'])) {
+            $src = $dir_fotos . 'tmp/' . $user->username . '.jpg';
+            $img_r = file_exists($src) ? @imagecreatefromjpeg($src) : FALSE;
+            if (!$img_r) {
+                $errors[] = 'No se encontró la foto para recortar. Vuelva a subirla.';
+            } else {
+                $ancho = imagesx($img_r);
+                $alto = imagesy($img_r);
+                // recorte cuadrado dentro de la imagen; si no se marco nada, el cuadrado central
+                $w = (int) round((float) Arr::get($_POST, 'w', 0));
+                $x = (int) round((float) Arr::get($_POST, 'x1', 0));
+                $y = (int) round((float) Arr::get($_POST, 'y1', 0));
+                if ($w < 20) {
+                    $w = min($ancho, $alto);
+                    $x = (int) (($ancho - $w) / 2);
+                    $y = (int) (($alto - $w) / 2);
+                }
+                $w = min($w, $ancho, $alto);
+                $x = max(0, min($x, $ancho - $w));
+                $y = max(0, min($y, $alto - $w));
+                $lado = 300;
+                $dst_r = imagecreatetruecolor($lado, $lado);
+                imagecopyresampled($dst_r, $img_r, 0, 0, $x, $y, $lado, $lado, $w, $w);
+                if (file_exists($dir_fotos . $user->username . '.jpg')) {
+                    // se conserva la anterior, como hacia subirfoto
+                    @rename($dir_fotos . $user->username . '.jpg', $dir_fotos . time() . '_' . $user->username . '.jpg');
+                }
+                imagejpeg($dst_r, $dir_fotos . $user->username . '.jpg', 90);
+                imagedestroy($dst_r);
+                imagedestroy($img_r);
+                @unlink($src);
+                $info[] = 'La foto de perfil se actualizó.';
+                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' ' . $this->user->cargo . ' modificó su foto de perfil');
+            }
+        }
+
+        // DESTINATARIOS
+        $mUsers = New Model_Users();
+        $destinatarios = $mUsers->destinatarios($user->id);
+
+        // actividad del usuario
+        $actividad = DB::query(Database::SELECT, 'SELECT
+                (SELECT COUNT(*) FROM documentos WHERE id_user = :u) AS documentos,
+                (SELECT COUNT(*) FROM seguimiento WHERE derivado_por = :u) AS derivaciones,
+                (SELECT COUNT(*) FROM seguimiento WHERE derivado_a = :u AND estado = 2) AS pendientes,
+                (SELECT COUNT(*) FROM seguimiento WHERE derivado_a = :u AND estado = 1) AS por_recibir')
+                ->param(':u', (int) $user->id)->execute()->current();
+
+        $oficina = ORM::factory('oficinas', $user->id_oficina);
+        $foto_tmp = file_exists($dir_fotos . 'tmp/' . $user->username . '.jpg');
+
+        $this->template->styles = array(
+            'static/plugins/dropzone/css/dropzone.css' => 'screen',
+            'static/plugins/dropzone/css/basic.css' => 'screen',
+            'static/plugins/jscrop/css/jquery.Jcrop.css' => 'screen',
+        );
+        $this->template->scripts = array(
+            'static/plugins/dropzone/dropzone.min.js',
+            'static/plugins/jscrop/js/jquery.Jcrop.js',
+            'static/js/eModal.min.js',
+        );
+        $this->template->titulo .= $es_propio ? 'Mi perfil' : 'Perfil de ' . $user->nombre;
+        $this->template->content = View::factory('user/profile')
+            ->bind('user', $user)
+            ->bind('destinatarios', $destinatarios)
+            ->bind('errors', $errors)
+            ->bind('info', $info)
+            ->bind('actividad', $actividad)
+            ->bind('oficina', $oficina)
+            ->bind('foto_tmp', $foto_tmp)
+            ->bind('es_propio', $es_propio);
     }
 
+    /**
+     * Recibe la foto (Dropzone) y la deja en static/fotos/tmp/ para recortarla.
+     * Solo para el propio usuario, o para otro si quien sube es administrador.
+     */
     public function action_subirfoto()
     {
-        $foto = $_POST['username'] . '.jpg';
-        $post = Validation::factory($_FILES)
+        $this->auto_render = FALSE;
+        $this->response->headers('Content-Type', 'application/json; charset=utf-8');
+        $user = $this->user;
+        $idp = (int) Arr::get($_POST, 'idp', 0);
+        if ($idp > 0 && $idp !== (int) $this->user->id && (int) $this->user->nivel === 5) {
+            $user = ORM::factory('users', $idp);
+        }
+        $archivo = isset($_FILES['file']) ? $_FILES['file'] : NULL;
+        $valido = Validation::factory($_FILES)
             ->rule('file', 'Upload::not_empty')
-            ->rule('file', 'Upload::type', array(':value', array('jpg')));
-        // ->rule('archivo', 'Upload::size', array(':value', '20M'));
-        //si pasa la validacion guardamamos 
-        if (file_exists('static/fotos/tmp/' . $foto)) {
-            rename('static/fotos/tmp/' . $foto, 'static/fotos/tmp/' . time() . '_' . $foto);
+            ->rule('file', 'Upload::type', array(':value', array('jpg', 'jpeg')))
+            ->rule('file', 'Upload::size', array(':value', '5M'));
+        // ademas de la extension, el contenido debe ser realmente una imagen JPG
+        $es_jpg = $archivo && is_uploaded_file($archivo['tmp_name']) && ($info = @getimagesize($archivo['tmp_name'])) && $info[2] === IMAGETYPE_JPEG;
+        if (!$user->loaded() || !$valido->check() || !$es_jpg) {
+            $this->response->status(400)->body(json_encode(array('error' => 'Suba una imagen JPG de hasta 5 MB.')));
+            return;
         }
-        if (file_exists('static/fotos/' . $foto)) {
-            rename('static/fotos/' . $foto, 'static/fotos/' . time() . '_' . $foto);
+        $dir = DOCROOT . 'static/fotos/tmp/';
+        $foto = $user->username . '.jpg';
+        if (file_exists($dir . $foto)) {
+            @rename($dir . $foto, $dir . time() . '_' . $foto);
         }
-        $path = 'static/fotos/tmp/';
-        $filename = upload::save($_FILES['file'], $foto, $path);
-
-        /* if ($this->request->hasFiles() == true) {
-          foreach ($this->request->getUploadedFiles() as $file) {
-          //echo $file->getName(), " ", $file->getSize(), "\n";
-          if (file_exists('tmp/' . $ci . '.jpg')) {
-          rename('tmp/' . $ci . '.jpg', 'tmp/' . time() . '_' . $ci . '.jpg');
-          }
-          if (file_exists('personal/' . $ci . '.jpg')) {
-          rename('personal/' . $ci . '.jpg', 'personal/' . time() . '_' . $ci . '.jpg');
-          }
-          $file->moveTo('tmp/' . $ci . '.jpg');
-          $image = new Phalcon\Image\Adapter\GD('tmp/' . $ci . '.jpg');
-          $image->resize(500, 500);
-          if ($image->save()) {
-          echo 'success';
-          }
-          }
-          }
-         */
-        $_POST = null;
+        if (!Upload::save($archivo, $foto, $dir)) {
+            $this->response->status(500)->body(json_encode(array('error' => 'No se pudo guardar la imagen.')));
+            return;
+        }
+        $this->response->body(json_encode(array('ok' => 1)));
     }
 
     public function action_nuevo()
@@ -358,9 +376,13 @@ class Controller_User extends Controller_DefaultTemplate
 
     public function action_xdes()
     {
-        $id_usuario = Arr::get($_GET, 'id_user', '');
-        $id_destino = Arr::get($_GET, 'id_des', '');
-        if (($id_destino != '') && ($id_usuario != '')) {
+        $id_usuario = (int) Arr::get($_GET, 'id_user', 0);
+        $id_destino = (int) Arr::get($_GET, 'id_des', 0);
+        // solo se quitan destinatarios de la propia lista (o de cualquiera, si es administrador)
+        if ($id_usuario !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+            $id_usuario = (int) $this->user->id;
+        }
+        if ($id_destino > 0 && $id_usuario > 0) {
             $destino = ORM::factory('destinatarios')
                 ->where('id_usuario', '=', $id_usuario)
                 ->and_where('id_destino', '=', $id_destino)
@@ -369,7 +391,7 @@ class Controller_User extends Controller_DefaultTemplate
                 $destino->delete();
             }
         }
-        $this->request->redirect('/user/profile/' . $id_usuario);
+        $this->request->redirect('/user/profile/' . ($id_usuario !== (int) $this->user->id ? $id_usuario : ''));
     }
 
     public function action_color($color = '')

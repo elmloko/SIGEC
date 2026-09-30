@@ -83,7 +83,7 @@
             <a href="/" class="mn-logo" title="Inicio"><img src="/media/logo-transparente.png" alt="Correos de Bolivia"/></a>
             <?php if (strpos($menu_html, 'href="/document/"') !== FALSE): ?>
                 <!-- accion principal -->
-                <a href="/document" class="mn-cta"><i class="fa fa-plus"></i> Nuevo documento</a>
+                <?php echo View::factory('templates/nuevo_documento'); ?>
             <?php endif; ?>
             <div class="mn-seccion">Menú</div>
             <!-- BEGIN MAIN MENU -->

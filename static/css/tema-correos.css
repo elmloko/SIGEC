@@ -409,6 +409,229 @@ body {
     color: var(--correos-azul-oscuro);
 }
 
+/* ===== menu lateral: nuevo documento (selector de tipos) ===== */
+#menubar.menubar-inverse .mn-nuevo {
+    margin: 10px 16px 6px;
+}
+#menubar.menubar-inverse .mn-nuevo .mn-cta {
+    margin: 0;
+}
+#menubar.menubar-inverse .mn-cta .mn-cta-flecha {
+    width: auto;
+    height: auto;
+    margin-left: 2px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    transition: transform .2s;
+}
+#menubar.menubar-inverse .mn-nuevo.abierto .mn-cta {
+    border-radius: 12px 12px 0 0;
+    box-shadow: none;
+    transform: none;
+}
+#menubar.menubar-inverse .mn-nuevo.abierto .mn-cta-flecha {
+    transform: rotate(180deg);
+}
+#menubar.menubar-inverse .mn-nuevo-lista {
+    display: none;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border-radius: 0 0 12px 12px;
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(18, 62, 115, 0.22);
+}
+#menubar.menubar-inverse .mn-nuevo.abierto .mn-nuevo-lista {
+    display: block;
+    animation: mn-desplegar .15s ease-out;
+}
+#menubar.menubar-inverse .mn-nuevo-lista a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--correos-azul-oscuro);
+    text-decoration: none;
+}
+#menubar.menubar-inverse .mn-nuevo-lista a .fa {
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    border-radius: 7px;
+    background: var(--correos-azul-suave);
+    color: var(--correos-azul);
+    text-align: center;
+    font-size: 13px;
+}
+#menubar.menubar-inverse .mn-nuevo-lista a:hover,
+#menubar.menubar-inverse .mn-nuevo-lista a:focus {
+    background: var(--correos-amarillo-suave);
+    color: var(--correos-azul);
+}
+#menubar.menubar-inverse .mn-nuevo-lista a:hover .fa {
+    background: var(--correos-azul);
+    color: #fff;
+}
+@keyframes mn-desplegar {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+}
+/* contraido: solo el boton "+" (la lista se ve al expandir el menu) */
+@media (min-width: 769px) and (max-width: 1199px) {
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-nuevo {
+        margin: 14px 12px 10px;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-nuevo .mn-cta {
+        margin: 0;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-nuevo-lista,
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-cta-flecha {
+        display: none !important;
+    }
+}
+@media (min-width: 1200px) {
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-nuevo {
+        margin: 14px 12px 10px;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-nuevo .mn-cta {
+        margin: 0;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-nuevo-lista,
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-cta-flecha {
+        display: none !important;
+    }
+}
+
+/* ===== menu lateral contraido (solo iconos) ===== */
+@media (min-width: 769px) and (max-width: 1199px) {
+    /* sin logo, ni titulo de seccion, ni pie: no caben en 64px */
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-logo,
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-seccion,
+    body:not(.menubar-visible) #menubar.menubar-inverse .menubar-foot-panel {
+        display: none;
+    }
+    /* "Nuevo documento" queda como boton cuadrado con el "+" */
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-cta {
+        width: 40px;
+        height: 40px;
+        margin: 14px auto 10px;
+        padding: 0;
+        border-radius: 12px;
+        font-size: 0;
+        gap: 0;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .mn-cta .fa {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
+    /* solo iconos, centrados */
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls {
+        padding: 0 12px;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li > a {
+        justify-content: center;
+        width: 40px;
+        min-width: 0;
+        min-height: 40px;
+        padding: 3px;
+        border-radius: 12px;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li > a .title,
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li > ul {
+        display: none;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > .gui-folder > a:after {
+        display: none;
+    }
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li > a .gui-icon {
+        flex: 0 0 34px;
+    }
+    /* la seccion activa: el icono en azul sobre fondo blanco */
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li.active > a,
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li.expanded > a {
+        background: #ffffff;
+    }
+    /* aviso de "por recibir" como punto rojo sobre el icono */
+    body:not(.menubar-visible) #menubar.menubar-inverse .gui-controls > li:has(.mn-badge.mn-alerta) > a .gui-icon:after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        width: 9px;
+        height: 9px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        background: #D32F2F;
+    }
+}
+@media (min-width: 1200px) {
+    /* sin logo, ni titulo de seccion, ni pie: no caben en 64px */
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-logo,
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-seccion,
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .menubar-foot-panel {
+        display: none;
+    }
+    /* "Nuevo documento" queda como boton cuadrado con el "+" */
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-cta {
+        width: 40px;
+        height: 40px;
+        margin: 14px auto 10px;
+        padding: 0;
+        border-radius: 12px;
+        font-size: 0;
+        gap: 0;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .mn-cta .fa {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
+    /* solo iconos, centrados */
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls {
+        padding: 0 12px;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li > a {
+        justify-content: center;
+        width: 40px;
+        min-width: 0;
+        min-height: 40px;
+        padding: 3px;
+        border-radius: 12px;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li > a .title,
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li > ul {
+        display: none;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > .gui-folder > a:after {
+        display: none;
+    }
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li > a .gui-icon {
+        flex: 0 0 34px;
+    }
+    /* la seccion activa: el icono en azul sobre fondo blanco */
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li.active > a,
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li.expanded > a {
+        background: #ffffff;
+    }
+    /* aviso de "por recibir" como punto rojo sobre el icono */
+    body:not(.menubar-visible):not(.menubar-pin) #menubar.menubar-inverse .gui-controls > li:has(.mn-badge.mn-alerta) > a .gui-icon:after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        width: 9px;
+        height: 9px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        background: #D32F2F;
+    }
+}
+
 /* ===== barra superior ===== */
 #header.cb-header {
     background: #ffffff;

@@ -14,8 +14,8 @@ $derivado = $documento->estado == 1;
 // para derivar se exige al menos un archivo digital (salvo el usuario de despacho)
 $puede_derivar = $num_archivos > 0 || $user == '95';
 ?>
-<link rel="stylesheet" href="/static/css/documento-form.css?v=1"/>
-<script type="text/javascript" src="/static/js/documento-form.js?v=1"></script>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=2"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=2"></script>
 <script type="text/javascript">
     $(function () {
         // el plugin redactor ya no se carga en esta pagina; sin esta verificacion el error detenia el resto de los scripts
