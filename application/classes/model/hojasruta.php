@@ -136,41 +136,77 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     // listado admin: todas las hojas de ruta generadas en el sistema, ordenadas por fecha de creacion reciente
-    public function todasAdmin($o, $i, $q = '') {
-        $filtro = '';
-        if ($q !== '') {
-            $like = Database::instance()->escape('%' . $q . '%');
-            $filtro = " AND (d.nur LIKE $like OR d.cite_original LIKE $like OR d.referencia LIKE $like
-                OR d.nombre_destinatario LIKE $like OR u.nombre LIKE $like) ";
+    /*
+     * Listado de administracion. $f: q (texto), anio, tipo (id_tipo), estado (estado actual de la hoja de ruta:
+     * 0 = sin derivar, o el estado de la ultima derivacion oficial: 1 no recibido, 2 pendiente, 6 agrupado, 10 archivado...).
+     * Tambien acepta un texto (forma anterior: solo busqueda).
+     */
+    protected function filtroAdmin($f, &$params) {
+        if (!is_array($f)) {
+            $f = array('q' => (string) $f);
         }
+        $w = array("d.original = '1'");
+        $q = trim((string) Arr::get($f, 'q', ''));
+        if ($q !== '') {
+            $w[] = '(d.nur LIKE :q OR d.cite_original LIKE :q OR d.referencia LIKE :q OR d.nombre_destinatario LIKE :q OR u.nombre LIKE :q)';
+            $params[':q'] = '%' . $q . '%';
+        }
+        if ((int) Arr::get($f, 'anio', 0) > 0) {
+            $w[] = 'd.fecha_creacion >= :desde AND d.fecha_creacion < :hasta';
+            $params[':desde'] = (int) $f['anio'] . '-01-01';
+            $params[':hasta'] = ((int) $f['anio'] + 1) . '-01-01';
+        }
+        if ((int) Arr::get($f, 'tipo', 0) > 0) {
+            $w[] = 'd.id_tipo = :tipo';
+            $params[':tipo'] = (int) $f['tipo'];
+        }
+        $estado = Arr::get($f, 'estado', '');
+        if ($estado !== '' && $estado !== NULL) {
+            $w[] = self::SQL_ESTADO_HR . ' = :estado';
+            $params[':estado'] = (int) $estado;
+        }
+        return ' WHERE ' . implode(' AND ', $w) . ' ';
+    }
+
+    // estado actual: 0 si el documento no se derivo; si no, el de la ultima derivacion oficial
+    const SQL_ESTADO_HR = "IF(d.estado = 0, 0, (SELECT s.estado FROM seguimiento s WHERE s.nur = d.nur AND s.oficial > 0 ORDER BY s.id DESC LIMIT 1))";
+
+    public function todasAdmin($o, $i, $f = array()) {
+        $params = array();
+        $where = $this->filtroAdmin($f, $params);
+        $o = max(0, (int) $o);
+        $i = max(1, (int) $i);
         $sql = "SELECT d.id, d.nur, d.codigo, d.cite_original, d.referencia, d.estado,
-                d.nombre_destinatario, d.cargo_destinatario, d.fecha_creacion,
-                u.nombre AS creado_por, p.proceso,
-                (SELECT COUNT(*) FROM agrupaciones a WHERE a.padre = d.nur OR a.hijo = d.nur) AS agrupado
+                d.nombre_destinatario, d.cargo_destinatario, d.fecha_creacion, d.id_user,
+                u.nombre AS creado_por, u.username, u.genero, p.proceso, t.tipo,
+                (SELECT COUNT(*) FROM agrupaciones a WHERE a.padre = d.nur OR a.hijo = d.nur) AS agrupado,
+                " . self::SQL_ESTADO_HR . " AS estado_hr,
+                (SELECT s.nombre_receptor FROM seguimiento s WHERE s.nur = d.nur AND s.oficial > 0 ORDER BY s.id DESC LIMIT 1) AS con_quien
             FROM documentos d
             LEFT JOIN users u ON u.id = d.id_user
             LEFT JOIN procesos p ON p.id = d.id_proceso
-            WHERE d.original = '1' $filtro
+            LEFT JOIN tipos t ON t.id = d.id_tipo
+            $where
             ORDER BY d.fecha_creacion DESC
-            LIMIT $o , $i";
-        return db::query(Database::SELECT, $sql)->execute();
+            LIMIT $o, $i";
+        $query = db::query(Database::SELECT, $sql);
+        foreach ($params as $k => $v) {
+            $query->param($k, $v);
+        }
+        return $query->execute();
     }
 
-    public function contarTodas($q = '') {
-        $filtro = '';
-        if ($q !== '') {
-            $like = Database::instance()->escape('%' . $q . '%');
-            $filtro = " AND (d.nur LIKE $like OR d.cite_original LIKE $like OR d.referencia LIKE $like
-                OR d.nombre_destinatario LIKE $like OR u.nombre LIKE $like) ";
+    public function contarTodas($f = array()) {
+        $params = array();
+        $where = $this->filtroAdmin($f, $params);
+        $sql = "SELECT COUNT(*) AS n FROM documentos d LEFT JOIN users u ON u.id = d.id_user $where";
+        $query = db::query(Database::SELECT, $sql);
+        foreach ($params as $k => $v) {
+            $query->param($k, $v);
         }
-        $sql = "SELECT COUNT(*) AS n
-            FROM documentos d
-            LEFT JOIN users u ON u.id = d.id_user
-            WHERE d.original = '1' $filtro";
-        $r = db::query(Database::SELECT, $sql)->execute()->as_array();
+        $r = $query->execute()->as_array();
         return isset($r[0]['n']) ? (int) $r[0]['n'] : 0;
     }
-
     public function select($sql) {
         return $this->_db->query(Database::SELECT, $sql, TRUE);
     }

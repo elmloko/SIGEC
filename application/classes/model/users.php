@@ -68,43 +68,45 @@ class Model_Users extends ORM {
     }
     //usuarios conectados
     public function usuariosconectados() {
-        $sql = "SELECT 
-                    s.last_active,
-                    @minutos:=(UNIX_TIMESTAMP() - s.last_active) / 60 AS minutos,
-                    ROUND(@minutos, 2) AS segundos,
-                    u.nombre,
-                    u.cargo,
-                    u.id
-                FROM
-                    sesiones s USE INDEX (INDEX_LAST_ACTIVE)
-                        INNER JOIN
-                    users u USE KEY (PRIMARY) ON (s.user_id = u.id)
-                HAVING minutos < 10
-                ORDER BY s.last_active DESC;";
-
+        // una fila por usuario (puede tener varias sesiones), activos en los ultimos 10 minutos
+        $sql = "SELECT u.id, u.nombre, u.cargo, u.username, u.genero,
+                    MAX(s.last_active) AS last_active,
+                    ROUND((UNIX_TIMESTAMP() - MAX(s.last_active)) / 60, 2) AS segundos
+                FROM sesiones s USE INDEX (INDEX_LAST_ACTIVE)
+                INNER JOIN users u ON s.user_id = u.id
+                WHERE s.last_active >= UNIX_TIMESTAMP() - 600
+                GROUP BY u.id
+                ORDER BY last_active DESC";
         return db::query(Database::SELECT, $sql)->execute();
     }
-    //bitacora de actividades, paginada
-    public function actividades($page = 1, $limit = 15) {
+
+    //bitacora de actividades, paginada y con busqueda opcional (texto de la accion o nombre del usuario)
+    public function actividades($page = 1, $limit = 15, $q = '') {
         $page = max(1, (int) $page);
         $limit = min(100, max(1, (int) $limit));
         $offset = ($page - 1) * $limit;
-
-        $sql = "SELECT v.fecha_hora, v.accion_realizada, v.ip_usuario, u.nombre AS usuario
+        $filtro = $q !== '' ? 'WHERE (v.accion_realizada LIKE :q OR u.nombre LIKE :q)' : '';
+        $sql = "SELECT v.fecha_hora, v.accion_realizada, v.ip_usuario, u.nombre AS usuario, u.id AS id_usuario
                 FROM vitacora v
                 LEFT JOIN users u ON v.id_usuario = u.id
+                $filtro
                 ORDER BY v.fecha_hora DESC
                 LIMIT $limit OFFSET $offset";
-        return db::query(Database::SELECT, $sql)->execute();
+        return db::query(Database::SELECT, $sql)->param(':q', '%' . $q . '%')->execute();
     }
 
     //total de registros de la bitacora, para armar la paginacion
-    public function actividades_total() {
-        $sql = "SELECT COUNT(*) AS total FROM vitacora";
-        $result = db::query(Database::SELECT, $sql)->execute();
+    public function actividades_total($q = '') {
+        if ($q === '') {
+            $sql = "SELECT COUNT(*) AS total FROM vitacora";
+        } else {
+            // con filtro, el conteo se corta en 5001 (la bitacora tiene cientos de miles de filas)
+            $sql = "SELECT COUNT(*) AS total FROM (SELECT 1 FROM vitacora v LEFT JOIN users u ON v.id_usuario = u.id
+                    WHERE (v.accion_realizada LIKE :q OR u.nombre LIKE :q) LIMIT 5001) t";
+        }
+        $result = db::query(Database::SELECT, $sql)->param(':q', '%' . $q . '%')->execute();
         return (int) $result[0]['total'];
     }
-
     //propiedades de un usuario
     public function property($id) {
         $sql = "SELECT u.id, u.dependencia, u.nombre,u.cargo,o.nombre, u.genero, u.id_oficina 

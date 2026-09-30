@@ -218,63 +218,52 @@ class Controller_Admin_ajax extends Controller
         echo json_encode($result, JSON_NUMERIC_CHECK);
     }
 
+    // se devuelven datos, no HTML: la vista los escapa al mostrarlos
     public function action_usuariosconectados()
     {
         $result = array();
         $mUsers = new Model_Users();
-        $activos = $mUsers->usuariosconectados();
-        $cantidad = 0;
-
-        foreach ($activos as $c) {
+        foreach ($mUsers->usuariosconectados() as $c) {
+            $foto = DOCROOT . 'static/fotos/' . $c['username'] . '.jpg';
             $result[] = array(
-                'fecha' => $c['last_active'],
-                'segundos' => $c['segundos'],
-                'nombre' => '<a href="/user/profile/' . $c['id'] . '">' . $c['nombre'] . '</a>',
+                'id' => (int) $c['id'],
+                'nombre' => $c['nombre'],
                 'cargo' => $c['cargo'],
+                'minutos' => (float) $c['segundos'],
+                'foto' => file_exists($foto) ? '/static/fotos/' . $c['username'] . '.jpg' : '/static/fotos/' . ($c['genero'] == 'mujer' ? 'mujer' : 'hombre') . '.jpg',
             );
         }
-//$result[] = [{"name":"Test1", "data":[[1415567095000, 2117]]}, {"name":"Test2", "data":[[1415567095000, 2414]]}];
-        /* $result[] = array(
-          "name" => "Usuarios",
-          "data" => array(
-          array_values(array(time() * 1000, $cantidad))
-          )
-          );
-         */
-        echo json_encode($result, JSON_NUMERIC_CHECK);
+        echo json_encode($result);
     }
 
     public function action_bitacora()
     {
         $result = array();
         $mUsers = new Model_Users();
-
-        $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-        $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 15;
-        if ($page < 1) $page = 1;
-        if ($limit < 1 || $limit > 100) $limit = 15;
-
-        $activos = $mUsers->actividades($page, $limit);
-        $total = $mUsers->actividades_total();
-
-        foreach ($activos as $c) {
+        $page = max(1, (int) Arr::get($_GET, 'page', 1));
+        $limit = (int) Arr::get($_GET, 'limit', 15);
+        if ($limit < 1 || $limit > 100) {
+            $limit = 15;
+        }
+        $q = trim((string) Arr::get($_GET, 'q', ''));
+        foreach ($mUsers->actividades($page, $limit, $q) as $c) {
             $result[] = array(
                 'fecha' => $c['fecha_hora'],
                 'accion_realizada' => $c['accion_realizada'],
                 'ip' => $c['ip_usuario'],
-                'usuario' => $c['usuario']
+                'usuario' => $c['usuario'],
+                'id_usuario' => (int) $c['id_usuario'],
             );
         }
-
+        $total = $mUsers->actividades_total($q);
         echo json_encode(array(
             'data' => $result,
             'total' => $total,
             'page' => $page,
             'limit' => $limit,
             'pages' => (int) ceil($total / $limit)
-        ), JSON_NUMERIC_CHECK);
+        ));
     }
-
     public function action_superior()
     {
         if ($this->request->is_ajax()) {

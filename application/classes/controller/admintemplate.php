@@ -98,7 +98,8 @@ class Controller_AdminTemplate extends Controller_Template {
                 'static/js/core/source/AppOffcanvas.js',
                 'static/js/core/source/AppNavigation.js',
                 'static/js/core/source/App.js',
-                'static/js/libs/rickshaw/rickshaw.min.js',
+                // rickshaw necesita d3, que no se carga aqui (y ninguna vista de admin lo usa)
+                //'static/js/libs/rickshaw/rickshaw.min.js',
                 //'static/js/libs/d3/d3.v3.js',
                // 'static/js/libs/d3/d3.min.js',
                 'static/js/libs/jquery-validation/dist/jquery.validate.min.js',

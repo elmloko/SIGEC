@@ -24,54 +24,23 @@ class Controller_Admin_User extends Controller_AdminTemplate
     //lista de usuarios
     public function action_index()
     {
-        $this->template->styles = array(
-            'media/jqwidgets/styles/jqx.custom.css' => 'all',
-            'media/jqwidgets/styles/jqx.base.css' => 'all',
-        );
-        $this->template->scripts = array(
-            //'media/jqwidgets/scripts/demos.js',
-            'media/jqwidgets/globalization/globalize.js',
-            'media/jqwidgets/jqxcalendar.js',
-            'media/jqwidgets/jqxdatetimeinput.js',
-            'media/jqwidgets/jqxwindow.js',
-            'media/jqwidgets/jqxnumberinput.js',
-            'media/jqwidgets/jqxgrid.aggregates.js',
-            'media/jqwidgets/jqxgrid.columnsresize.js',
-            'media/jqwidgets/jqxgrid.columnsreorder.js',
-            'media/jqwidgets/jqxadata.export.js',
-            'media/jqwidgets/jqxgrid.export.js',
-            'media/jqwidgets/jqxgrid.edit.js',
-            //'media/jqwidgets/jqxgrid.grouping.js',
-            'media/jqwidgets/jqxgrid.selection.js',
-            'media/jqwidgets/jqxgrid.filter.js',
-            'media/jqwidgets/jqxgrid.pager.js',
-            'media/jqwidgets/jqxgrid.sort.js',
-            'media/jqwidgets/jqxdata.js',
-            'media/jqwidgets/jqxgrid.js',
-            'media/jqwidgets/jqxdropdownlist.js',
-            'media/jqwidgets/jqxlistbox.js',
-            'media/jqwidgets/jqxcheckbox.js',
-            'media/jqwidgets/jqxmenu.js',
-            'media/jqwidgets/jqxscrollbar.js',
-            'media/jqwidgets/jqxbuttons.js',
-            'media/jqwidgets/jqxcore.js',
-            'static/js/eModal.min.js'
-        );
-        // mismos joins que el listado (admin/ajax/usuariosjson) para que los totales coincidan con la grilla
-        $totales = DB::query(Database::SELECT, 'SELECT u.habilitado, COUNT(*) AS total FROM users u
+        // son pocos cientos de usuarios: se cargan todos y la busqueda/orden se hace en el navegador
+        // (antes era una grilla jqx que armaba los filtros en SQL con los valores del navegador)
+        $usuarios = DB::query(Database::SELECT, 'SELECT u.id, u.username, u.nombre, u.cargo, u.email, u.mosca, u.genero,
+                    u.logins, u.last_login, u.habilitado, u.fecha_creacion, n.nivel, o.oficina, e.sigla AS entidad
+                FROM users u
                 INNER JOIN niveles n ON u.nivel = n.id
                 INNER JOIN oficinas o ON u.id_oficina = o.id
                 INNER JOIN entidades e ON o.id_entidad = e.id
-                GROUP BY u.habilitado')
-                ->execute()
-                ->as_array('habilitado', 'total');
-        $total_alta = Arr::get($totales, 1, 0);
-        $total_baja = Arr::get($totales, 0, 0);
-        $this->template->content = View::factory('admin/j_usuarios')
-                ->bind('total_alta', $total_alta)
-                ->bind('total_baja', $total_baja);
+                ORDER BY u.nombre')
+                ->execute()->as_array();
+        $this->template->titulo .= 'Usuarios';
+        $this->template->scripts = array('static/js/eModal.min.js');
+        $this->template->content = View::factory('admin/usuarios_panel')
+                ->bind('usuarios', $usuarios)
+                ->set('aviso', Session::instance()->get_once('us_aviso', ''))
+                ->set('yo', (int) $this->user->id);
     }
-
     public function action_index_old()
     {
         $oUser = New Model_Users();
@@ -177,127 +146,118 @@ class Controller_Admin_User extends Controller_AdminTemplate
     }
 
     //editar usuario
-    public function action_edit($id)
+    public function action_edit($id = 0)
     {
-
-        $u = ORM::factory('users')->where('id', '=', $id)->find();
-        if ($u->loaded()) {
-            $message = '';
-            $error = array();
-            if (isset($_POST['submit'])) {
-                try {
-                    $email = ORM::factory('users')
-                        ->where('email', '=', $_POST['email'])
-                        ->and_where('id', '<>', $_POST['id'])
-                        ->find();
-                    if ($email->loaded()) {
-                        $error['correo'] = "El correo ya existe en la base de datos, elija otro por favor.";
-                    }
-                    $email = ORM::factory('users')
-                        ->where('username', '=', $_POST['username'])
-                        ->where('id', '<>', $_POST['id'])
-                        ->find();
-                    if ($email->loaded()) {
-                        $error['username'] = "Ya existe un usuario con el nombre '" . $_POST['username'] . "', elija otro por favor";
-                    }
-                    if (sizeof($error) == 0) {
-                        // Create the user using form values
-                        $user = ORM::factory('users', $_POST['id']);
-                        $user->username = $_POST['username'];
-                        $user->nombre = $_POST['nombre'];
-                        $user->cargo = $_POST['cargo'];
-                        $user->cedula_identidad = $_POST['cedula_identidad'];
-                        $user->id_oficina = $_POST['id_oficina'];
-                        $user->id_entidad = $_POST['id_entidad'];
-                        $user->email = strtolower($_POST['email']);
-                        $user->mosca = strtoupper($_POST['mosca']);
-                        $user->nivel = $_POST['nivel'];
-                        $user->genero = $_POST['genero'];
-                        $user->dependencia = $_POST['dependencia'];
-                        $user->superior = $_POST['superior'];
-                        $user->fecha_creacion = time();
-                        if ($user->save()) {
-                            $u = $user;
-                            //$user->add('roles', 1);
-//                            $rol = ORM::factory('usersrol');
-                            //                          $rol->user_id = $user->id;
-                            //                        $rol->role_id = 1;
-                            //                      $rol->save();
-                            //                    $user = ORM::factory('users', $user->id);
-                            //                  $user->add('tipo', 3);
-                            //                $user->add('tipo', 4);
-                            //              $user->add('tipo', 5);
-                            // Reset values so form is not sticky
-                            $_POST = array();
-                            // Set success message
-                            $message = "Se modifico el usuario '{$user->username}' correctamente";
-
-                            // RELOAD PAGE
-                            $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]/admin/user";
-
-                            echo '<script>window.location = "' . $url . '";</script>';
-                            die;
-                        }
-                        // Grant user login role
-//                $user->add('roles', 1);
-                        //tipos
-                    }
-                } catch (ORM_Validation_Exception $e) {
-
-                    // Set failure message
-                    $message = 'Usted tiene errores en el formulario revise por favor.';
-                    // Set errors using custom messages
-                    $error = $e->errors('models');
+        $u = ORM::factory('users', (int) $id);
+        if (!$u->loaded()) {
+            $this->request->redirect('/admin/user');
+        }
+        $error = array();
+        $datos = array(
+            'username' => $u->username, 'nombre' => $u->nombre, 'cargo' => $u->cargo,
+            'cedula_identidad' => $u->cedula_identidad, 'genero' => $u->genero, 'id_entidad' => $u->id_entidad,
+            'id_oficina' => $u->id_oficina, 'superior' => (int) $u->superior, 'dependencia' => (int) $u->dependencia,
+            'mosca' => $u->mosca, 'nivel' => (int) $u->nivel, 'email' => $u->email,
+        );
+        if ($this->request->method() === 'POST') {
+            // el id sale de la URL, no del formulario
+            foreach ($datos as $k => $v) {
+                if (isset($_POST[$k])) {
+                    $datos[$k] = trim($_POST[$k]);
                 }
             }
+            $datos['username'] = strtolower($datos['username']);
+            $datos['email'] = strtolower($datos['email']);
+            $datos['mosca'] = strtoupper($datos['mosca']);
+            $datos['superior'] = (int) $datos['superior'];
+            $datos['dependencia'] = (int) $datos['dependencia'] === 0 ? 0 : 1;
+            $datos['genero'] = $datos['genero'] === 'mujer' ? 'mujer' : 'hombre';
 
-            $usuario = array();
-
-            $usuario['id'] = $u->id;
-            $usuario['username'] = $u->username;
-            $usuario['nombre'] = $u->nombre;
-            $usuario['cargo'] = $u->cargo;
-            $usuario['cedula_identidad'] = $u->cedula_identidad;
-            $usuario['genero'] = $u->genero;
-            $usuario['id_oficina'] = $u->id_oficina;
-
-            $usuario['id_entidad'] = $u->id_entidad;
-            $usuario['superior'] = $u->superior;
-            $usuario['dependencia'] = $u->dependencia;
-            $usuario['mosca'] = $u->mosca;
-            $usuario['nivel'] = $u->nivel;
-            $usuario['email'] = $u->email;
-
-            $this->template->scripts = array('media/js/select-chain.js', 'static/js/libs/select2/select2.min.js');
-            $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
-
-            $entidades = ORM::factory('entidades')->find_all();
-
-            $options = array();
-            foreach ($entidades as $e) {
-                $options[$e->id] = $e->entidad;
+            if ($datos['nombre'] === '') {
+                $error['nombre'] = 'Escriba el nombre completo.';
             }
-            //oficinas
-            $oOficinas = ORM::factory('oficinas')->where('id_entidad', '=', $u->id_entidad)->find_all();
-            $oficinas = array();
-            foreach ($oOficinas as $o) {
-                $oficinas[$o->id] = $o->oficina;
+            if ($datos['cargo'] === '') {
+                $error['cargo'] = 'Escriba el cargo.';
             }
-            $oNiveles = ORM::factory('niveles')->find_all();
-            $niveles = array();
-            foreach ($oNiveles as $n) {
-                $niveles[$n->id] = $n->nivel;
+            if (!preg_match('/^[a-z0-9._-]{3,50}$/', $datos['username'])) {
+                $error['username'] = 'El usuario solo puede tener letras minúsculas, números, punto, guion o guion bajo (mínimo 3).';
+            } elseif (ORM::factory('users')->where('username', '=', $datos['username'])->where('id', '<>', $u->id)->find()->loaded()) {
+                $error['username'] = 'Ya existe otra persona con el usuario "' . $datos['username'] . '".';
             }
-            $this->template->content = View::factory('admin/user/edit')
-                ->bind('usuario', $usuario)
-                ->bind('oficinas', $oficinas)
-                ->bind('options', $options)
-                ->bind('message', $message)
-                ->bind('error', $error)
-                ->bind('niveles', $niveles);
-        } else {
-
+            if (!Valid::email($datos['email'])) {
+                $error['email'] = 'El correo electrónico no es válido.';
+            } elseif (ORM::factory('users')->where('email', '=', $datos['email'])->where('id', '<>', $u->id)->find()->loaded()) {
+                $error['email'] = 'Ese correo ya lo usa otra persona.';
+            }
+            if ($datos['mosca'] === '') {
+                $error['mosca'] = 'Escriba la rúbrica (mosca).';
+            }
+            $oficina = ORM::factory('oficinas', (int) $datos['id_oficina']);
+            if (!$oficina->loaded() || (int) $oficina->id_entidad !== (int) $datos['id_entidad']) {
+                $error['id_oficina'] = 'Elija una oficina de la entidad seleccionada.';
+            }
+            if (!ORM::factory('niveles', (int) $datos['nivel'])->loaded()) {
+                $error['nivel'] = 'Elija un rol válido.';
+            } elseif ((int) $datos['nivel'] === 5 && (int) $u->nivel !== 5) {
+                // el rol de administrador del panel no se asigna desde esta pantalla
+                $error['nivel'] = 'Elija un rol válido.';
+            } elseif ((int) $u->nivel === 5 && (int) $datos['nivel'] !== 5) {
+                // se puede quitar el rol de administrador, pero no al ultimo que queda
+                $otros = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM users WHERE nivel = 5 AND habilitado = 1 AND id <> :id')
+                        ->param(':id', (int) $u->id)
+                        ->execute()->get('n');
+                if ((int) $otros === 0) {
+                    $error['nivel'] = 'Es el único administrador activo: primero dé el rol de administrador a otra persona.';
+                }
+            }
+            if ($datos['superior'] === (int) $u->id) {
+                $error['superior'] = 'Una persona no puede ser su propio superior.';
+            } elseif ($datos['superior'] > 0 && !ORM::factory('users', $datos['superior'])->loaded()) {
+                $error['superior'] = 'El superior elegido no existe.';
+            }
+            if (count($error) == 0) {
+                foreach ($datos as $k => $v) {
+                    $u->$k = $v;
+                }
+                // fecha_creacion ya no se pisa al editar
+                $u->save();
+                Session::instance()->set('us_aviso', 'Se guardaron los cambios de ' . $u->nombre . '.');
+                $this->request->redirect('/admin/user' . ((int) $u->habilitado === 1 ? '' : '#baja'));
+            }
         }
+
+        $entidades = array();
+        foreach (ORM::factory('entidades')->find_all() as $e) {
+            $entidades[$e->id] = $e->entidad;
+        }
+        $oficinas = DB::query(Database::SELECT, 'SELECT id, id_entidad, oficina, sigla FROM oficinas ORDER BY oficina')
+                ->execute()->as_array();
+        // candidatos a superior: se filtran por oficina en el navegador
+        $personas = DB::query(Database::SELECT, 'SELECT id, nombre, cargo, id_oficina, habilitado, dependencia FROM users
+                WHERE id <> :id ORDER BY nombre')
+                ->param(':id', (int) $u->id)
+                ->execute()->as_array();
+        $niveles = ORM::factory('niveles')->find_all()->as_array();
+        $dependientes = DB::query(Database::SELECT, 'SELECT id, nombre, cargo FROM users
+                WHERE superior = :id AND id <> :id AND habilitado = 1 ORDER BY nombre')
+                ->param(':id', (int) $u->id)
+                ->execute()->as_array();
+        $oficina_actual = ORM::factory('oficinas', $u->id_oficina);
+
+        $this->template->titulo .= 'Usuarios / Editar';
+        $this->template->scripts = array('static/js/libs/select2/select2.min.js', 'static/js/eModal.min.js');
+        $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
+        $this->template->content = View::factory('admin/user/edit')
+                ->set('u', $u)
+                ->set('datos', $datos)
+                ->set('error', $error)
+                ->set('entidades', $entidades)
+                ->set('oficinas', $oficinas)
+                ->set('personas', $personas)
+                ->set('niveles', $niveles)
+                ->set('dependientes', $dependientes)
+                ->set('oficina_actual', $oficina_actual->loaded() ? $oficina_actual->oficina : '')
+                ->set('yo', (int) $this->user->id);
     }
 
     //crear un nuevo usuario mediante 'id_oficina'

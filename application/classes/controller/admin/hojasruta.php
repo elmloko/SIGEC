@@ -42,15 +42,16 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
     // listado general de todas las hojas de ruta generadas en el sistema
     public function action_lista()
     {
-        $q = trim(Arr::get($_GET, 'q', ''));
-        $page = (int) Arr::get($_GET, 'page', 1);
-        if ($page < 1) {
-            $page = 1;
-        }
+        $filtros = array(
+            'q' => trim((string) Arr::get($_GET, 'q', '')),
+            'anio' => (int) Arr::get($_GET, 'anio', 0),
+            'tipo' => (int) Arr::get($_GET, 'tipo', 0),
+            'estado' => Arr::get($_GET, 'estado', '') === '' ? '' : (int) Arr::get($_GET, 'estado'),
+        );
         $items_per_page = 50;
 
         $oHR = New Model_Hojasruta();
-        $count = $oHR->contarTodas($q);
+        $count = $oHR->contarTodas($filtros);
 
         $pagination = Pagination::factory(array(
             'total_items' => $count,
@@ -59,21 +60,28 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             'view' => 'pagination/floating',
         ));
 
-        $hojasruta = $oHR->todasAdmin($pagination->offset, $items_per_page, $q);
+        $hojasruta = $oHR->todasAdmin($pagination->offset, $items_per_page, $filtros);
         $page_links = $pagination->render();
 
+        // opciones de los filtros
+        $anios = DB::query(Database::SELECT, "SELECT DISTINCT YEAR(fecha_creacion) AS a FROM documentos WHERE original = 1 AND fecha_creacion IS NOT NULL ORDER BY a DESC")
+                ->execute()->as_array(NULL, 'a');
+        $tipos = DB::query(Database::SELECT, "SELECT id, tipo FROM tipos ORDER BY tipo")->execute()->as_array('id', 'tipo');
+        $estados = DB::query(Database::SELECT, "SELECT id, estado FROM estados ORDER BY id")->execute()->as_array('id', 'estado');
+
         $this->template->title .= ' Hojas de Ruta';
-        $this->template->titulo .= ' Hojas de Ruta';
+        $this->template->titulo .= 'Documentos y hojas de ruta';
         $this->template->descripcion .= ' Listado general de hojas de ruta generadas en el sistema';
-        $this->template->styles = array('media/css/tablas.css' => 'all');
-        $this->template->scripts = array('media/js/jquery.tablesorter.min.js');
         $this->template->content = View::factory('admin/hojasruta/lista')
             ->bind('hojasruta', $hojasruta)
             ->bind('count', $count)
             ->bind('page_links', $page_links)
-            ->bind('q', $q);
+            ->bind('filtros', $filtros)
+            ->bind('anios', $anios)
+            ->bind('tipos', $tipos)
+            ->bind('estados', $estados)
+            ->set('q', $filtros['q']);
     }
-
     // editar los datos del documento asociado a la hoja de ruta
     public function action_editar($id = '')
     {
