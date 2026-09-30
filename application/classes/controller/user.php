@@ -41,33 +41,37 @@ class Controller_User extends Controller_DefaultTemplate
     {
         $errors = array();
         $info = array();
-        if ($_POST['pass_old']) {
+        if (isset($_POST['pass_old'])) {
             $auth = Auth::instance();
-            $pass_old = $auth->hash_password($_POST['pass_old']);
-            if ($pass_old == $this->user->password) { //verificamos que el password anterior coincida
-                if ($_POST['pass1'] == $_POST['pass2']) {
-                    $user = ORM::factory('users', array('id' => $this->user->id));
-                    if ($user->loaded()) {
-                        $user->password = $auth->hash_password($_POST['pass1']);
-                        $user->save();
-                        $info[] = 'Su contraseña fue cambiado correctamente';
-                        //vitacora
-                        $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' ' . $this->user->cargo . ' cambio su contrase&ntilde;');
-                    }
-                } else {
-                    $errors[] = 'Las contraseñas nuevas no coinciden';
-                }
+            // se compara con la contraseña guardada en la base (la de la sesion queda vieja tras un cambio)
+            $user = ORM::factory('users', $this->user->id);
+            $actual = (string) Arr::get($_POST, 'pass_old', '');
+            $nueva = (string) Arr::get($_POST, 'pass1', '');
+            $repetida = (string) Arr::get($_POST, 'pass2', '');
+            if (!$user->loaded() || $auth->hash_password($actual) !== $user->password) {
+                $errors[] = 'La contraseña actual es incorrecta.';
+            } elseif (mb_strlen($nueva, 'UTF-8') < 6) {
+                $errors[] = 'La contraseña nueva debe tener al menos 6 caracteres.';
+            } elseif ($nueva !== $repetida) {
+                $errors[] = 'Las contraseñas nuevas no coinciden.';
+            } elseif ($nueva === $actual) {
+                $errors[] = 'La contraseña nueva debe ser distinta de la actual.';
             } else {
-                $errors[] = 'La contraseña actual es incorrecta';
+                $user->password = $auth->hash_password($nueva);
+                $user->save();
+                $this->user->password = $user->password;
+                $info[] = 'Su contraseña se cambió correctamente.';
+                //vitacora
+                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ' ' . $this->user->cargo . ' cambio su contrase&ntilde;');
             }
         }
         $user = $this->user;
+        $this->template->titulo .= 'Cambiar contraseña';
         $this->template->content = View::factory('user/change_pass')
             ->bind('user', $user)
             ->bind('errors', $errors)
             ->bind('info', $info);
     }
-
     public function action_profile($id = "")
     {
         $errors = array();
