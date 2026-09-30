@@ -123,85 +123,288 @@ body {
     color: var(--correos-azul);
 }
 #menubar.menubar-inverse:before {
+    /* liso: el logo tiene fondo #FECB34 opaco y un degradado dejaria un recuadro visible */
     background: var(--correos-amarillo);
+    box-shadow: 1px 0 0 rgba(18, 62, 115, 0.08);
 }
 #menubar.menubar-inverse .nano-slider {
     background: rgba(26, 84, 154, 0.35);
 }
-#menubar.menubar-inverse .menubar-fixed-panel,
-#menubar.menubar-inverse .menubar-foot-panel {
-    border-color: rgba(26, 84, 154, 0.15);
-}
-#menubar.menubar-inverse hr {
-    border-top-color: rgba(26, 84, 154, 0.25);
-    margin-top: 0;
-}
-#menubar.menubar-inverse .menubar-scroll-panel > img {
-    display: block;
-    max-width: 100%;
-    height: auto;
+#menubar.menubar-inverse .menubar-fixed-panel {
+    border-color: rgba(26, 84, 154, 0.12);
 }
 #menubar.menubar-inverse .text-primary,
 #menubar.menubar-inverse .menubar-toggle {
     color: var(--correos-azul);
+}
+#menubar.menubar-inverse hr {
+    display: none;
+}
+
+/* logo */
+#menubar.menubar-inverse .menubar-scroll-panel > img,
+#menubar.menubar-inverse .mn-logo img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+#menubar.menubar-inverse .mn-logo {
+    display: block;
+    padding: 14px 22px 6px;
+}
+#menubar.menubar-inverse .mn-logo img {
+    width: 190px;
+    margin: 0 auto;
+}
+
+/* boton principal "Nuevo documento" */
+#menubar.menubar-inverse .mn-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 16px 6px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: var(--correos-azul);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(18, 62, 115, 0.28);
+    transition: background .15s, transform .15s, box-shadow .15s;
+}
+#menubar.menubar-inverse .mn-cta:hover,
+#menubar.menubar-inverse .mn-cta:focus {
+    background: var(--correos-azul-oscuro);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(18, 62, 115, 0.34);
+}
+#menubar.menubar-inverse .mn-cta .fa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--correos-amarillo);
+    color: var(--correos-azul-oscuro);
+    font-size: 11px;
+}
+#menubar.menubar-inverse .mn-seccion {
+    margin: 16px 24px 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(18, 62, 115, 0.55);
+}
+
+/* lista */
+#menubar.menubar-inverse .gui-controls {
+    padding: 0 12px 12px;
+}
+#menubar.menubar-inverse .gui-controls > li {
+    margin-bottom: 3px;
+}
+#menubar.menubar-inverse .gui-controls > li > a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 5px 34px 5px 6px;
+    border-radius: 12px;
+    background: transparent;
+    transition: background .15s, box-shadow .15s;
+}
+
+/* iconos */
+#menubar.menubar-inverse .gui-controls > li > a .gui-icon {
+    position: relative;
+    left: 0;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.38);
+    color: var(--correos-azul);
+    font-size: 16px;
+}
+#menubar.menubar-inverse .gui-controls > li > a .gui-icon .fa:first-child,
+#menubar.menubar-inverse .gui-controls > li > a .gui-icon .md:first-child {
+    line-height: 34px;
+}
+#menubar.menubar-inverse .gui-icon:hover,
+#menubar.menubar-inverse .gui-folder:hover:not(.active) .gui-icon {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--correos-azul-oscuro);
 }
 
 /* textos */
 #menubar.menubar-inverse .gui-controls li .title,
 #menubar.menubar-inverse .gui-controls li.gui-folder > a .title,
 #menubar.menubar-inverse .gui-controls li.gui-folder.expanded > a .title,
-#menubar.menubar-inverse .gui-controls li.gui-folder.active > a .title,
+#menubar.menubar-inverse .gui-controls li.gui-folder.active > a .title {
+    display: flex;
+    align-items: center;
+    color: var(--correos-azul-oscuro);
+    font-style: normal;
+    text-shadow: none;
+}
+#menubar.menubar-inverse .gui-controls > li > a .title {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 10px;
+    padding-left: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
 #menubar.menubar-inverse .gui-controls small {
     color: var(--correos-azul);
-    text-shadow: none;
-    font-weight: 500;
-}
-#menubar.menubar-inverse .gui-controls li > a:hover .title,
-#menubar.menubar-inverse .gui-controls li.active > a .title {
-    color: var(--correos-azul-oscuro);
-    font-weight: 700;
-}
-#menubar.menubar-inverse .gui-folder > a:after,
-#menubar.menubar-inverse .gui-controls > .gui-folder.expanding > a:after,
-#menubar.menubar-inverse .gui-controls > .gui-folder.expanded > a:after {
-    color: rgba(26, 84, 154, 0.6);
 }
 
-/* iconos */
-#menubar.menubar-inverse .gui-icon {
-    color: var(--correos-azul);
+/* hover y seleccionado (primer nivel) */
+#menubar.menubar-inverse .gui-controls > li > a:hover {
+    background: rgba(255, 255, 255, 0.35);
 }
-#menubar.menubar-inverse .gui-icon:hover,
-#menubar.menubar-inverse .gui-folder:hover:not(.active) .gui-icon {
-    background-color: rgba(26, 84, 154, 0.12);
-    color: var(--correos-azul-oscuro);
+#menubar.menubar-inverse .gui-controls > li.active > a,
+#menubar.menubar-inverse .gui-controls > li.active:not(.gui-folder) > a,
+#menubar.menubar-inverse .gui-controls > li.expanded > a {
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(18, 62, 115, 0.12);
+}
+#menubar.menubar-inverse .gui-controls > li.active > a .title,
+#menubar.menubar-inverse .gui-controls > li.expanded > a .title {
+    color: var(--correos-azul);
+    font-weight: 700;
 }
 #menubar.menubar-inverse .gui-controls a.expanded .gui-icon,
-#menubar.menubar-inverse .gui-controls li.active .gui-icon,
-#menubar.menubar-inverse .gui-controls li.active .gui-icon:hover,
+#menubar.menubar-inverse .gui-controls li.active > a .gui-icon,
+#menubar.menubar-inverse .gui-controls li.active > a .gui-icon:hover,
+#menubar.menubar-inverse .gui-controls li.expanded > a .gui-icon,
 #menubar.menubar-inverse .gui-icon-active {
-    background-color: var(--correos-azul);
+    background: var(--correos-azul);
     border-color: var(--correos-azul);
     color: #ffffff;
 }
 
-/* filas: hover y seleccionada */
-#menubar.menubar-inverse .gui-controls > li:not(.gui-folder) > a:hover,
-#menubar.menubar-inverse .gui-controls > li ul > li > a:hover,
-#menubar.menubar-inverse .gui-controls > li ul > li > a:focus {
-    background-color: var(--correos-amarillo-oscuro);
+/* flecha de las carpetas */
+#menubar.menubar-inverse .gui-controls > .gui-folder > a:after {
+    content: "\f105";
+    font-family: FontAwesome;
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    left: auto;
+    margin: -8px 0 0;
+    font-size: 15px;
+    line-height: 16px;
+    color: rgba(18, 62, 115, 0.55);
+    opacity: 1;
+    transform: rotate(0deg);
 }
-#menubar.menubar-inverse .gui-controls > li.active:not(.gui-folder) > a,
-#menubar.menubar-inverse .gui-controls > li ul > li > a:active,
-#menubar.menubar-inverse .gui-controls > li ul > li > a.active,
-#menubar.menubar-inverse .gui-controls > li ul > li.active > a {
-    background-color: rgba(255, 255, 255, 0.55);
+#menubar.menubar-inverse .gui-controls > .gui-folder.expanding > a:after,
+#menubar.menubar-inverse .gui-controls > .gui-folder.expanded > a:after {
+    margin: -8px 0 0;
+    color: var(--correos-azul);
+    transform: rotate(90deg);
 }
 
-/* lineas guia de los submenus */
-#menubar.menubar-inverse .gui-controls > li ul > li:before {
-    border-left-color: rgba(26, 84, 154, 0.35);
+/* submenus */
+#menubar.menubar-inverse .gui-controls > li > ul {
+    margin: 4px 0 6px 22px;
+    padding: 4px 0 4px 10px;
+    border-left: 2px solid rgba(18, 62, 115, 0.18);
 }
+#menubar.menubar-inverse .gui-controls > li ul > li:before,
 #menubar.menubar-inverse .gui-controls > li ul > li > a:before {
-    border-bottom-color: rgba(26, 84, 154, 0.35);
+    display: none;
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a {
+    display: block;
+    margin: 1px 0;
+    padding: 8px 12px 8px 26px;
+    border-radius: 9px;
+    background: transparent;
+}
+/* punto de cada opcion */
+#menubar.menubar-inverse .gui-controls > li ul > li > a:after {
+    content: "";
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    border-radius: 50%;
+    background: rgba(18, 62, 115, 0.35);
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a .title {
+    font-size: 13px;
+    font-weight: 500;
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a:hover,
+#menubar.menubar-inverse .gui-controls > li ul > li > a:focus {
+    background: rgba(255, 255, 255, 0.4);
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a.active,
+#menubar.menubar-inverse .gui-controls > li ul > li.active > a {
+    background: rgba(255, 255, 255, 0.75);
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a.active .title,
+#menubar.menubar-inverse .gui-controls > li ul > li.active > a .title {
+    color: var(--correos-azul);
+    font-weight: 700;
+}
+#menubar.menubar-inverse .gui-controls > li ul > li > a.active:after,
+#menubar.menubar-inverse .gui-controls > li ul > li.active > a:after {
+    width: 8px;
+    height: 8px;
+    margin-top: -4px;
+    left: 10px;
+    background: var(--correos-azul);
+    box-shadow: 0 0 0 3px rgba(26, 84, 154, 0.18);
+}
+
+/* contadores */
+#menubar .mn-badge {
+    display: inline-block;
+    min-width: 20px;
+    height: 19px;
+    margin-left: auto;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: var(--correos-azul);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 19px;
+    text-align: center;
+}
+#menubar .gui-controls > li > a .mn-badge {
+    margin-right: 4px;
+}
+#menubar .mn-badge.mn-alerta {
+    background: #D32F2F;
+    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.18);
+}
+
+/* pie */
+#menubar.menubar-inverse .menubar-foot-panel {
+    padding: 12px 20px;
+    border-top: 1px solid rgba(18, 62, 115, 0.12);
+    text-align: center;
+}
+#menubar.menubar-inverse .mn-pie {
+    display: block;
+    line-height: 1.4;
+    font-size: 11px;
+    color: rgba(18, 62, 115, 0.7);
+}
+#menubar.menubar-inverse .mn-pie b {
+    display: block;
+    font-size: 12px;
+    color: var(--correos-azul-oscuro);
 }

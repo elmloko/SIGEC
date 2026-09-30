@@ -224,18 +224,23 @@
             </div>
         </div>
         <div class="menubar-scroll-panel">
-            <img src="/media/logo-transparente.png" width="235"/>
-            <hr/>
+            <?php $menu_html = (string) $menutop; ?>
+            <a href="/" class="mn-logo" title="Inicio"><img src="/media/logo-transparente.png" alt="Correos de Bolivia"/></a>
+            <?php if (strpos($menu_html, 'href="/document/"') !== FALSE): ?>
+                <!-- accion principal -->
+                <a href="/document" class="mn-cta"><i class="fa fa-plus"></i> Nuevo documento</a>
+            <?php endif; ?>
+            <div class="mn-seccion">Menú</div>
             <!-- BEGIN MAIN MENU -->
             <ul id="main-menu" class="gui-controls">
-
-                <?php echo $menutop; ?>
+                <?php echo $menu_html; ?>
             </ul><!--end .main-menu -->
             <!-- END MAIN MENU -->
 
             <div class="menubar-foot-panel">
-                <small class="no-linebreak hidden-folded">
-                    <span class="opacity-75">Copyright &copy; <?php echo date('Y'); ?></span> <strong>SISTEMAS</strong>
+                <small class="mn-pie hidden-folded">
+                    <b>SIGEC · Correos de Bolivia</b>
+                    &copy; <?php echo date('Y'); ?> Área de Sistemas
                 </small>
             </div>
         </div><!--end .menubar-scroll-panel-->
