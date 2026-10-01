@@ -60,8 +60,12 @@ class Controller_Dashboard extends Controller_DefaultTemplate {
             $this->request->redirect('/admin');            
         }        
         
-        $ventanilla = array();
         $vista = 'index';
+        $vent_hoy = array('recibidos' => 0, 'derivados' => 0);
+        $vent_pendientes = array();
+        $vent_viejos = 0;
+        $vent_encamino = array();
+        $vent_semana = array();
         $oSeguimiento = New Model_Seguimiento();
         $id = $this->user->id;
         if ($this->user->nivel == 4) {
@@ -88,6 +92,36 @@ class Controller_Dashboard extends Controller_DefaultTemplate {
                 );
             }
             $vista = 'ventanilla';
+            // datos propios de ventanilla: lo del dia y lo que lleva mas tiempo esperando
+            $vent_hoy = DB::query(Database::SELECT, 'SELECT COUNT(*) AS recibidos,
+                        SUM(estado = 1) AS derivados FROM documentos
+                    WHERE id_user = :id AND DATE(fecha_creacion) = CURDATE()')
+                    ->param(':id', (int) $id)->execute()->current();
+            // los mas antiguos del ultimo año: los anteriores son arrastre historico y, si se
+            // mezclan, tapan lo que de verdad hay que derivar esta semana
+            $vent_pendientes = DB::query(Database::SELECT, 'SELECT id, nur, codigo, cite_original, referencia,
+                        nombre_remitente, institucion_remitente, nombre_destinatario, cargo_destinatario,
+                        fecha_creacion, DATEDIFF(NOW(), fecha_creacion) AS dias
+                    FROM documentos WHERE id_user = :id AND estado = 0
+                      AND fecha_creacion >= NOW() - INTERVAL 1 YEAR
+                    ORDER BY fecha_creacion ASC LIMIT 12')
+                    ->param(':id', (int) $id)->execute()->as_array();
+            // ultimo movimiento: lo que ventanilla ya puso en circulacion, para darle seguimiento
+            $vent_encamino = DB::query(Database::SELECT, 'SELECT d.id, d.nur, d.referencia, d.nombre_destinatario,
+                        s.fecha_emision, s.estado AS estado_seg,
+                        DATEDIFF(NOW(), s.fecha_emision) AS dias
+                    FROM documentos d
+                    INNER JOIN seguimiento s ON s.nur = d.nur AND s.derivado_por = d.id_user
+                    WHERE d.id_user = :id AND d.estado = 1 AND s.id_seguimiento = 0 AND s.oficial > 0
+                    ORDER BY s.fecha_emision DESC LIMIT 6')
+                    ->param(':id', (int) $id)->execute()->as_array();
+            $vent_viejos = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM documentos
+                    WHERE id_user = :id AND estado = 0 AND fecha_creacion < NOW() - INTERVAL 1 YEAR')
+                    ->param(':id', (int) $id)->execute()->get('n');
+            $vent_semana = DB::query(Database::SELECT, "SELECT DATE(fecha_creacion) AS dia, COUNT(*) AS n
+                    FROM documentos WHERE id_user = :id AND fecha_creacion >= CURDATE() - INTERVAL 6 DAY
+                    GROUP BY dia")
+                    ->param(':id', (int) $id)->execute()->as_array('dia', 'n');
         } else {
             $estados = $oSeguimiento->nestados($id);
             foreach ($estados as $e) {
@@ -178,6 +212,11 @@ class Controller_Dashboard extends Controller_DefaultTemplate {
                 ->bind('pendientes_lista', $pendientes_lista)
                 ->bind('por_recibir', $por_recibir)
                 ->bind('nombre_oficina', $nombre_oficina)
+                ->set('vent_hoy', $vent_hoy)
+                ->set('vent_pendientes', $vent_pendientes)
+                ->set('vent_semana', $vent_semana)
+                ->set('vent_viejos', (int) $vent_viejos)
+                ->set('vent_encamino', $vent_encamino)
         ;
     }
 

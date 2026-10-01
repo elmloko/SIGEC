@@ -45,23 +45,28 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
     }
 
     public function action_principal() {
-        $user = ORM::factory('users', array('id' => $this->user->id));
-        $oficina = $user->oficina->oficina;
-        $recepcionados = ORM::factory('documentos')->where('id_user', '=', $this->user->id)->count_all();
-        $derivados = ORM::factory('documentos')->where('id_user', '=', $this->user->id)
-                ->and_where('estado', '=', 1)
-                ->count_all();
-        $pendientes = ORM::factory('documentos')->where('id_user', '=', $this->user->id)
-                ->and_where('estado', '=', 0)
-                ->count_all();
-        $this->template->title = 'Ventanilla / Pendientes';
-        $this->template->styles = array('media/css/tablas.css' => 'screen');
+        $user = ORM::factory('users', $this->user->id);
+        $oficina = ORM::factory('oficinas', $user->id_oficina);
+        // un solo recorrido en vez de tres consultas de conteo
+        $cuentas = DB::query(Database::SELECT, 'SELECT COUNT(*) AS total,
+                    SUM(estado = 0) AS pendientes,
+                    SUM(estado = 1) AS derivados,
+                    SUM(DATE(fecha_creacion) = CURDATE()) AS hoy
+                FROM documentos WHERE id_user = :id')
+                ->param(':id', (int) $this->user->id)
+                ->execute()->current();
+        $antiguo = DB::query(Database::SELECT, 'SELECT MAX(DATEDIFF(NOW(), fecha_creacion)) AS dias
+                FROM documentos WHERE id_user = :id AND estado = 0')
+                ->param(':id', (int) $this->user->id)
+                ->execute()->get('dias');
+
+        $this->template->title = 'Ventanilla';
+        $this->template->titulo = 'Ventanilla';
         $this->template->content = View::factory('ventanilla/menu')
                 ->bind('user', $user)
-                ->bind('oficina', $oficina)
-                ->bind('pendientes', $pendientes)
-                ->bind('recepcionados', $recepcionados)
-                ->bind('derivados', $derivados);
+                ->set('oficina', $oficina->loaded() ? $oficina->oficina : '')
+                ->set('cuentas', $cuentas)
+                ->set('antiguo', (int) $antiguo);
     }
 
     public function action_recibida() {
@@ -101,70 +106,113 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
         $this->template->content = View::factory('ventanilla/recibida')
                 ->bind('user', $this->user);
     }
+    // correspondencia recibida en ventanilla que todavia no se derivo
     public function action_pendientes() {
-
-        $this->template->styles = array(
-            'media/jqwidgets/styles/jqx.custom.css' => 'all',
-            'media/jqwidgets/styles/jqx.base.css' => 'all',
-        );
-        $this->template->scripts = array(
-            //'media/jqwidgets/scripts/demos.js',
-            'media/jqwidgets/globalization/globalize.js',
-            'media/jqwidgets/jqxcalendar.js',
-            'media/jqwidgets/jqxdatetimeinput.js',
-            'media/jqwidgets/jqxwindow.js',
-            'media/jqwidgets/jqxnumberinput.js',
-            'media/jqwidgets/jqxgrid.aggregates.js',
-            'media/jqwidgets/jqxgrid.columnsresize.js',
-            'media/jqwidgets/jqxgrid.columnsreorder.js',
-            'media/jqwidgets/jqxdata.export.js',
-            'media/jqwidgets/jqxgrid.export.js',
-            'media/jqwidgets/jqxgrid.edit.js',
-            'media/jqwidgets/jqxgrid.grouping.js',
-            'media/jqwidgets/jqxgrid.selection.js',
-            'media/jqwidgets/jqxgrid.filter.js',
-            'media/jqwidgets/jqxgrid.pager.js',
-            'media/jqwidgets/jqxgrid.sort.js',
-            'media/jqwidgets/jqxdata.js',
-            'media/jqwidgets/jqxgrid.js',
-            'media/jqwidgets/jqxdropdownlist.js',
-            'media/jqwidgets/jqxlistbox.js',
-            'media/jqwidgets/jqxcheckbox.js',
-            'media/jqwidgets/jqxmenu.js',
-            'media/jqwidgets/jqxscrollbar.js',
-            'media/jqwidgets/jqxbuttons.js',
-            'media/jqwidgets/jqxcore.js',
-        );
-        $this->template->content = View::factory('ventanilla/pendientes')
-                ->bind('user', $this->user);
-    }
-
-    public function action_listar() {
-
-        $count = ORM::factory('documentos')->where('id_user', '=', $this->user->id)->count_all();
+        // los datos se arman aqui: antes los traia una grilla que pedia
+        // /ajaxd/ventanillajsonp/{id} con el id en la direccion y los filtros en SQL
+        $q = trim(Arr::get($_GET, 'q', ''));
+        // 'antiguos' separa el arrastre historico de lo que hay que derivar ahora
+        $antiguos = Arr::get($_GET, 'antiguos', '');
+        $where = 'd.id_user = :id AND d.estado = 0';
+        if ($antiguos === '1') {
+            $where .= ' AND d.fecha_creacion < NOW() - INTERVAL 1 YEAR';
+        } elseif ($antiguos === '0') {
+            $where .= ' AND d.fecha_creacion >= NOW() - INTERVAL 1 YEAR';
+        }
+        if ($q !== '') {
+            $where .= ' AND (d.nur LIKE :q OR d.cite_original LIKE :q OR d.referencia LIKE :q
+                    OR d.nombre_remitente LIKE :q OR d.institucion_remitente LIKE :q OR d.nombre_destinatario LIKE :q)';
+        }
+        $count = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM documentos d WHERE ' . $where)
+                ->param(':id', (int) $this->user->id)
+                ->param(':q', '%' . $q . '%')
+                ->execute()->get('n');
         $pagination = Pagination::factory(array(
                     'total_items' => $count,
                     'current_page' => array('source' => 'query_string', 'key' => 'page'),
                     'items_per_page' => 40,
                     'view' => 'pagination/floating',
         ));
-        $results = ORM::factory('documentos')
-                ->where('id_user', '=', $this->user->id)
-                ->order_by('fecha_creacion', 'DESC')
-                ->limit($pagination->items_per_page)
-                ->offset($pagination->offset)
-                ->find_all();
-        // Render the pagination links
-        $page_links = $pagination->render();
+        $documentos = DB::query(Database::SELECT, 'SELECT d.id, d.nur, d.codigo, d.cite_original, d.referencia,
+                    d.nombre_remitente, d.cargo_remitente, d.institucion_remitente,
+                    d.nombre_destinatario, d.cargo_destinatario, d.fecha_creacion, d.hojas, d.adjuntos,
+                    DATEDIFF(NOW(), d.fecha_creacion) AS dias
+                FROM documentos d WHERE ' . $where . '
+                ORDER BY d.fecha_creacion DESC LIMIT :desde, :cuantos')
+                ->param(':id', (int) $this->user->id)
+                ->param(':q', '%' . $q . '%')
+                ->param(':desde', (int) $pagination->offset)
+                ->param(':cuantos', (int) $pagination->items_per_page)
+                ->execute()->as_array();
 
-        $this->template->title .='Correspondencia Recepcionanda';
-        $this->template->titulo .='Correspondencia Recepcionanda';
-        $this->template->descripcion = 'Ventanilla | Recepcionada';
-        $this->template->styles = array('media/css/tablas.css' => 'screen');
+        $this->template->title .= ' / Pendientes';
+        $this->template->titulo = 'Pendientes de derivar';
+        $this->template->descripcion = 'Ventanilla | Correspondencia recibida y todavía sin derivar';
+        $reparto = DB::query(Database::SELECT, 'SELECT
+                    SUM(fecha_creacion >= NOW() - INTERVAL 1 YEAR) AS recientes,
+                    SUM(fecha_creacion < NOW() - INTERVAL 1 YEAR) AS viejos
+                FROM documentos WHERE id_user = :id AND estado = 0')
+                ->param(':id', (int) $this->user->id)
+                ->execute()->current();
+
+        $this->template->content = View::factory('ventanilla/pendientes')
+                ->set('documentos', $documentos)
+                ->set('count', $count)
+                ->set('q', $q)
+                ->set('antiguos', $antiguos)
+                ->set('reparto', $reparto)
+                ->set('page_links', $pagination->render())
+                ->bind('user', $this->user);
+    }
+
+    // todo lo que esta ventanilla registro, derivado o no
+    public function action_listar() {
+        $q = trim(Arr::get($_GET, 'q', ''));
+        $estado = Arr::get($_GET, 'estado', '');
+        $where = 'd.id_user = :id';
+        if ($q !== '') {
+            $where .= ' AND (d.nur LIKE :q OR d.cite_original LIKE :q OR d.referencia LIKE :q
+                    OR d.nombre_remitente LIKE :q OR d.institucion_remitente LIKE :q OR d.nombre_destinatario LIKE :q)';
+        }
+        if ($estado === '0' OR $estado === '1') {
+            $where .= ' AND d.estado = ' . (int) $estado;
+        }
+        $count = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM documentos d WHERE ' . $where)
+                ->param(':id', (int) $this->user->id)
+                ->param(':q', '%' . $q . '%')
+                ->execute()->get('n');
+        $pagination = Pagination::factory(array(
+                    'total_items' => $count,
+                    'current_page' => array('source' => 'query_string', 'key' => 'page'),
+                    'items_per_page' => 40,
+                    'view' => 'pagination/floating',
+        ));
+        $documentos = DB::query(Database::SELECT, 'SELECT d.id, d.nur, d.codigo, d.cite_original, d.referencia,
+                    d.nombre_remitente, d.cargo_remitente, d.institucion_remitente,
+                    d.nombre_destinatario, d.cargo_destinatario, d.fecha_creacion, d.estado,
+                    DATEDIFF(NOW(), d.fecha_creacion) AS dias
+                FROM documentos d WHERE ' . $where . '
+                ORDER BY d.fecha_creacion DESC LIMIT :desde, :cuantos')
+                ->param(':id', (int) $this->user->id)
+                ->param(':q', '%' . $q . '%')
+                ->param(':desde', (int) $pagination->offset)
+                ->param(':cuantos', (int) $pagination->items_per_page)
+                ->execute()->as_array();
+        $totales = DB::query(Database::SELECT, 'SELECT COUNT(*) AS total, SUM(estado = 0) AS pendientes,
+                    SUM(estado = 1) AS derivados FROM documentos WHERE id_user = :id')
+                ->param(':id', (int) $this->user->id)
+                ->execute()->current();
+
+        $this->template->title .= ' / Recepcionados';
+        $this->template->titulo = 'Correspondencia recepcionada';
+        $this->template->descripcion = 'Ventanilla | Todo lo registrado por este usuario';
         $this->template->content = View::factory('ventanilla/lista_documentos')
-                ->bind('results', $results)
-                ->bind('page_links', $page_links)
-                ->bind('count', $count);
+                ->set('documentos', $documentos)
+                ->set('count', $count)
+                ->set('q', $q)
+                ->set('estado', $estado)
+                ->set('totales', $totales)
+                ->set('page_links', $pagination->render());
     }
 
     public function action_pendientes_old() {
@@ -305,10 +353,33 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
             foreach ($result as $r) {
                 $procesos[$r->id] = $r->proceso;
             }
-            //destinatarios            
+            //destinatarios
             $oDestinatario = New Model_Destinatarios();
             $destinos = $oDestinatario->destinos($this->user->id);
             $oficina = $this->user->id_oficina;
+
+            // Instituciones y remitentes ya usados por esta ventanilla. Sirven para que al
+            // escribir se elija uno existente en vez de teclear otra variante: hoy la misma
+            // institucion esta escrita de varias formas y eso rompe busquedas y reportes.
+            $instituciones = DB::query(Database::SELECT, "SELECT institucion_remitente AS v, COUNT(*) AS n
+                    FROM documentos
+                    WHERE id_user = :id AND TRIM(REPLACE(institucion_remitente, '.', '')) <> ''
+                    GROUP BY institucion_remitente ORDER BY n DESC LIMIT 400")
+                    ->param(':id', (int) $this->user->id)->execute()->as_array();
+            $remitentes = DB::query(Database::SELECT, "SELECT nombre_remitente AS n, cargo_remitente AS c,
+                        institucion_remitente AS i, COUNT(*) AS veces
+                    FROM documentos
+                    WHERE id_user = :id AND TRIM(REPLACE(nombre_remitente, '.', '')) <> ''
+                      AND fecha_creacion >= NOW() - INTERVAL 3 YEAR
+                    GROUP BY nombre_remitente, cargo_remitente, institucion_remitente
+                    ORDER BY veces DESC LIMIT 400")
+                    ->param(':id', (int) $this->user->id)->execute()->as_array();
+            // lo registrado hoy: para ver lo hecho y notar si algo se esta repitiendo
+            $hoy = DB::query(Database::SELECT, "SELECT id, nur, cite_original, referencia, nombre_remitente,
+                        institucion_remitente, estado, DATE_FORMAT(fecha_creacion, '%H:%i') AS hora
+                    FROM documentos WHERE id_user = :id AND DATE(fecha_creacion) = CURDATE()
+                    ORDER BY id DESC LIMIT 12")
+                    ->param(':id', (int) $this->user->id)->execute()->as_array();
 
             $this->template->scripts = array('static/js/libs/select2/select2.min.js', 'static/js/libs/bootstrap-datepicker/bootstrap-datepicker.js');
             $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all', 'static/css/theme-1/libs/bootstrap-datepicker/datepicker3.css' => 'screen');
@@ -325,6 +396,9 @@ class Controller_ventanilla extends Controller_DefaultTemplate {
                     ->bind('motivos', $motivos)
                     ->bind('procesos', $procesos)
                     ->bind('destinos', $destinos)
+                    ->set('instituciones', $instituciones)
+                    ->set('remitentes', $remitentes)
+                    ->set('hoy', $hoy)
                     ->bind('oficina', $oficina);
         }
     }
