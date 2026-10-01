@@ -285,18 +285,118 @@ class Controller_Bandeja extends Controller_DefaultTemplate
 
     public function action_archivo()
     {
-        $oCarpeta = New Model_Carpetas();
-        $carpetas = $oCarpeta->archivadores($this->user->id);
+        // carpetas con lo que este usuario tiene archivado. Se cuenta igual que se lista el
+        // contenido (seguimiento archivado del usuario), asi el numero de la carpeta coincide
+        // con lo que se ve al abrirla
+        $carpetas = DB::query(Database::SELECT, 'SELECT c.id, c.carpeta, COUNT(*) AS cc, MAX(a.fecha) AS ultima
+                FROM seguimiento s
+                INNER JOIN archivados a ON a.id = s.id_archivo
+                INNER JOIN carpetas c ON c.id = a.id_carpeta
+                WHERE s.derivado_a = :u AND s.estado = 10
+                GROUP BY c.id, c.carpeta
+                ORDER BY c.carpeta')
+                ->param(':u', (int) $this->user->id)
+                ->execute()->as_array();
         $this->template->title .= ' / Correspondencia Archivada';
-        $this->template->titulo .= 'Archivada ';
-        $this->template->descripcion = 'Lista de Carpetas';
+        $this->template->titulo .= 'Archivo';
+        $this->template->descripcion = 'Carpetas y documentos archivados';
         $this->template->styles = array('media/css/tablas.css' => 'all'); $this->estilos_bandeja();
         $this->template->content = View::factory('bandeja/archivadores')
-            ->bind('carpetas', $carpetas);
+            ->set('carpetas', $carpetas)
+            ->set('destinos', $this->carpetas_destino())
+            ->set('abrir', (int) Arr::get($_GET, 'c', 0));
+    }
+
+    // carpetas a las que el usuario puede mover: las de su oficina y las que ya usa
+    private function carpetas_destino()
+    {
+        return DB::query(Database::SELECT, 'SELECT c.id, c.carpeta FROM carpetas c
+                WHERE c.id_oficina = :o
+                   OR c.id IN (SELECT a.id_carpeta FROM archivados a WHERE a.id_user = :u)
+                GROUP BY c.id, c.carpeta
+                ORDER BY c.carpeta')
+                ->param(':o', (int) $this->user->id_oficina)
+                ->param(':u', (int) $this->user->id)
+                ->execute()->as_array();
+    }
+
+    // contenido de una carpeta, en JSON, para mostrarlo en la misma pantalla del archivo
+    public function action_carpetajson($id = 0)
+    {
+        $this->auto_render = FALSE;
+        $this->response->headers('Content-Type', 'application/json; charset=utf-8');
+        $filas = DB::query(Database::SELECT, "SELECT s.id AS seg, s.nur, s.nombre_emisor, s.de_oficina, s.proveido,
+                    DATE_FORMAT(s.fecha_emision, '%d/%m/%Y') AS recibido,
+                    DATE_FORMAT(a.fecha, '%d/%m/%Y %H:%i') AS archivado, a.observaciones,
+                    d.id AS doc, d.codigo, d.cite_original, d.referencia
+                FROM seguimiento s
+                INNER JOIN archivados a ON a.id = s.id_archivo
+                LEFT JOIN documentos d ON d.nur = s.nur AND d.original = 1
+                WHERE s.derivado_a = :u AND s.estado = 10 AND a.id_carpeta = :c
+                GROUP BY s.id
+                ORDER BY a.fecha DESC")
+                ->param(':u', (int) $this->user->id)
+                ->param(':c', (int) $id)
+                ->execute()->as_array();
+        echo json_encode(array('ok' => TRUE, 'filas' => $filas));
+    }
+
+    // mueve documentos archivados de una carpeta a otra (o a una carpeta nueva)
+    public function action_mover()
+    {
+        $this->auto_render = FALSE;
+        $this->response->headers('Content-Type', 'application/json; charset=utf-8');
+        if ($this->request->method() !== Request::POST) {
+            echo json_encode(array('ok' => FALSE, 'msg' => 'Solicitud no válida.'));
+            return;
+        }
+        $segs = array_filter(array_map('intval', (array) Arr::get($_POST, 'seg', array())));
+        if (!$segs) {
+            echo json_encode(array('ok' => FALSE, 'msg' => 'No eligió ningún documento.'));
+            return;
+        }
+        $nueva = trim((string) Arr::get($_POST, 'nueva', ''));
+        if ($nueva !== '') {
+            $c = ORM::factory('carpetas');
+            $c->id_oficina = $this->user->id_oficina;
+            $c->carpeta = mb_substr($nueva, 0, 100, 'UTF-8');
+            $c->fecha_creacion = date('Y-m-d H:i:s');
+            $c->save();
+            $destino = (int) $c->id;
+        } else {
+            $destino = (int) Arr::get($_POST, 'destino', 0);
+            $permitida = FALSE;
+            foreach ($this->carpetas_destino() as $c) {
+                if ((int) $c['id'] === $destino) {
+                    $permitida = TRUE;
+                }
+            }
+            if (!$permitida) {
+                echo json_encode(array('ok' => FALSE, 'msg' => 'Esa carpeta no está disponible.'));
+                return;
+            }
+        }
+        // solo lo archivado por el propio usuario
+        $movidos = DB::query(Database::UPDATE, 'UPDATE archivados a
+                INNER JOIN seguimiento s ON s.id_archivo = a.id
+                SET a.id_carpeta = :d
+                WHERE s.id IN (' . implode(',', $segs) . ') AND s.derivado_a = :u AND s.estado = 10')
+                ->param(':d', $destino)
+                ->param(':u', (int) $this->user->id)
+                ->execute();
+        if ((int) $movidos === 0) {
+            echo json_encode(array('ok' => FALSE, 'msg' => 'No se movió nada: esos documentos no están en su archivo.'));
+            return;
+        }
+        $nombre = ORM::factory('carpetas', $destino)->carpeta;
+        $this->save($this->user->id_entidad, $this->user->id, 'Movió ' . $movidos . ' documento(s) archivado(s) a la carpeta <b>' . $nombre . '</b>');
+        echo json_encode(array('ok' => TRUE, 'movidos' => (int) $movidos, 'destino' => $destino, 'nombre' => $nombre));
     }
 
     public function action_folder($id = '')
     {
+        // la carpeta ahora se abre dentro de la pantalla del archivo
+        $this->request->redirect('/bandeja/archivo?c=' . (int) $id);
         $oArchivo = New Model_Archivados();
         $carpeta = $oArchivo->carpeta($id, $this->user->id);
         $carpetas = ORM::factory('carpetas', $id);
