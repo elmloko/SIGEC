@@ -12,6 +12,29 @@ foreach ($menus as $m) {
     }
 }
 
+// el menu de reportes queda solo con el Centro de indicadores (sus demas paginas se abren desde sus pestañas);
+// los submenus de reportes antiguos de la base se ocultan
+foreach ($principales as $mid => $m) {
+    if ($m->controlador === 'reports') {
+        $menu[$mid] = array(0 => array('submenu' => 'Tablero de indicadores', 'accion' => 'tablero'));
+    }
+}
+
+// "Mis indicadores": tablero personal, disponible para todos los usuarios (no esta en la base);
+// va justo encima de Busqueda; si el usuario no tiene Busqueda, en segundo lugar
+$mis_indicadores = (object) array('id' => 'mis-indicadores', 'menu' => 'Mis indicadores', 'controlador' => 'indicadores', 'logo' => 'fa fa-line-chart');
+$posicion = 1;
+foreach (array_values($principales) as $i => $m) {
+    $nombre_menu = strtolower(trim(html_entity_decode((string) $m->menu, ENT_QUOTES, 'UTF-8')));
+    $nombre_menu = strtr($nombre_menu, array('ú' => 'u', 'Ú' => 'u'));
+    if (in_array(trim($m->controlador, '/'), array('search', 'busqueda'), TRUE) || strpos($nombre_menu, 'busqueda') === 0) {
+        $posicion = $i;
+        break;
+    }
+}
+$principales = array_slice($principales, 0, $posicion, TRUE) + array('mis-indicadores' => $mis_indicadores) + array_slice($principales, $posicion, NULL, TRUE);
+$menu['mis-indicadores'] = array(0 => array('submenu' => 'Mis indicadores', 'accion' => ''));
+
 // textos con tildes y nombres mas claros (los de la base se mantienen)
 $etiquetas = array(
     'Busqueda' => 'Búsqueda',
@@ -97,7 +120,7 @@ $insignia = function ($n, $clase = '') {
                 <?php endforeach; ?>
             </ul>
         <?php else: ?>
-            <?php $href = '/' . trim($m->controlador, '/'); ?>
+            <?php $href = $m->controlador === 'reports' ? '/reports/tablero' : '/' . trim($m->controlador, '/'); ?>
             <a href="<?php echo HTML::chars($href); ?>" class="<?php echo ($controller == $m->controlador || $normalizar($href) === $mejor) ? 'active' : ''; ?>">
                 <div class="gui-icon"><i class="<?php echo HTML::chars($icono); ?>"></i></div>
                 <span class="title"><?php echo HTML::chars($titulo); ?><?php echo $insignia($total_insignia); ?></span>

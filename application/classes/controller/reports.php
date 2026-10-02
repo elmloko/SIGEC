@@ -997,7 +997,134 @@ class Controller_Reports extends Controller_DefaultTemplate {
         }
     }
 
-    //options oficinas 
+    // ===================== Centro de indicadores =====================
+
+    // lee y normaliza los filtros comunes (periodo y oficina); por defecto el año en curso
+    protected function filtros_indicadores($con_usuarios = FALSE) {
+        list($desde, $hasta) = Model_Indicadores::periodo($_GET);
+        $oficinas = array();
+        foreach (ORM::factory('oficinas')->where('id_entidad', '=', $this->user->id_entidad)->order_by('oficina')->find_all() as $o) {
+            $oficinas[$o->id] = $o->oficina;
+        }
+        $oficina = (int) Arr::get($_GET, 'oficina', 0);
+        if (!isset($oficinas[$oficina])) {
+            $oficina = 0;
+        }
+        $f = array('desde' => $desde, 'hasta' => $hasta, 'oficina' => $oficina, 'oficinas' => $oficinas, 'usuario' => 0, 'usuarios' => array());
+        if ($con_usuarios) {
+            // funcionarios de la entidad agrupados por oficina: [oficina => [id => nombre]]
+            $filas = DB::query(Database::SELECT, 'SELECT u.id, u.nombre, u.habilitado, COALESCE(o.oficina, "Sin oficina") AS oficina
+                    FROM users u LEFT JOIN oficinas o ON o.id = u.id_oficina
+                    WHERE u.id_entidad = :e ORDER BY oficina, u.nombre')
+                    ->param(':e', (int) $this->user->id_entidad)->execute()->as_array();
+            foreach ($filas as $u) {
+                $f['usuarios'][$u['oficina']][$u['id']] = $u['nombre'] . ($u['habilitado'] ? '' : ' (deshabilitado)');
+            }
+            $usuario = (int) Arr::get($_GET, 'usuario', 0);
+            foreach ($f['usuarios'] as $lista) {
+                if (isset($lista[$usuario])) {
+                    $f['usuario'] = $usuario;
+                }
+            }
+        }
+        return $f;
+    }
+
+    // ejecuta $calculo una sola vez cada 10 minutos por combinacion de filtros
+    protected function indicadores_cache($clave, array $f, $calculo) {
+        $nombre = 'indicadores:' . $clave . ':' . $f['desde'] . ':' . $f['hasta'] . ':' . $f['oficina'] . ':' . $f['usuario'];
+        $datos = Kohana::cache($nombre, NULL, 600);
+        if ($datos === NULL || Arr::get($_GET, 'refrescar')) {
+            $datos = $calculo(new Model_Indicadores($f['desde'], $f['hasta'], $f['oficina'], $f['usuario']));
+            $datos['generado'] = date('Y-m-d H:i:s');
+            Kohana::cache($nombre, $datos, 600);
+        }
+        return $datos;
+    }
+
+    protected function vista_indicadores($pagina, $titulo, array $f, array $datos) {
+        $this->template->title .= ' / ' . $titulo;
+        $this->template->titulo .= $titulo;
+        $this->template->descripcion = 'Centro de indicadores';
+        $this->template->styles = array('media/css/indicadores.css?v=20261002b' => 'all');
+        $this->template->scripts = array('static/js/libs/chartjs/chart.umd.min.js');
+        $this->template->content = View::factory('reportes/indicadores/' . $pagina)
+                ->set('f', $f)
+                ->set('d', $datos)
+                ->set('pagina', $pagina)
+                ->set('plazo', Model_Indicadores::PLAZO_DIAS);
+    }
+
+    public function action_tablero() {
+        $f = $this->filtros_indicadores();
+        $datos = $this->indicadores_cache('tablero', $f, function ($m) use ($f) {
+            return array(
+                'volumen' => $m->volumen(),
+                'tiempos' => $m->tiempos(),
+                'cumplimiento' => $m->cumplimiento(),
+                'rezago' => $m->rezago(),
+                'tendencia' => $m->tendencia_mensual(),
+                'estados' => $m->por_estado(),
+                'acciones' => $m->por_accion(),
+                'dias' => $m->por_dia_semana(),
+                // con una oficina elegida, el ranking pasa a ser de sus funcionarios
+                'oficinas' => array_slice($m->desempeno($f['oficina'] > 0), 0, 10),
+            );
+        });
+        $this->save($this->user->id_entidad, $this->user->id, 'Ingresa al <b>Tablero de indicadores</b>');
+        $this->vista_indicadores('tablero', 'Tablero general', $f, $datos);
+    }
+
+    public function action_desempeno() {
+        $f = $this->filtros_indicadores();
+        $por_usuario = $f['oficina'] > 0;
+        $datos = $this->indicadores_cache($por_usuario ? 'desempeno_usuarios' : 'desempeno_oficinas', $f, function ($m) use ($por_usuario) {
+            return array('filas' => $m->desempeno($por_usuario), 'tiempos' => $m->tiempos(), 'rezago' => $m->rezago());
+        });
+        $datos['por_usuario'] = $por_usuario;
+        $this->save($this->user->id_entidad, $this->user->id, 'Ingresa al reporte <b>Desempeño</b>');
+        $this->vista_indicadores('desempeno', $por_usuario ? 'Desempeño por funcionario' : 'Desempeño por oficina', $f, $datos);
+    }
+
+    public function action_rezago() {
+        $f = $this->filtros_indicadores();
+        $datos = $this->indicadores_cache('rezago', $f, function ($m) use ($f) {
+            return array('rezago' => $m->rezago(), 'detalle' => $m->detalle_rezago(TRUE, 1000), 'oficinas' => array_slice($m->desempeno($f['oficina'] > 0), 0, 15));
+        });
+        $this->save($this->user->id_entidad, $this->user->id, 'Ingresa al reporte <b>Rezago</b>');
+        $this->vista_indicadores('rezago', 'Rezago y vencidos', $f, $datos);
+    }
+
+    public function action_produccion() {
+        $f = $this->filtros_indicadores();
+        $datos = $this->indicadores_cache('produccion', $f, function ($m) {
+            return array(
+                'volumen' => $m->volumen(),
+                'tipos' => $m->documentos_por_tipo(),
+                'oficinas' => $m->documentos_por_oficina(15),
+                'usuarios' => $m->documentos_por_usuario(15),
+                'mensual' => $m->documentos_mensual_por_tipo(),
+                'origen' => $m->origen_hojas(),
+            );
+        });
+        $this->save($this->user->id_entidad, $this->user->id, 'Ingresa al reporte <b>Producción documental</b>');
+        $this->vista_indicadores('produccion', 'Producción documental', $f, $datos);
+    }
+
+    public function action_persona() {
+        $f = $this->filtros_indicadores(TRUE);
+        if ($f['usuario'] > 0) {
+            $datos = $this->indicadores_cache('persona', $f, function ($m) {
+                return $m->tablero_persona();
+            });
+            $this->save($this->user->id_entidad, $this->user->id, 'Ingresa al <b>Tablero por persona</b> (usuario ' . $f['usuario'] . ')');
+        } else {
+            $datos = array('generado' => date('Y-m-d H:i:s'));
+        }
+        $this->vista_indicadores('persona', 'Tablero por persona', $f, $datos);
+    }
+
+    //options oficinas
     public function oficinas() {
         $o_oficinas = ORM::factory('oficinas')->find_all();
         $oficinas = array(0 => 'Todos');
