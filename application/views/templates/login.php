@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#ffc400">
     <meta name="description" content="Sistema de Gestión de Correspondencia de Correos de Bolivia">
     <link rel="shortcut icon" href="/media/images/icon.png">
-    <link rel="stylesheet" href="/media/css/login.css?v=login-20260930-4">
+    <link rel="stylesheet" href="/media/css/login.css?v=login-20261002-1">
     <title><?php echo HTML::chars($title); ?></title>
 </head>
 <body class="login-page">

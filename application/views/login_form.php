@@ -8,19 +8,23 @@
     <p class="login-intro">Ingrese sus credenciales para acceder<br class="desktop-break"> al sistema.</p>
 
     <form class="login-form" action="" method="post" accept-charset="UTF-8" id="loginform">
-        <div class="input-wrap<?php echo isset($errors['login']) ? ' input-error' : ''; ?>">
-            <label class="sr-only" for="username">Correo electrónico o usuario</label>
-            <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
-            <input type="text" value="<?php echo HTML::chars(Arr::get($_POST, 'username', '')); ?>" title="Ingrese su usuario o correo electrónico" placeholder="Correo electrónico" class="login-input" maxlength="120" name="username" id="username" autocomplete="username" required<?php echo isset($errors['login']) ? ' aria-invalid="true" aria-describedby="error"' : ''; ?>>
+        <div class="field">
+            <label class="field-label" for="username">Nombre de usuario</label>
+            <div class="input-wrap<?php echo isset($errors['login']) ? ' input-error' : ''; ?>">
+                <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+                <input type="text" value="<?php echo HTML::chars(Arr::get($_POST, 'username', '')); ?>" placeholder="Ej.: jperez" class="login-input" maxlength="120" name="username" id="username" autocomplete="username" required<?php echo isset($errors['login']) ? ' aria-invalid="true" aria-describedby="error"' : ''; ?>>
+            </div>
         </div>
 
-        <div class="input-wrap<?php echo isset($errors['login']) ? ' input-error' : ''; ?>">
-            <label class="sr-only" for="password">Contraseña</label>
-            <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v3"/></svg>
-            <input type="password" class="login-input" maxlength="120" autocomplete="current-password" title="Ingrese su contraseña" placeholder="Contraseña" name="password" id="password" required<?php echo isset($errors['login']) ? ' aria-invalid="true" aria-describedby="error"' : ''; ?>>
-            <button class="password-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.2-6 9.5-6 9.5 6 9.5 6-3.2 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/><path class="eye-slash" d="m4 20 16-16"/></svg>
-            </button>
+        <div class="field">
+            <label class="field-label" for="password">Contraseña</label>
+            <div class="input-wrap<?php echo isset($errors['login']) ? ' input-error' : ''; ?>">
+                <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v3"/></svg>
+                <input type="password" class="login-input" maxlength="120" autocomplete="current-password" placeholder="Ingrese su contraseña" name="password" id="password" required<?php echo isset($errors['login']) ? ' aria-invalid="true" aria-describedby="error"' : ''; ?>>
+                <button class="password-toggle" type="button" aria-label="Mostrar contraseña" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.2-6 9.5-6 9.5 6 9.5 6-3.2 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/><path class="eye-slash" d="m4 20 16-16"/></svg>
+                </button>
+            </div>
         </div>
 
         <label class="remember-option">

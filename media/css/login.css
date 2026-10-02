@@ -113,6 +113,26 @@ input {
     margin-top: 26px;
 }
 
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-align: left;
+}
+
+.field-label {
+    padding-left: 2px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: .01em;
+    transition: color .18s ease;
+}
+
+.field:focus-within .field-label {
+    color: var(--blue-soft);
+}
+
 .input-wrap {
     position: relative;
     display: flex;
