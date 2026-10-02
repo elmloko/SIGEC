@@ -59,43 +59,86 @@ class Controller_Bandeja extends Controller_DefaultTemplate
 
     public function action_doa()
     {
-        if (isset($_POST['id_seg'])) {
-            if ($_POST['accion'] == 0) { // 0 = archivar correspondencia
-                $carpetas = ORM::factory('carpetas')->where('id_oficina', '=', $this->user->id_oficina)->find_all();
-                $arrCarpetas = array();
-                foreach ($carpetas as $c) {
-                    $arrCarpetas[$c->id] = $c->carpeta;
-                }
-                //nurs
-                $nurs = array();
-                $oSeg = New Model_Seguimiento();
-                foreach ($_POST['id_seg'] as $k => $v) {
-                    $nur = $oSeg->nur($v);
-                    $id = $nur[0]['id'];
-                    $nurs[$id] = $nur[0]['nur'];
-                }
-                $this->template->scripts = array('static/js/libs/select2/select2.min.js');
-                $this->template->styles = array('static/css/theme-1/libs/select2/select2.css' => 'all');
-
-                $this->template->content = View::factory('bandeja/archivar')
-                    ->bind('options', $arrCarpetas)
-                    ->bind('nurs', $nurs);
-            } else {
-                $oSeg = New Model_Seguimiento();
-                foreach ($_POST['id_seg'] as $k => $v) {
-                    $nur = $oSeg->nur($v);
-                    $id = $nur[0]['id'];
-                    $nurs[$id] = $nur[0]['nur'];
-                }
-                $this->template->title .= ' / agrupar correspondencia';
-                $this->template->titulo .= 'Agrupar correspondencia';
-                $this->template->descripcion = 'Agrupar correspondencia';
-                $this->template->content = View::factory('bandeja/agrupar')
-                    ->bind('nurs', $nurs);
-            }
-        } else {
+        if (!isset($_POST['id_seg'])) {
             $this->request->redirect('error404');
         }
+        $ids = array_values(array_filter(array_map('intval', (array) $_POST['id_seg'])));
+        if (!$ids) {
+            $this->request->redirect('bandeja/pendientes');
+        }
+        $hojas = $this->hojas_seleccionadas($ids);
+        $this->estilos_bandeja();
+        $this->template->styles['static/css/bandeja-acciones.css?v=' . @filemtime(DOCROOT . 'static/css/bandeja-acciones.css')] = 'all';
+
+        if ($_POST['accion'] == 0) { // 0 = archivar correspondencia
+            // recorrido (derivaciones) de cada hoja de ruta, para ver el flujo antes de archivar
+            $recorrido = array();
+            if ($hojas) {
+                $nurs = array();
+                foreach ($hojas as $s) {
+                    $nurs[] = $s['nur'];
+                }
+                $pasos = DB::query(Database::SELECT, 'SELECT s.id, s.nur, s.nombre_emisor, s.de_oficina, s.nombre_receptor,
+                            s.a_oficina, s.fecha_emision, s.fecha_recepcion, s.estado, s.oficial, s.proveido
+                        FROM seguimiento s
+                        WHERE s.nur IN :nurs
+                        ORDER BY s.id')
+                        ->param(':nurs', array_unique($nurs))
+                        ->execute()->as_array();
+                foreach ($pasos as $p) {
+                    $recorrido[$p['nur']][] = $p;
+                }
+            }
+            // carpetas disponibles con lo que el usuario ya archivo en cada una (la mas reciente se preselecciona)
+            $carpetas = DB::query(Database::SELECT, 'SELECT c.id, c.carpeta, COUNT(a.id) AS cc, MAX(a.fecha) AS ultima
+                    FROM carpetas c
+                    LEFT JOIN archivados a ON a.id_carpeta = c.id AND a.id_user = :u
+                    WHERE c.id_oficina = :o
+                       OR c.id IN (SELECT ar.id_carpeta FROM archivados ar WHERE ar.id_user = :u)
+                    GROUP BY c.id, c.carpeta
+                    ORDER BY c.carpeta')
+                    ->param(':o', (int) $this->user->id_oficina)
+                    ->param(':u', (int) $this->user->id)
+                    ->execute()->as_array();
+
+            $this->template->title .= ' / Archivar correspondencia';
+            $this->template->titulo .= 'Archivar correspondencia';
+            $this->template->descripcion = 'Archivar hojas de ruta en una carpeta';
+            $this->template->content = View::factory('bandeja/archivar')
+                ->set('carpetas', $carpetas)
+                ->set('hojas', $hojas)
+                ->set('recorrido', $recorrido)
+                ->set('usuario', $this->user);
+        } else {
+            $this->template->title .= ' / Agrupar correspondencia';
+            $this->template->titulo .= 'Agrupar correspondencia';
+            $this->template->descripcion = 'Agrupar hojas de ruta bajo una principal';
+            $this->template->content = View::factory('bandeja/agrupar')
+                ->set('hojas', $hojas);
+        }
+    }
+
+    // hojas de ruta seleccionadas en la bandeja con su documento y remitente, en el orden en que se marcaron
+    private function hojas_seleccionadas(array $ids)
+    {
+        $filas = DB::query(Database::SELECT, 'SELECT s.id, s.nur, s.nombre_emisor, s.cargo_emisor, s.de_oficina,
+                    s.oficial, s.prioridad, s.proveido, s.fecha_emision AS fecha, s.fecha_recepcion,
+                    DATEDIFF(NOW(), s.fecha_emision) AS dias, a.accion,
+                    (SELECT d.referencia FROM documentos d WHERE d.nur = s.nur ORDER BY d.id LIMIT 1) AS referencia,
+                    (SELECT d.codigo FROM documentos d WHERE d.nur = s.nur ORDER BY d.id LIMIT 1) AS codigo,
+                    (SELECT d.id FROM documentos d WHERE d.nur = s.nur ORDER BY d.id LIMIT 1) AS id_doc
+                FROM seguimiento s
+                LEFT JOIN acciones a ON a.id = s.accion
+                WHERE s.id IN :ids')
+                ->param(':ids', $ids)
+                ->execute()->as_array('id');
+        $hojas = array();
+        foreach ($ids as $id) {
+            if (isset($filas[$id])) {
+                $hojas[] = $filas[$id];
+            }
+        }
+        return $hojas;
     }
 
     //archivar correspondencia final
@@ -136,18 +179,24 @@ class Controller_Bandeja extends Controller_DefaultTemplate
     //archivar correspondencia final
     public function action_archivarf()
     {
-        if ($_POST) {
+        if ($_POST && !empty($_POST['seg'])) {
             if ($_POST['tipo'] == 0) {  //nueva carpeta
-                $nombre_carpeta = $_POST['carpeta_input'];
-
+                $nombre_carpeta = mb_substr(trim(preg_replace('/\s+/u', ' ', (string) Arr::get($_POST, 'carpeta_input', ''))), 0, 100, 'UTF-8');
                 if ($nombre_carpeta == '') {
-                    $carpeta = time();
+                    $nombre_carpeta = 'Carpeta ' . date('d/m/Y H:i');
                 }
-                $carpeta = ORM::factory('carpetas');
-                $carpeta->id_oficina = $this->user->id_oficina;
-                $carpeta->carpeta = $nombre_carpeta;
-                $carpeta->fecha_creacion = date('Y-m-d H:i:s');
-                $carpeta->save();
+                // si la oficina ya tiene una carpeta con ese nombre se usa esa en vez de duplicarla
+                $carpeta = ORM::factory('carpetas')
+                    ->where('id_oficina', '=', $this->user->id_oficina)
+                    ->and_where('carpeta', '=', $nombre_carpeta)
+                    ->find();
+                if (!$carpeta->loaded()) {
+                    $carpeta = ORM::factory('carpetas');
+                    $carpeta->id_oficina = $this->user->id_oficina;
+                    $carpeta->carpeta = $nombre_carpeta;
+                    $carpeta->fecha_creacion = date('Y-m-d H:i:s');
+                    $carpeta->save();
+                }
                 if ($carpeta->id > 0) { //si se creo la carpeta entonces:
                     $id_carpeta = $carpeta->id;
                     foreach ($_POST['seg'] as $k => $v) {
@@ -168,13 +217,17 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                     $_POST = array();
                 }
             } else {
+                $id_carpeta = (int) Arr::get($_POST, 'carpeta_lista', 0);
+                if (!ORM::factory('carpetas', $id_carpeta)->loaded()) {
+                    $this->request->redirect('bandeja/pendientes');
+                }
                 foreach ($_POST['seg'] as $k => $v) {
                     $seg = ORM::factory('seguimiento', $v);
                     if ($seg->loaded()) {
                         $carpeta = ORM::factory('archivados');
                         $carpeta->id_user = $this->user->id;
                         $carpeta->nur = $seg->nur;
-                        $carpeta->id_carpeta = $_POST['carpeta_lista'];
+                        $carpeta->id_carpeta = $id_carpeta;
                         $carpeta->observaciones = mb_substr(trim((string) Arr::get($_POST, 'observaciones', '')), 0, 1000, 'UTF-8');
                         $carpeta->fecha = date('Y-m-d H:i:s');
                         $carpeta->save();
@@ -185,8 +238,10 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                 }
                 $_POST = array();
             }
-            $this->request->redirect('bandeja/archivo');
+            // abre directamente la carpeta donde se archivo
+            $this->request->redirect('bandeja/archivo' . (!empty($id_carpeta) ? '?c=' . (int) $id_carpeta : ''));
         }
+        $this->request->redirect('bandeja/pendientes');
     }
 
     //correlativo para un NURI -1=nuri / -2 = nur
