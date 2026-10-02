@@ -20,8 +20,52 @@ foreach ($principales as $mid => $m) {
     }
 }
 
-// "Mis indicadores": tablero personal, disponible para todos los usuarios (no esta en la base);
-// va justo encima de Busqueda; si el usuario no tiene Busqueda, en segundo lugar
+// carpetas que se muestran como carpeta aunque les quede un solo submenu
+$siempre_carpeta = array();
+
+// administrador: Entidades, Oficinas y Tipos de documento pasan a la carpeta "Configuraciones",
+// ubicada justo despues de Administracion (cada submenu guarda su enlace original en 'href')
+if ((int) $datos_usuario_logueado->nivel === Model_niveles::NIVEL_ADMIN):
+$es_configuracion = function ($m, $v) {
+    $href = strtolower('/' . trim($m->controlador, '/') . '/' . trim((string) $v['accion'], '/'));
+    $texto = strtolower(trim(html_entity_decode((string) $v['submenu'], ENT_QUOTES, 'UTF-8')));
+    return (bool) preg_match('#/(entidades|oficinas|tipos)(/|$)#', $href)
+        || (bool) preg_match('/^(entidades|oficinas|tipos? de documentos?)$/u', $texto);
+};
+$configuracion = array();
+$despues_de = NULL;
+foreach ($principales as $mid => $m) {
+    foreach ($menu[$mid] as $sid => $v) {
+        if ($es_configuracion($m, $v)) {
+            $v['href'] = '/' . trim($m->controlador, '/') . ($v['accion'] !== NULL && $v['accion'] !== '' ? '/' . $v['accion'] : '/');
+            $configuracion[$sid] = $v;
+            unset($menu[$mid][$sid]);
+            if ($despues_de === NULL) {
+                $despues_de = $mid;
+            }
+            $siempre_carpeta[$mid] = TRUE; // Administracion sigue siendo carpeta aunque le quede una opcion
+        }
+    }
+}
+if ($configuracion) {
+    $config = (object) array('id' => 'configuraciones', 'menu' => 'Configuraciones', 'controlador' => '', 'logo' => 'fa fa-cogs');
+    $siempre_carpeta['configuraciones'] = TRUE;
+    $menu['configuraciones'] = $configuracion;
+    $posicion = array_search($despues_de, array_keys($principales), TRUE) + 1;
+    $principales = array_slice($principales, 0, $posicion, TRUE) + array('configuraciones' => $config) + array_slice($principales, $posicion, NULL, TRUE);
+}
+// la carpeta "Usuario" del menu principal se oculta para el administrador (sus paginas siguen accesibles por enlace);
+// el menu que se queda sin opciones tambien desaparece
+foreach ($principales as $mid => $m) {
+    if (!$menu[$mid] || preg_match('/^usuarios?$/u', strtolower(trim(html_entity_decode((string) $m->menu, ENT_QUOTES, 'UTF-8'))))) {
+        unset($principales[$mid]);
+    }
+}
+endif;
+
+// "Mis indicadores": tablero personal (no esta en la base), solo para el rol usuario;
+// va justo encima de Busqueda (si no la tiene, en segundo lugar)
+if ((int) $datos_usuario_logueado->nivel === Model_niveles::NIVEL_USUARIO):
 $mis_indicadores = (object) array('id' => 'mis-indicadores', 'menu' => 'Mis indicadores', 'controlador' => 'indicadores', 'logo' => 'fa fa-line-chart');
 $posicion = 1;
 foreach (array_values($principales) as $i => $m) {
@@ -34,6 +78,7 @@ foreach (array_values($principales) as $i => $m) {
 }
 $principales = array_slice($principales, 0, $posicion, TRUE) + array('mis-indicadores' => $mis_indicadores) + array_slice($principales, $posicion, NULL, TRUE);
 $menu['mis-indicadores'] = array(0 => array('submenu' => 'Mis indicadores', 'accion' => ''));
+endif;
 
 // textos con tildes y nombres mas claros (los de la base se mantienen)
 $etiquetas = array(
@@ -58,6 +103,13 @@ $normalizar = function ($ruta) {
 $enlace = function ($m, $accion) {
     return '/' . trim($m->controlador, '/') . ($accion !== NULL && $accion !== '' ? '/' . $accion : '/');
 };
+// enlace de un submenu (los movidos a Configuraciones conservan el suyo)
+$enlace_sub = function ($m, $v) use ($enlace) {
+    return isset($v['href']) ? $v['href'] : $enlace($m, $v['accion']);
+};
+$es_carpeta_de = function ($mid) use (&$menu, &$siempre_carpeta) {
+    return count($menu[$mid]) > 1 || isset($siempre_carpeta[$mid]);
+};
 
 // pagina actual (documento/* pertenece a "document")
 $actual = $normalizar(Request::initial()->uri());
@@ -67,7 +119,7 @@ $actual = preg_replace('#^documento(/|$)#', 'document$1', $actual);
 $mejor = '';
 foreach ($principales as $mid => $m) {
     foreach ($menu[$mid] as $v) {
-        $r = $normalizar($enlace($m, count($menu[$mid]) > 1 ? $v['accion'] : NULL));
+        $r = $normalizar($es_carpeta_de($mid) ? $enlace_sub($m, $v) : $enlace($m, NULL));
         if ($r !== '' && ($actual === $r || strpos($actual . '/', $r . '/') === 0) && strlen($r) > strlen($mejor)) {
             $mejor = $r;
         }
@@ -87,14 +139,23 @@ $insignia = function ($n, $clase = '') {
 <?php foreach ($principales as $mid => $m): ?>
     <?php
     $subs = $menu[$mid];
-    $es_carpeta = count($subs) > 1;
+    $es_carpeta = $es_carpeta_de($mid);
+    // Administracion y Configuraciones comparten controlador: se activa la que contiene la pagina actual
+    if (isset($siempre_carpeta[$mid])) {
+        $carpeta_activa = FALSE;
+        foreach ($subs as $v) {
+            $carpeta_activa = $carpeta_activa || $normalizar($enlace_sub($m, $v)) === $mejor;
+        }
+    } else {
+        $carpeta_activa = ($controller == $m->controlador);
+    }
     $icono = $m->logo ? $m->logo : 'fa fa-circle-o';
     $titulo = $etiqueta($m->menu);
     $total_insignia = ($m->controlador === 'bandeja') ? $por_recibir + $pendientes : 0;
     ?>
     <li class="<?php echo $es_carpeta ? 'gui-folder' : ''; ?>">
         <?php if ($es_carpeta): ?>
-            <a href="javascript:;" class="<?php echo ($controller == $m->controlador) ? 'active' : ''; ?>">
+            <a href="javascript:;" class="<?php echo $carpeta_activa ? 'active' : ''; ?>">
                 <div class="gui-icon"><i class="<?php echo HTML::chars($icono); ?>"></i></div>
                 <span class="title"><?php echo HTML::chars($titulo); ?><?php echo $insignia($total_insignia, $por_recibir > 0 ? 'mn-alerta' : ''); ?></span>
             </a>
@@ -105,7 +166,7 @@ $insignia = function ($n, $clase = '') {
                     if (in_array(trim($v['submenu']), $solo_despacho, TRUE) && $id_oficina_despacho !== '73') {
                         continue;
                     }
-                    $href = $enlace($m, $v['accion']);
+                    $href = $enlace_sub($m, $v);
                     $sin_accion = ($v['accion'] === NULL || $v['accion'] === '');
                     $n = 0;
                     if ($m->controlador === 'bandeja') {

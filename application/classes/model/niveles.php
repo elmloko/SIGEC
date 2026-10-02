@@ -5,6 +5,8 @@ class Model_niveles extends ORM{
     protected $_table_names_plural = false;    
     // nivel del rol administrador (unico que ve el menu de Reportes)
     const NIVEL_ADMIN = 5;
+    // nivel del rol usuario (funcionario; default de users.nivel), unico que ve "Mis indicadores"
+    const NIVEL_USUARIO = 2;
 
     public function menus($n){
         $n = (int) $n;

@@ -3,7 +3,7 @@
 defined('SYSPATH') or die('Acceso denegado');
 
 /**
- * "Mis indicadores": tablero personal de cualquier usuario con sesion.
+ * "Mis indicadores": tablero personal del rol usuario (Model_niveles::NIVEL_USUARIO).
  * Siempre muestra los datos del usuario logueado; no acepta otro usuario por parametro.
  * Reutiliza el modelo y la vista del tablero por persona del Centro de indicadores (reports/persona).
  */
@@ -11,6 +11,14 @@ class Controller_Indicadores extends Controller_DefaultTemplate {
 
     protected $user;
     protected $menus;
+
+    public function before() {
+        parent::before();
+        // solo el rol usuario; el administrador tiene el Centro de indicadores (reports/tablero)
+        if ((int) $this->user->nivel !== Model_niveles::NIVEL_USUARIO) {
+            $this->request->redirect((int) $this->user->nivel === Model_niveles::NIVEL_ADMIN ? 'reports/tablero' : 'dashboard');
+        }
+    }
 
     public function after() {
         $this->template->menutop = View::factory('templates/menutop')->bind('menus', $this->menus)->set('controller', 'indicadores');
