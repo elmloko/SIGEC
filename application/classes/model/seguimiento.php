@@ -22,6 +22,7 @@ class Model_Seguimiento extends ORM
 
     public function nestados($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT MAX(x.norecibido) AS norecibido,MAX(x.pendientes) as pendientes,MAX(x.archivo) as archivo,
                 MAX(x.documentos) as documentos
@@ -215,6 +216,7 @@ class Model_Seguimiento extends ORM
 
     public function nestadosVentanilla($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT SUM(x.recibido) as recibido,SUM(x.pendientes) as pendientes FROM 
                 (SELECT COUNT(*)  as recibido,0 AS pendientes
                 FROM documentos WHERE id_user='$id_user' 
@@ -227,6 +229,7 @@ class Model_Seguimiento extends ORM
 
     public function jsonpendientesUser($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT 
                     1 AS suma,
@@ -334,6 +337,7 @@ class Model_Seguimiento extends ORM
     //lista de correspondencia pendiente y no recibida
     public function pendientesUsers($id_oficina)
     {
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql = "SELECT u.id,COUNT(*) as cantidad,UPPER(o.oficina) as oficina,u.nombre,u.cargo,DATE_FORMAT(FROM_UNIXTIME(u.last_login), '%d-%m-%Y %H:%i:%s') as ultimo_ingreso ,IF(e.id>1,'pendiente','no_recibido') as estado 
                 FROM  seguimiento s 
                 INNER JOIN users u ON s.derivado_a=u.id
@@ -383,6 +387,7 @@ class Model_Seguimiento extends ORM
 
     public function jsonPendientesDeUsuariosAgrupadoPorOficinaId($id_oficina)
     {
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql = "SELECT 
                     *
                 FROM
@@ -495,6 +500,7 @@ class Model_Seguimiento extends ORM
     // [INICIO] DETALLE PENDIENTES CON RETRASO
     public function jsonPendientesConRetrasoUserId($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT
                     1 AS suma,
@@ -659,6 +665,7 @@ class Model_Seguimiento extends ORM
 
     public function jsonPendientesDespachoUser($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT 
                     1 AS suma,
                     s.id,
@@ -792,6 +799,7 @@ class Model_Seguimiento extends ORM
 
     public function jsonPendientesPorUsuarioId($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT
                     1 AS suma,
                     s.id,
@@ -926,6 +934,7 @@ class Model_Seguimiento extends ORM
 
     public function jsonFueraDePlazoPorOficinaId($id_oficina)
     {
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql = "SELECT 
                     *
                 FROM
@@ -1014,6 +1023,9 @@ class Model_Seguimiento extends ORM
 
     public function enviadosTodos($id, $fecha1, $fecha2)
     {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         $sql = "SELECT e.estado,s.nur,s.nombre_emisor,s.cargo_emisor,DATE_FORMAT(s.fecha_emision,'%d/%m/%Y %H:%i:%s') as fecha_emision,
                 s.nombre_receptor,s.cargo_receptor,s.a_oficina, DATE_FORMAT(s.fecha_recepcion,'%d/%m/%Y %H:%i:%s') as  fecha_recepcion,s.proveido,
                 IF(s.oficial=2,'Copia','Oficial') as oficial
@@ -1026,6 +1038,10 @@ class Model_Seguimiento extends ORM
 
     public function enviadosOficina($id, $ido, $fecha1, $fecha2)
     {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
+        $ido = SqlSafe::value($ido); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         $sql = "SELECT e.estado,s.nur,s.nombre_emisor,s.cargo_emisor,DATE_FORMAT(s.fecha_emision,'%d/%m/%Y %H:%i:%s') as fecha_emision,
                 s.nombre_receptor,s.cargo_receptor,s.a_oficina, DATE_FORMAT(s.fecha_recepcion,'%d/%m/%Y %H:%i:%s') as  fecha_recepcion,s.proveido,
                 IF(s.oficial=2,'Copia','Oficial') as oficial
@@ -1039,6 +1055,8 @@ class Model_Seguimiento extends ORM
 
     public function por_recibir($id_user, $fecha)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $fecha = SqlSafe::value($fecha); // se pega en el SQL entre comillas
         $sql = "SELECT id,nur,nombre_emisor,cargo_emisor,de_oficina FROM seguimiento
         WHERE derivado_a='$id_user'
         and fecha_emision > '$fecha' ";
@@ -1076,6 +1094,8 @@ class Model_Seguimiento extends ORM
     //estados
     public function estado_a($id_estado, $id_user)
     {
+        $id_estado = SqlSafe::value($id_estado); // se pega en el SQL entre comillas
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT s.id, s.padre,s.nur as id_nur, s.nombre_emisor,s.cargo_emisor,s.de_oficina,s.fecha_emision as fecha, c.accion, s.oficial, s.hijo, s.proveido,s.adjuntos,s.archivos, n.nur
              , d.codigo, d.nombreDestinatario, d.cargoDestinatario, p.proceso
               FROM seguimiento s
@@ -1093,6 +1113,8 @@ class Model_Seguimiento extends ORM
     //estados mejorado en velocidad
     public function estado($id_estado, $id_user)
     {
+        $id_estado = SqlSafe::value($id_estado); // se pega en el SQL entre comillas
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT  s.id, s.padre,s.hijo,s.id_seguimiento,s.nur, s.nombre_emisor,UPPER(s.cargo_emisor) as cargo_emisor,s.de_oficina,
                 s.fecha_emision as fecha,s.fecha_recepcion as fecha2, a.accion, s.oficial, s.hijo, s.proveido,s.adjuntos,s.archivos
                 , d.codigo, d.nombre_destinatario, d.cargo_destinatario,UPPER(d.referencia) as referencia,d.id as id_doc,s.prioridad
@@ -1108,6 +1130,7 @@ class Model_Seguimiento extends ORM
     //estados mejorado en velocidad
     public function entrada($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT
                     s.id,
@@ -1196,6 +1219,7 @@ class Model_Seguimiento extends ORM
     //estados mejorado en velocidad
     public function pendiente($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT  s.id, s.padre,s.hijo,s.id_seguimiento,s.nur, s.nombre_emisor,UPPER(s.cargo_emisor) as cargo_emisor,s.de_oficina,
             s.fecha_emision as fecha,s.fecha_recepcion as fecha2, a.accion, s.oficial, s.hijo, s.proveido,s.adjuntos,s.archivos
@@ -1256,6 +1280,7 @@ class Model_Seguimiento extends ORM
     //hojas de ruta archivadas de un usuario (estado=10), para el drill-down de estadisticas
     public function archivo($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT
                     s.id,
                     s.estado,
@@ -1304,6 +1329,7 @@ class Model_Seguimiento extends ORM
     //estados mejorado en velocidad
     public function enviados($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT  s.id, s.padre,s.nur, s.nombre_receptor,s.cargo_receptor,s.a_oficina,s.fecha_emision as fecha, a.accion, s.oficial, s.hijo, s.proveido,s.adjuntos,s.archivos
              ,d.id as id_documento, d.codigo, d.cite_original, d.nombre_destinatario, d.cargo_destinatario, d.referencia,s.prioridad,RESTA2_FECHAS(NOW(),s.fecha_emision) as dias
                 FROM 
@@ -1317,6 +1343,7 @@ class Model_Seguimiento extends ORM
 
     public function seguimientox($id)
     {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT *
             FROM seguimiento s
             INNER JOIN asignados a ON s.nur=a.id
@@ -1404,6 +1431,7 @@ class Model_Seguimiento extends ORM
 
     public function archivado($nur)
     {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         $sql = "SELECT a.fecha,a.observaciones,c.carpeta,c.fecha_creacion,c.id,c.id_oficina FROM archivados a INNER JOIN carpetas c ON c.id=a.id_carpeta
               WHERE a.nur='$nur'";
         return $this->_db->query(Database::SELECT, $sql, TRUE);
@@ -1411,6 +1439,8 @@ class Model_Seguimiento extends ORM
 
     public function pendientes($id_user, $e)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $e = SqlSafe::value($e); // se pega en el SQL entre comillas
 
         $sql = "SELECT s.id, s.padre,s.nombre_emisor,s.oficial,s.cargo_emisor,s.de_oficina,s.fecha_emision as fecha,s.proveido,h.id_nur, h.id_seguimiento, a.codigo as documento, d.codigo, p.proceso,c.accion,s.adjuntos
             FROM seguimiento s
@@ -1427,12 +1457,14 @@ class Model_Seguimiento extends ORM
 
     public function carpetas($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT id, carpeta FROM carpetas WHERE id_user='$id_user'";
         return db::query(Database::SELECT, $sql)->execute();
     }
 
     public function nuris($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT * FROM seguimiento s
         INNER JOIN nurs n ON s.nur=n.id
         INNER JOIN documentos d ON d.id_nur=s.nur
@@ -1443,6 +1475,7 @@ class Model_Seguimiento extends ORM
 
     public function nur($id_seg)
     {
+        $id_seg = SqlSafe::value($id_seg); // se pega en el SQL entre comillas
         $sql = "SELECT s.id, s.nur FROM seguimiento s             
              WHERE s.id='$id_seg'";
         return db::query(Database::SELECT, $sql)->execute();
@@ -1451,6 +1484,7 @@ class Model_Seguimiento extends ORM
     //cantidad de estados 
     public function estados($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT * FROM (SELECT s.estado,COUNT(*) as n 
         FROM seguimiento s 
         WHERE s.derivado_a='$id_user'
@@ -1461,6 +1495,7 @@ class Model_Seguimiento extends ORM
 
     public function derivado($id_seguimiento)
     {
+        $id_seguimiento = SqlSafe::value($id_seguimiento); // se pega en el SQL entre comillas
         $sql = "SELECT s.id, n.nur,d.codigo,d.referencia,s.nombre_receptor,s.cargo_receptor,s.a_oficina,s.fecha_emision,s.proveido 
             FROM seguimiento s
             INNER JOIN nurs n ON s.nur=n.nur
@@ -1474,12 +1509,14 @@ class Model_Seguimiento extends ORM
 
     public function delete_deriv($padre)
     {
+        $padre = SqlSafe::value($padre); // se pega en el SQL entre comillas
         $sql = "DELETE FROM seguimiento WHERE padre='$padre'";
         return db::query(Database::DELETE, $sql)->execute();
     }
 
     public function delete_principal($id)
     {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "DELETE FROM seguimiento WHERE id= '$id'";
         return db::query(Database::DELETE, $sql)->execute();
     }

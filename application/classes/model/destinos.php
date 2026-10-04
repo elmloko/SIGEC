@@ -15,6 +15,7 @@ class Model_destinos extends ORM{
     //function destinos para un usario
     public function destinos($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql="SELECT u.id,u.nombre,u.cargo,u.genero,o.oficina,e.entidad FROM destinatarios d 
             INNER JOIN users u ON u.id=d.id_destino
             INNER JOIN oficinas o ON u.id_oficina=o.id

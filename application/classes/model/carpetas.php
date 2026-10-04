@@ -6,6 +6,7 @@ class Model_Carpetas extends ORM{
     protected $_sorting = array('carpeta' => 'ASC');   
     public function archivadores($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql="SELECT c.id,c.carpeta, COUNT(c.carpeta) as cc 
         FROM archivados a 
         INNER JOIN carpetas c ON a.id_carpeta=c.id

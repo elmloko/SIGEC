@@ -21,6 +21,11 @@ class Controller_Aajax extends Controller {
    
 
     public function action_documentosjson($user) {
+        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        $user = (int) $user;
+        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+            $user = (int) $this->user->id;
+        }
         // $this->view->disable();
         //$user = '150';
         $esql = "SELECT d.id,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.estado,

@@ -32,12 +32,14 @@ class Model_Oficinas extends ORM {
 
     //lista de oficinas segun entidad
     public function lista($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT id as value,oficina as text,sigla FROM oficinas WHERE id_entidad='$id'";
         return db::query(Database::SELECT, $sql)->execute();
     }
 
     //lista de oficinas segun entidad
     public function listaOficinas($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
 
         /*
         if ($id > 0) {

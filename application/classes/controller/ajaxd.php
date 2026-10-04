@@ -27,6 +27,11 @@ class Controller_Ajaxd extends Controller
 
     public function action_documentosjson($user)
     {
+        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        $user = (int) $user;
+        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+            $user = (int) $this->user->id;
+        }
         // $this->view->disable();
         //$user = '150';        
         $esql = "   SELECT 
@@ -357,6 +362,11 @@ class Controller_Ajaxd extends Controller
 
     public function action_ventanillajson($user)
     {
+        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        $user = (int) $user;
+        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+            $user = (int) $this->user->id;
+        }
         // $this->view->disable();
         //$user = '150';
         $esql = "SELECT d.id,CONCAT(d.nombre_destinatario,'<br><b>',d.cargo_destinatario,'</b>') as destinatario
@@ -557,6 +567,11 @@ class Controller_Ajaxd extends Controller
 
     public function action_ventanillajsonp($user)
     {
+        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        $user = (int) $user;
+        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+            $user = (int) $this->user->id;
+        }
         // $this->view->disable();
         //$user = '150';
         $esql = "SELECT d.id,CONCAT(d.nombre_destinatario,'<br><b>',d.cargo_destinatario,'</b>') as destinatario
@@ -847,7 +862,7 @@ class Controller_Ajaxd extends Controller
 
     public function action_jsondocumentos()
     {
-        $oficina = $_GET['oficina'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
         $oDocumentos = new Model_Documentos();
         $documentos = $oDocumentos->tdocumentos($oficina);
         echo json_encode($documentos);
@@ -855,8 +870,8 @@ class Controller_Ajaxd extends Controller
 
     public function action_jqwdocumentos()
     {
-        $oficina = $_GET['oficina'];
-        $tipo = $_GET['tipo'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
+        $tipo = SqlSafe::value(Arr::get($_GET, 'tipo', ''));
         $query = "SELECT * FROM (
                 SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
                 d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
@@ -1253,7 +1268,7 @@ class Controller_Ajaxd extends Controller
 
     public function action_explosion()
     {
-        $oficina = $_GET['oficina'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
         $query = "SELECT * FROM (
                 SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
                 d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
@@ -1517,9 +1532,9 @@ class Controller_Ajaxd extends Controller
     public function action_gauges()
     {
 
-        $oficina = $_GET['oficina'];
-        $gestion = $_GET['gestion'];
-        $mes = $_GET['mes'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
+        $gestion = SqlSafe::value(Arr::get($_GET, 'gestion', ''));
+        $mes = SqlSafe::value(Arr::get($_GET, 'mes', ''));
         $sql_generado = "SELECT COUNT(*) as generada FROM nurs n INNER JOIN users u ON n.id_user=u.id";
         $sql_generado2 = $sql_generado;
         $sql_generado3 = $sql_generado;
@@ -1617,9 +1632,9 @@ class Controller_Ajaxd extends Controller
     //torta de documentos
     public function action_tDocumentos()
     {
-        $oficina = $_GET['oficina'];
-        $gestion = $_GET['gestion'];
-        $mes = $_GET['mes'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
+        $gestion = SqlSafe::value(Arr::get($_GET, 'gestion', ''));
+        $mes = SqlSafe::value(Arr::get($_GET, 'mes', ''));
         $sql = "SELECT  COUNT(*) as cantidad, UPPER(t.plural) as documento, t.id FROM documentos d INNER JOIN tipos t ON t.id=d.id_tipo"
             . " WHERE t.abreviatura IS NOT NULL";
         $where = "";

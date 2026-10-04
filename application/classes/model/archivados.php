@@ -12,6 +12,8 @@ class Model_Archivados extends ORM{
     }    
     public function carpeta($id_carpeta,$id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $id_carpeta = SqlSafe::value($id_carpeta); // se pega en el SQL entre comillas
         $sql="SELECT s.id as id_seg,a.id_user, a.observaciones, s.id_archivo, c.carpeta, s.accion,s.oficial,s.de_oficina, s.proveido, a.fecha as fecha_archivo, d.id as id_doc, d.nur, d.codigo,d.referencia
             FROM archivados a USE INDEX (IDX_NUR)
             INNER JOIN carpetas c USE KEY (PRIMARY) ON a.id_carpeta=c.id
@@ -24,6 +26,8 @@ class Model_Archivados extends ORM{
     }
     public function carpeta_OLD($id_carpeta,$id_oficina)
     {
+        $id_carpeta = SqlSafe::value($id_carpeta); // se pega en el SQL entre comillas
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql="SELECT s.id as id_seg,a.id_user, a.observaciones, s.id_archivo, c.carpeta, s.accion,s.oficial,s.de_oficina, s.proveido, a.fecha as fecha_archivo, d.id as id_doc, d.nur, d.codigo,d.referencia
             FROM seguimiento s
             INNER JOIN archivados a ON a.id=s.id_archivo

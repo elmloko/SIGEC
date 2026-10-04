@@ -471,7 +471,7 @@ class Controller_Ajax extends Controller
 
     public function action_jsondocumentos()
     {
-        $oficina = $_GET['oficina'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
         $oDocumentos = new Model_Documentos();
         $documentos = $oDocumentos->tdocumentos($oficina);
         echo json_encode($documentos);
@@ -479,8 +479,8 @@ class Controller_Ajax extends Controller
 
     public function action_jqwdocumentos()
     {
-        $oficina = $_GET['oficina'];
-        $tipo = $_GET['tipo'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
+        $tipo = SqlSafe::value(Arr::get($_GET, 'tipo', ''));
         $query = "SELECT * FROM (
                 SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
                 d.referencia,d.nur,d.cite_original,u.nombre,u.cargo,d.fecha_creacion
@@ -877,7 +877,7 @@ class Controller_Ajax extends Controller
 
     public function action_explosion()
     {
-        $oficina = $_GET['oficina'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
         $query = "SELECT * FROM (
                 SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
                 d.fecha_creacion,s.a_oficina,s.nombre_receptor,s.cargo_receptor,s.fecha_recepcion,e.estado,RESTA2_FECHAS(s.fecha_recepcion,d.fecha_creacion) as d1,RESTA2_FECHAS(s.fecha_emision,d.fecha_creacion) as d2 ,RESTA2_FECHAS(NOW(),d.fecha_creacion) as d3
@@ -1141,9 +1141,9 @@ class Controller_Ajax extends Controller
     public function action_gauges()
     {
 
-        $oficina = $_GET['oficina'];
-        $gestion = $_GET['gestion'];
-        $mes = $_GET['mes'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
+        $gestion = SqlSafe::value(Arr::get($_GET, 'gestion', ''));
+        $mes = SqlSafe::value(Arr::get($_GET, 'mes', ''));
         $sql_generado = "SELECT COUNT(*) as generada FROM nurs n INNER JOIN users u ON n.id_user=u.id";
         $sql_generado2 = $sql_generado;
         $sql_generado3 = $sql_generado;
@@ -1241,9 +1241,9 @@ class Controller_Ajax extends Controller
     //torta de documentos
     public function action_tDocumentos()
     {
-        $oficina = $_GET['oficina'];
-        $gestion = $_GET['gestion'];
-        $mes = $_GET['mes'];
+        $oficina = SqlSafe::value(Arr::get($_GET, 'oficina', ''));
+        $gestion = SqlSafe::value(Arr::get($_GET, 'gestion', ''));
+        $mes = SqlSafe::value(Arr::get($_GET, 'mes', ''));
         $sql = "SELECT  COUNT(*) as cantidad, UPPER(t.plural) as documento, t.id FROM documentos d INNER JOIN tipos t ON t.id=d.id_tipo"
             . " WHERE t.abreviatura IS NOT NULL";
         $where = "";
@@ -2287,8 +2287,8 @@ class Controller_Ajax extends Controller
         // $id_usuario_logueado, $id_usuario_destinatario)
         //$id_usuario_logueado = null, $id_usuario_destinatario = null)
     {
-        $id_usuario_logueado = $_GET['id_usuario_logueado'];
-        $id_usuario_destinatario = $_GET['id_usuario_destinatario'];
+        $id_usuario_logueado = SqlSafe::value(Arr::get($_GET, 'id_usuario_logueado', ''));
+        $id_usuario_destinatario = SqlSafe::value(Arr::get($_GET, 'id_usuario_destinatario', ''));
 
         //echo $id_usuario_logueado;
         //echo $id_usuario_destinatario;
@@ -2317,10 +2317,10 @@ class Controller_Ajax extends Controller
     // GUARDAR JUSTIFICACION
     public function action_guardar_justificacion()
     {
-        $id_seguimiento = $_POST['id_seguimiento'];
-        $nur = $_POST['nur'];
-        $observacion = $_POST['observacion'];
-        $id_usuario = $_POST['id_usuario'];
+        $id_seguimiento = SqlSafe::value(Arr::get($_POST, 'id_seguimiento', ''));
+        $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
+        $observacion = SqlSafe::value(Arr::get($_POST, 'observacion', ''));
+        $id_usuario = SqlSafe::value(Arr::get($_POST, 'id_usuario', ''));
 
         $query = "  INSERT INTO observacion_seguimiento (id_seguimiento, nur, observacion, fecha_observacion, id_usuario, id_estado)
                     VALUES ('$id_seguimiento', '$nur', '$observacion', now(), '$id_usuario', '2');";
@@ -2339,10 +2339,10 @@ class Controller_Ajax extends Controller
     public function action_rechazar_derivacion()
     {
         $id_seguimiento_a_borrar = $_POST['id_seguimiento'];
-        $id_seguimiento_padre = $_POST['id_seguimiento_padre'];
-        $nur = $_POST['nur'];
-        $observacion = $_POST['observacion'];
-        $id_usuario = $_POST['id_usuario'];
+        $id_seguimiento_padre = SqlSafe::value(Arr::get($_POST, 'id_seguimiento_padre', ''));
+        $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
+        $observacion = SqlSafe::value(Arr::get($_POST, 'observacion', ''));
+        $id_usuario = SqlSafe::value(Arr::get($_POST, 'id_usuario', ''));
         $estado = $_POST['estado'];
 
         // logica para el rechazo de derivaciones

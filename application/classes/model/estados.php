@@ -7,6 +7,7 @@ class Model_Estados extends ORM{
     
     
     public function bajaUser($id){
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
          $sql="DELETE from roles_users where user_id='$id'";
         return $this->_db->query(Database::DELETE,$sql,TRUE);
     }

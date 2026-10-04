@@ -26,6 +26,7 @@ class Model_Tipos extends ORM {
 
 //documentos que un usuario puede crear    
     public function misTipos($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
 
         /*
         $sql = "SELECT t.id, t.tipo,t.action,t.plural,t.descripcion FROM tipos t 
@@ -46,15 +47,18 @@ class Model_Tipos extends ORM {
     }
 
     public function tipoUsuario($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT id,tipo FROM tipos WHERE id IN (select id_tipo from usertipo where id_user='$id')";
         return db::query(Database::SELECT, $sql)->execute()->as_array();
     }
     public function quitar($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "DELETE  FROM usertipo where id_user='$id'";
         return db::query(Database::DELETE, $sql)->execute();
     }
 
     public function lista($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT d.id,d.plural,SUM(cc) as cantidad,d.action as accion,d.descripcion,d.tipo FROM 
                 (SELECT t.id,t.plural,0 as cc,t.action,t.descripcion,t.tipo FROM usertipo u INNER JOIN tipos t ON u.id_tipo=t.id
                 WHERE u.id_user='$id'

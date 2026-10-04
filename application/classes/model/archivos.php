@@ -7,6 +7,7 @@ class Model_Archivos extends ORM {
     protected $_table_names_plural = false;
 
     public function listar($id_user) {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT a.id,d.id as id_documento,d.codigo,d.cite_original,a.fecha, t.tipo,d.nur,d.referencia,a.tamanio,a.nombre_archivo,a.extension
                 FROM archivos a INNER JOIN documentos d ON a.id_documento=d.id
                 INNER JOIN tipos t ON d.id_tipo=t.id

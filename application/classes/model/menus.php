@@ -5,6 +5,7 @@ class Model_Menus extends ORM{
     protected $_table_names_plural = false;
     //protected $_sorting = array('fecha_publicacion' => 'DESC');
     public function submenus($c){
+        $c = SqlSafe::value($c); // se pega en el SQL entre comillas
         $sql="SELECT * FROM menus m
         INNER JOIN submenus s ON s.id_menu=m.id
         WHERE m.controlador='$c'";

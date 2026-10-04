@@ -36,6 +36,7 @@ class Model_Destinatarios extends ORM
 
     public function dependientes($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT 
                     u.id, u.nombre, u.cargo, u.genero, o.oficina, e.entidad
                 FROM
@@ -52,6 +53,7 @@ class Model_Destinatarios extends ORM
 
     public function superior($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "  SELECT 
                     u.id, u.nombre, u.cargo, u.genero, o.oficina, e.entidad
                 FROM
@@ -67,6 +69,7 @@ class Model_Destinatarios extends ORM
 
     public function destinos_nuevosAdmin($id_user)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "  SELECT 
                     u.id, e.sigla, o.oficina, u.nombre, u.cargo
                 FROM
@@ -89,6 +92,8 @@ class Model_Destinatarios extends ORM
 
     public function destinos_nuevos($id_user, $entidad)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $entidad = SqlSafe::value($entidad); // se pega en el SQL entre comillas
         /*
         $sql="  SELECT
                     u.id,

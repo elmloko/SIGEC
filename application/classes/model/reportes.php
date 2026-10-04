@@ -28,6 +28,10 @@ class Model_Reportes extends ORM
 
     public function recepcionado($oficina, $id_user, $fecha1, $fecha2, $tipo)
     {
+        $oficina = SqlSafe::value($oficina); // se pega en el SQL entre comillas
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         /* $sql="SELECT s.nur,s.nombre_receptor,s.cargo_receptor,s.nombre_emisor,s.cargo_emisor,s.fecha_emision, s.fecha_recepcion,s.proveido,d.codigo FROM seguimiento s
           INNER JOIN documentos d ON s.nur=d.nur
           WHERE s.id_de_oficina='$oficina'
@@ -503,6 +507,9 @@ WHERE d.original=1";
 
     public function recepcionado_all($id_user, $fecha1, $fecha2, $tipo)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         switch ($tipo) {
             case 1:
                 /*
@@ -854,6 +861,10 @@ WHERE d.original=1";
 
     public function enviado($oficina, $id_user, $fecha1, $fecha2)
     {
+        $oficina = SqlSafe::value($oficina); // se pega en el SQL entre comillas
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT s.nur,s.nombre_receptor,s.cargo_receptor,s.nombre_emisor,s.cargo_emisor,s.fecha_emision, s.fecha_recepcion,s.proveido,d.codigo,d.cite_original FROM seguimiento s
         INNER JOIN documentos d ON s.nur=d.nur
@@ -916,6 +927,8 @@ WHERE d.original=1";
 
     public function enviado_all($id_user, $fecha1, $fecha2)
     {
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT s.nur,s.nombre_receptor,s.cargo_receptor,s.nombre_emisor,s.cargo_emisor,s.fecha_emision, s.fecha_recepcion,s.proveido,d.codigo,d.cite_original FROM seguimiento s
         INNER JOIN documentos d ON s.nur=d.nur";
@@ -973,6 +986,10 @@ WHERE d.original=1";
     //personalizado
     public function personal($oficina, $estado, $fecha1, $fecha2)
     {
+        $oficina = SqlSafe::value($oficina); // se pega en el SQL entre comillas
+        $estado = SqlSafe::value($estado); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         /* $sql="SELECT s.de_oficina,d.institucion_remitente,d.referencia,d.nombre_remitente,d.nombre_destinatario, s.nur,s.nombre_receptor,s.cargo_receptor,s.nombre_emisor,s.cargo_emisor,s.fecha_emision, s.fecha_recepcion,s.proveido,d.codigo,d.cite_original FROM seguimiento s
           INNER JOIN documentos d ON s.nur=d.nur
           WHERE s.id_a_oficina='$oficina'
@@ -995,6 +1012,9 @@ WHERE d.original=1";
 
     public function v_recepcion($id_user, $fecha1, $fecha2)
     {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
         $sql = "SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,d.adjuntos,d.fecha_creacion,d.hojas,d.estado
         FROM documentos d
         WHERE id_user='$id_user'
@@ -1005,6 +1025,9 @@ WHERE d.original=1";
 
     public function report_adec($idu, $idsup, $oficina)
     {
+        $idsup = SqlSafe::value($idsup); // se pega en el SQL entre comillas
+        $idu = SqlSafe::value($idu); // se pega en el SQL entre comillas
+        $oficina = SqlSafe::value($oficina); // se pega en el SQL entre comillas
 
         if ($idu != '-1') {
             $sql = "SELECT s.nur,s.nombre_emisor,s.nombre_receptor,s.fecha_emision,s.fecha_recepcion,RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision)AS dias_intermedio,RESTA2_FECHAS(NOW(),s.fecha_recepcion)AS dias_recepcion 

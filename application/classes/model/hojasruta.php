@@ -10,6 +10,7 @@ class Model_Hojasruta extends ORM {
     //protected $_sorting = array('fecha_publicacion' => 'DESC');
     //mis hojas de ruta creadas por un usuario
     public function HRhijos($p) {
+        $p = SqlSafe::value($p); // se pega en el SQL entre comillas
         $sql = "SELECT d.nur,d.referencia,d.cite_original,IF(s.oficial>0,'Oficial','Copia') as oficial,
             DATE_FORMAT(s.fecha_recepcion,'%d-%m-%Y %H:%i:%s') as fecha_recepcion, x.id as id_agrupacion
             FROM  (select id,hijo,fecha,id_seguimiento from agrupaciones where padre='$p') as x, documentos d,seguimiento s
@@ -70,6 +71,7 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     public function hojasruta($id_user, $o, $i) {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT d.id as id_documento, d.codigo,d.cite_original, d.nombre_destinatario, d.cargo_destinatario, 
          d.referencia, d.nur, d.fecha_creacion,d.estado,p.proceso 
         FROM documentos d 
@@ -82,6 +84,7 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     public function imprimir($nur) {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         $sql = "SELECT d.id_tipo,d.hojas,d.codigo,d.nur,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,d.fecha_creacion,d.adjuntos,d.copias,d.institucion_destinatario,d.institucion_remitente
     ,d.cite_original, e.entidad,e.sigla,e.logo2,e.logo,e.sigla2,p.proceso FROM documentos d
     INNER JOIN users u ON u.id=d.id_user 
@@ -94,6 +97,7 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     public function proveidos($nur) {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         /*
         $sql = "SELECT nombre_receptor,cargo_receptor,proveido,accion
                 FROM seguimiento where nur='$nur' and oficial>'0'
@@ -112,11 +116,13 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     public function agrupado($nur) {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         $sql = "SELECT * FROM agrupaciones a INNER  JOIN nurs n ON a.padre=n.nur WHERE a.padre='$nur'";
         return $this->_db->query(Database::SELECT, $sql, TRUE);
     }
 
     public function hijos($nur) {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         $sql = "SELECT * FROM seguimiento s
             INNER JOIN nurs n ON s.nur=n.nur
             INNER JOIN agrupaciones a ON s.id=a.id_seguimiento
@@ -126,6 +132,7 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
 
     // hoja de ruta "padre" en la que fue agrupado un nur (cuando el nur es el "hijo")
     public function HRpadre($hijo) {
+        $hijo = SqlSafe::value($hijo); // se pega en el SQL entre comillas
         $sql = "SELECT a.id as id_agrupacion, a.padre, a.fecha, a.nombre, a.cargo, d.referencia, d.cite_original,
             d.nombre_destinatario, d.cargo_destinatario
             FROM agrupaciones a

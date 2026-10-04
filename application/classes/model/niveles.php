@@ -10,6 +10,7 @@ class Model_niveles extends ORM{
 
     public function menus($n){
         $n = (int) $n;
+        $n = (int) $n;
         // Reportes (controlador 'reports') solo para el administrador, aunque nivelmenu lo asigne a otros niveles
         if ($n === self::NIVEL_ADMIN) {
             $filtro = "(m.id IN (SELECT id_menu FROM nivelmenu WHERE id_nivel = $n) OR m.controlador = 'reports')";

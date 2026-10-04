@@ -4,6 +4,9 @@ class Model_Gestiones extends ORM{
 protected $_table_names_plural = false;
 
 public function reporteFecha($modalidad,$fecha1,$fecha2){
+        $modalidad = SqlSafe::value($modalidad); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
     $sql="SELECT * FROM gestiones g INNER JOIN users u  ON g.id_user=u.id
         WHERE modalidad LIKE '$modalidad%'
         AND fechaCreacion BETWEEN '$fecha1' AND '$fecha2'
@@ -14,6 +17,9 @@ public function reporteFecha($modalidad,$fecha1,$fecha2){
 
 
 public function reporteproponente($proponente,$fecha1,$fecha2){
+        $proponente = SqlSafe::value($proponente); // se pega en el SQL entre comillas
+        $fecha1 = SqlSafe::value($fecha1); // se pega en el SQL entre comillas
+        $fecha2 = SqlSafe::value($fecha2); // se pega en el SQL entre comillas
     $sql="SELECT * FROM gestiones g INNER JOIN users u ON g.id_user=u.id  
         WHERE proponente = '$proponente'
         AND fechaCreacion BETWEEN '$fecha1' AND '$fecha2'

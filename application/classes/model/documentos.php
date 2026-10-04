@@ -28,6 +28,7 @@ class Model_Documentos extends ORM {
     );
 
     public function generados($id){
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql="SELECT d.cantidad,t.plural as documento FROM (select count(*) as cantidad,id_tipo from documentos where id_user='$id'
 group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
         return DB::query(Database::SELECT, $sql)->execute()->as_array();
@@ -35,11 +36,13 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     
     
     public function actividad($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT count(*) as cantidad,UNIX_TIMESTAMP(fecha_creacion)*1000 as time  FROM documentos where id_user='$id'
         GROUP by YEAR(fecha_creacion),MONTH(fecha_creacion),DAY(fecha_creacion)";
         return DB::query(Database::SELECT, $sql)->execute()->as_array();
     }
     public function derivados($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT count(*) as cantidad,UNIX_TIMESTAMP(fecha_emision)*1000 as time,fecha_emision  FROM seguimiento
  where derivado_por='$id'
         GROUP by YEAR(fecha_emision),MONTH(fecha_emision),DAY(fecha_emision)";
@@ -48,6 +51,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
 
     //tipo documentos
     public function tipoDocumentos($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT id_tipo,count(*) as cantidad 
                 FROM documentos 
                 WHERE id_tipo in (select id_tipo from usertipo where id_user='$id')
@@ -64,6 +68,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function tdocumentos($id_oficina) {
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql = "SELECT  COUNT(*) as cantidad, UPPER(t.plural) as documento, t.id FROM documentos d INNER JOIN tipos t ON t.id=d.id_tipo
                 WHERE d.id_oficina='$id_oficina'
                 AND t.abreviatura IS NOT NULL
@@ -73,6 +78,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
 
     //nuevo 
     public function zdoc($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT x.id,x.referencia,x.nombre_destinatario,x.cargo_destinatario,t.tipo,DATE_FORMAT(x.fecha_creacion,'%d-%m-%Y') as fecha_creacion,x.nur,cite_original FROM
                 (select * from documentos where  id_user='$id'  order by fecha_creacion DESC limit 10 ) as x 
                 INNER JOIN tipos t ON x.id_tipo=t.id";
@@ -92,6 +98,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function seguimiento($nur) {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         $sql = "SELECT 1 as suma,IF(s.oficial,'OFICIAL','COPIA') as ofi,'-->' as flecha, s.*,e.* FROM seguimiento s INNER JOIN estados as e ON s.estado=e.id
             WHERE nur='$nur'";
         return db::query(Database::SELECT, $sql)->execute()->as_array();
@@ -129,6 +136,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function documentosTipo($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT COUNT(t.plural) as cantidad,t.plural as  documento,CONCAT(m.mes_corto,' ',YEAR(d.fecha_creacion)) as fecha 
                 FROM documentos d 
                 INNER JOIN tipos t ON d.id_tipo=t.id
@@ -140,11 +148,13 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function agrupados($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT id_tipo, COUNT(*) as n FROM documentos WHERE id_user='$id' GROUP BY id_tipo";
         return DB::query(1, $sql)->execute();
     }
 
     public function agrupaciones($id, $o, $i) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT a.padre,a.hijo,a.fecha, d.cite_original,d.cargo_destinatario,d.nombre_destinatario,d.referencia FROM agrupaciones a
         INNER JOIN documentos d ON a.hijo=d.nur
         WHERE d.original=1
@@ -156,6 +166,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
 
     //ultimos 10 documentos generados
     public function recientes($id) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT d.id,d.codigo,d.nombre_destinatario,d.cargo_destinatario,d.nombre_via,d.cargo_via,d.nombre_remitente,d.cargo_remitente,d.fecha_creacion,d.referencia,d.nur,t.tipo,d.estado
             FROM documentos d            
             INNER JOIN tipos t ON t.id=d.id_tipo
@@ -173,6 +184,8 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function detalle($id, $user) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
+        $user = SqlSafe::value($user); // se pega en el SQL entre comillas
         $sql = "SELECT d.id,d.codigo,d.id_tipo,t.plural,d.nombreDestinatario,d.cargoDestinatario,d.nombreVia,d.cargoVia,d.nombreRemitente,d.cargoRemitente,d.fecha_creacion,d.referencia,a.codigo as hr, t.tipo,d.contenido,d.id_archivo
             FROM documentos d
             INNER JOIN hojasruta h ON h.id_documento=d.id
@@ -184,6 +197,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function vista($codigo) {
+        $codigo = SqlSafe::value($codigo); // se pega en el SQL entre comillas
         $sql = "SELECT d.id,d.codigo,d.nombreDestinatario,d.cargoDestinatario,d.nombreVia,d.cargoVia,d.nombreRemitente,d.cargoRemitente,d.fecha_creacion,d.referencia,a.codigo as hr, t.tipo,d.contenido,d.id_archivo
             FROM documentos d
             INNER JOIN hojasruta h ON h.id_documento=d.id
@@ -194,6 +208,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function descripcion($nur) {
+        $nur = SqlSafe::value($nur); // se pega en el SQL entre comillas
         $sql = "SELECT d.id as id_doc, d.codigo as documento, d.nombre_destinatario as destinatario, d.cargo_destinatario as cargo, d.referencia, d.nombre_remitente as remitente, d.cargo_remitente as cargo_r,
         h.fecha, a.codigo as nur,t.tipo, p.proceso FROM documentos d
         INNER JOIN hojasruta h ON h.id_documento=d.id
@@ -206,6 +221,8 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function documento($id, $id_user) {
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT d.id as id_doc, d.id_tipo, d.codigo as documento, d.nombreDestinatario as destinatario, d.cargoDestinatario as cargo, d.referencia, d.nombreRemitente as remitente, d.cargoRemitente as cargo_r,
       d.nombreVia,d.cargoVia,  h.fecha, a.codigo as nur,t.tipo, p.proceso FROM documentos d
         INNER JOIN hojasruta h ON h.id_documento=d.id
@@ -218,6 +235,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function externos($id_user, $o, $i) {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT d.id, d.codigo, d.citeOriginal, d.estado, d.nombreDestinatario,d.cargoDestinatario, d.institucionDestinatario, d.nombreRemitente,d.cargoRemitente,d.institucionRemitente, d.referencia,d.adjuntos, d.nroHojas, d.nur, d.id_nur,de.fecha, g.grupo,m.motivo,p.proceso FROM documentos d 
             INNER JOIN descripcion de ON d.id=de.id_documento
             INNER JOIN grupos g ON de.id_grupo=g.id
@@ -231,6 +249,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function documentos_nuevos($id_user) {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT * FROM tipos t 
         WHERE t.id NOT IN (SELECT id_tipo FROM usertipo WHERE id_user='$id_user')
         and t.doc='0'";
@@ -249,6 +268,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function contar($text, $entidad) {
+        $text = SqlSafe::value($text); // se pega en el SQL entre comillas
 
         $sql = "SELECT COUNT(*) as count
                    FROM documentos d 
@@ -314,6 +334,8 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     {
         $o = (int) $o;
         $i = (int) $i;
+        $o = (int) $o;
+        $i = (int) $i;
         $sql = "SELECT
                     d.institucion_remitente,
                     d.id,
@@ -364,6 +386,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     }
 
     public function pendiente_ventanilla($id_user) {
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql = "SELECT d.id, d.cite_original, d.nur, d.nombre_destinatario,d.cargo_destinatario,d.institucion_destinatario,d.nombre_remitente,d.cargo_remitente,d.institucion_remitente,d.referencia,d.hojas,d.fecha_creacion,d.estado
             FROM documentos d 
             INNER JOIN descripcion de ON d.id=de.id_documento            
@@ -375,6 +398,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     /* Correlativos */
 
     public function correlativos($id_oficina) {
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql = "SELECT t.plural,c.correlativo,t.id FROM correlativo c INNER JOIN oficinas o ON c.id_oficina=o.id
                 INNER JOIN tipos t ON c.id_tipo=t.id
                 WHERE c.id_oficina='$id_oficina'";
@@ -384,6 +408,7 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
     /* documentos generado por oficina */
 
     public function documentos_generados($id_oficina) {
+        $id_oficina = SqlSafe::value($id_oficina); // se pega en el SQL entre comillas
         $sql = "SELECT COUNT(*) as cantidad,t.plural,t.id FROM documentos d INNER JOIN tipos t ON d.id_tipo=t.id
         INNER JOIN oficinas o on o.id=d.id_oficina
         WHERE d.id_oficina='$id_oficina'

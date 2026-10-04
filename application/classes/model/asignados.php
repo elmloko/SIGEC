@@ -10,6 +10,7 @@ class Model_Asignados extends ORM{
         return ORM::factory('nurs')->where('id_user','=',$id)->count_all();        
     }    
     public function nurs($id_user,$o,$i){
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql="SELECT * FROM nurs n
         INNER JOIN nurs_documentos  nd on n.id=nd.id_nur
         INNER JOIN documentos d ON d.id=nd.id_documento
@@ -35,6 +36,8 @@ class Model_Asignados extends ORM{
         
     }
     public function nur($id_nur,$id_user){
+        $id_nur = SqlSafe::value($id_nur); // se pega en el SQL entre comillas
+        $id_user = SqlSafe::value($id_user); // se pega en el SQL entre comillas
         $sql="SELECT a.id as id_nur,a.codigo as nur,h.id,h.id_seguimiento,d.id as id_documento,d.codigo,d.nombreDestinatario, d.cargoDestinatario, d.referencia,p.proceso  FROM asignados a
         INNER JOIN hojasruta h ON h.id_nur=a.id
         INNER JOIN documentos d ON d.id=h.id_documento

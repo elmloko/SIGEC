@@ -14,6 +14,7 @@ class Model_Usuario extends Kohana_Model{
 
     //lista de roles de un usuario determinado
     public function roles($id){
+        $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql="SELECT id,rol,marca
             FROM marcas
             WHERE idRubro='$id'";

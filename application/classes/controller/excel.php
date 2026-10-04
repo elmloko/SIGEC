@@ -28,7 +28,7 @@ public function action_sol_pasajes($id='')
         INNER JOIN pasajes p ON d.id=p.id_documento
         INNER JOIN tipoviaje t ON t.id=p.tipo_viaje
         INNER JOIN mediotransporte m ON m.id=p.medio_transporte
-        WHERE d.id='$id'";
+        WHERE d.id=" . (int) $id;
 
     $modelo=New Model_Hojasruta();
     $report=$modelo->select($sql);    
@@ -123,7 +123,7 @@ public function action_inf_viaje($id='')
         INNER JOIN viajes v ON d.id=v.id_documento       
         INNER JOIN mediotransporte m ON m.id=v.medio_transporte1
 	INNER JOIN mediotransporte mm ON mm.id=v.medio_transporte2
-        WHERE d.id='$id'";
+        WHERE d.id=" . (int) $id;
 
     $modelo=New Model_Hojasruta();
     $report=$modelo->select($sql);        
