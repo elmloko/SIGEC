@@ -24,7 +24,7 @@
 <h2 class="subtitulo">Descripción<br/><span>descripcion general del documento</span></h2>
 <div id="formulario" >
 <a href="/documento/editar/<?php echo $d->id; ?>" class="uibutton" title="Editar documento"><img src="/media/images/edit-doc.png" align="absmiddle" /> Editar documento</a>
-<a href="/export.php?id=<?php echo $d->id; ?>" class="uibutton" target="_blank" title="Imprimir documento" ><img src="/media/images/print.png"/> Imprimir</a>
+<a href="/plantilla/word/<?php echo (int) $d->id; ?>" class="uibutton" target="_blank" title="Imprimir documento" ><img src="/media/images/print.png"/> Imprimir</a>
 <a href="/hojaruta/deriv/?nur=<?php echo $d->nur; ?>" class="uibutton" title="Derivar a partir del documento, si ya esta derivado muestra el seguiemiento" ><img src="/media/images/derivar-doc.png"/> Derivar</a>
 <a href="/word/carta.php?id=<?php echo $d->nur; ?>" class="uibutton" title="Enviar a un documento word" ><img src="/media/images/word07.gif"/> Enviar a Word</a>
 <div style="text-align:center; margin: 5px 0; border-bottom: 1px solid #ccc;">
