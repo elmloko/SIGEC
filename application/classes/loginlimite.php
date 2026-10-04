@@ -6,7 +6,10 @@ defined('SYSPATH') or die('No direct script access.');
  * Limite de intentos fallidos de ingreso (contra la prueba masiva de contraseñas).
  *
  * - 5 fallos del mismo usuario desde la misma IP en 15 minutos: ese par queda bloqueado 15 minutos.
+ * - 20 fallos del mismo usuario desde cualquier IP: el usuario queda bloqueado 15 minutos
+ *   (contra quien va cambiando de IP; es mas alto para que un tercero no bloquee facil la cuenta ajena).
  * - 30 fallos desde una misma IP (con cualquier usuario) en 15 minutos: la IP queda bloqueada 15 minutos.
+ *   No se aplica si la IP es la de un proxy (ver IpCliente): bloquearia a todos los que entran por el.
  *
  * Los contadores se guardan en archivos dentro de application/cache/login_intentos (no hace falta tabla).
  * Un ingreso correcto borra el contador de ese usuario.
@@ -14,7 +17,8 @@ defined('SYSPATH') or die('No direct script access.');
 class LoginLimite {
 
     const VENTANA = 900;          // segundos
-    const MAX_USUARIO = 5;
+    const MAX_USUARIO_IP = 5;
+    const MAX_USUARIO = 20;
     const MAX_IP = 30;
 
     /** Segundos que faltan para poder intentar de nuevo (0 = puede intentar). */
@@ -47,16 +51,22 @@ class LoginLimite {
     }
 
     public static function exito($username) {
+        // solo se limpia el contador de usuario+IP: el del usuario solo (ataque desde otras IPs) sigue corriendo
         $claves = array_keys(self::claves($username));
         @unlink(self::archivo($claves[0]));
     }
 
     protected static function claves($username) {
-        $ip = (string) Arr::get($_SERVER, 'REMOTE_ADDR', '');
-        return array(
-            'u|' . strtolower(trim((string) $username)) . '|' . $ip => self::MAX_USUARIO,
-            'ip|' . $ip => self::MAX_IP,
+        $ip = IpCliente::obtener();
+        $usuario = strtolower(trim((string) $username));
+        $claves = array(
+            'u|' . $usuario . '|' . $ip => self::MAX_USUARIO_IP,
+            'u|' . $usuario => self::MAX_USUARIO,
         );
+        if (!IpCliente::es_proxy($ip)) {
+            $claves['ip|' . $ip] = self::MAX_IP;
+        }
+        return $claves;
     }
 
     protected static function archivo($clave) {

@@ -141,8 +141,8 @@ class Controller_Externo extends Controller
                 $entidad_id = $id_entidad;
                 $gestion_de_consulta = $gestion;
                 $navegador_web = SqlSafe::value(Arr::get($_POST, 'client_web_browser', ''));
-                // Client-IP / X-Forwarded-For las escribe el propio visitante: se usa la IP real de la conexion
-                $visita_ip = SqlSafe::value(Arr::get($_SERVER, 'REMOTE_ADDR', ''));
+                // IP real del visitante (X-Forwarded-For solo se cree si viene de un proxy de confianza)
+                $visita_ip = SqlSafe::value(IpCliente::obtener());
                 $visita_url = SqlSafe::value($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
                 $ciudad = SqlSafe::value(Arr::get($_POST, 'client_city', ''));
                 $pais = SqlSafe::value(Arr::get($_POST, 'client_country', ''));
