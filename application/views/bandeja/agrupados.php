@@ -92,10 +92,10 @@ $('a.close, #fade, #cancelar').live('click', function(){ //When clicking on the 
             
             <td><a href="/seguimiento/?nur=<?php echo $n['hijo'];?>" title="Ver seguimiento del NUR <?php echo $n['hijo'] ?>" ><?php echo $n['hijo'] ?></a>                </td>            
             <td><a href="/seguimiento/?nur=<?php echo $n['padre'];?>" title="Ver seguimiento del NUR <?php echo $n['padre'] ?>" ><?php echo $n['padre'] ?></a>                </td>
-            <td><b><?php echo $n['cite_original'];?></b></td>            
-            <td><?php echo $n['referencia'];?></td>                        
-            <td><?php echo $n['nombre_destinatario'];?><br/>
-                <b><?php echo $n['cargo_destinatario']?></b></td>
+            <td><b><?php echo HTML::chars($n['cite_original']);?></b></td>            
+            <td><?php echo HTML::chars($n['referencia']);?></td>                        
+            <td><?php echo HTML::chars($n['nombre_destinatario']);?><br/>
+                <b><?php echo HTML::chars($n['cargo_destinatario'])?></b></td>
             <td><?php echo Date::fecha_corta($n['fecha']);?></td>                       
         </tr>
         <?php endforeach;?>

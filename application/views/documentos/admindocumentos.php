@@ -51,7 +51,7 @@ $(function() {
     <tbody>
 <?php foreach ($documentos as $d): ?>
         <tr>
-            <td><?php echo $d['tipo'];?></td><td><?php echo $d['titulo'];?></td><td><?php echo $d['nombre_documento'];?></td><td><?php echo html::anchor(url::base().'noticias/editar/'.$d['id'],html::image('media/images/edit.png'),array('title'=>'Editar Noticia')); echo html::anchor(url::base().'noticias/eliminar/'.$d['id'],html::image('media/images/delete.png'),array('title'=>'Eliminar Noticia','class'=>'delete','alt'=>$d['titulo']));?></td>
+            <td><?php echo $d['tipo'];?></td><td><?php echo HTML::chars($d['titulo']);?></td><td><?php echo $d['nombre_documento'];?></td><td><?php echo html::anchor(url::base().'noticias/editar/'.$d['id'],html::image('media/images/edit.png'),array('title'=>'Editar Noticia')); echo html::anchor(url::base().'noticias/eliminar/'.$d['id'],html::image('media/images/delete.png'),array('title'=>'Eliminar Noticia','class'=>'delete','alt'=>$d['titulo']));?></td>
         </tr>
 <?php endforeach; ?>
     </tbody>

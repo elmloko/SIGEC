@@ -6,14 +6,14 @@
         <div class="row">
             <div class="col-md-3 col-xs-5">
                 <?php if (file_exists(DOCROOT . 'static/fotos/' . $user->username . '.jpg')): ?>
-                    <img class="img-circle border-white border-xl img-responsive " width="110" src="/static/fotos/<?php echo $user->username ?>.jpg" alt="" />
+                    <img class="img-circle border-white border-xl img-responsive " width="110" src="/static/fotos/<?php echo HTML::chars($user->username) ?>.jpg" alt="" />
                     <?php
                 else:
                     ?>
                     <img class="img-circle border-white border-xl img-responsive " width="110" src="/static/fotos/<?php echo $user->genero . '.jpg' ?>" alt="" />
                 <?php endif; ?>
                 
-                <h3><?php echo $user->nombre; ?><br/><small><?php echo $user->cargo ?></small></h3>
+                <h3><?php echo HTML::chars($user->nombre); ?><br/><small><?php echo HTML::chars($user->cargo) ?></small></h3>
             </div><!--end .col -->
             <div class="col-md-9 col-xs-7">
                 <div class="width-3 text-center pull-right">
@@ -25,7 +25,7 @@
         </div><!--end .row -->
         <div class="overlay overlay-shade-bottom stick-bottom-left force-padding text-right">
             <div class="pull-right">
-                <strong class="text-xl"><?php echo $user->email ?></strong><br/>
+                <strong class="text-xl"><?php echo HTML::chars($user->email) ?></strong><br/>
                 <span class="text-light opacity-75">Ultimo Ingreso: <?php echo Date::fuzzy_span($user->last_login); ?></span>
             </div>
         </div>
@@ -57,7 +57,7 @@
             <div class="col-md-5">
                 <div class="card card-underline">
                     <div class="card-head">
-                        <header><i class="fa fa-user"></i> Datos de Usuario: <?php echo $user->username ?></header>
+                        <header><i class="fa fa-user"></i> Datos de Usuario: <?php echo HTML::chars($user->username) ?></header>
                         <div class="tools">
                             <a class="btn btn-icon-toggle btn-close"><i class="md md-close"></i></a>
                         </div>

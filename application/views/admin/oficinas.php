@@ -38,7 +38,7 @@ $(function(){
                 <?php echo $o->id;?>
             </td>
             <td>
-                <a href="/admin/user/lista/<?php echo $o->id;?>"><?php echo $o->oficina;?></a>
+                <a href="/admin/user/lista/<?php echo $o->id;?>"><?php echo HTML::chars($o->oficina);?></a>
             </td>
             <td>
                 <a href="/admin/user/lista/<?php echo $o->id;?>"><img src="/media/images/16x16/Write.png" /></a>

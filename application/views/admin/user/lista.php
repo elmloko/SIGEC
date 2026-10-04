@@ -31,13 +31,13 @@
                     <?php foreach ($users as $u): ?>
                         <tr>
                             <td>
-                                <?php echo $u->username ?>
+                                <?php echo HTML::chars($u->username) ?>
                             </td>
                             <td>
-                                <?php echo $u->nombre ?>
+                                <?php echo HTML::chars($u->nombre) ?>
                             </td>
                             <td>
-                                <?php echo $u->cargo ?>
+                                <?php echo HTML::chars($u->cargo) ?>
                             </td>
                             <!--
                             <td>

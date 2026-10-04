@@ -1,6 +1,6 @@
 <fieldset>
 <h2><b>Referencia: </b> 
-    <?php echo $documento->referencia;?>
+    <?php echo HTML::chars($documento->referencia);?>
 </h2>
     <br/>
 <form action="" method="post" > 

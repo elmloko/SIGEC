@@ -6,7 +6,7 @@ $(function(){
     });
 });
 </script>
-<div style="text-align: center; " ><a href="/admin/oficinas/lista/<?php echo $id_entidad;?>" style="font-size: 14px; "><?php echo $entidad->entidad;?></a></div>
+<div style="text-align: center; " ><a href="/admin/oficinas/lista/<?php echo $id_entidad;?>" style="font-size: 14px; "><?php echo HTML::chars($entidad->entidad);?></a></div>
 <br/>
 <div style="float: left; margin-top: 5px;"><a href="/admin/user/create/<?php echo $id_oficina;?>" class="button">+ Nuevo Usuario</a></div>
 <div style="float: right;"><?php echo Form::select('id_oficina', $options, $id_oficina,array('id'=>'id_oficina'));?></div>
@@ -33,13 +33,13 @@ $(function(){
         <?php foreach($users as $u ): ?>
         <tr>
             <td>
-             <?php echo $u->username?>   
+             <?php echo HTML::chars($u->username)?>   
             </td>
             <td>
-             <a href="/admin/user/detalle/<?php echo $u->id?>"><?php echo $u->nombre?></a>   
+             <a href="/admin/user/detalle/<?php echo $u->id?>"><?php echo HTML::chars($u->nombre)?></a>   
             </td>
             <td>
-             <?php echo $u->cargo?>   
+             <?php echo HTML::chars($u->cargo)?>   
             </td>
             <td>
              <?php // echo $u->fecha_creacion;?>                     

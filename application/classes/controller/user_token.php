@@ -133,7 +133,7 @@ class Controller_User extends Controller_DefaultTemplate {
         $opCargos = '';
         $cargos = ORM::factory('users')->find_all();
         foreach ($cargos as $c) {
-            $opCargos.='<option value="' . $c->id . '" class="' . $c->id_oficina . '">' . $c->cargo . ' - ' . $c->nombre . '</options>';
+            $opCargos.='<option value="' . $c->id . '" class="' . $c->id_oficina . '">' . HTML::chars($c->cargo) . ' - ' . HTML::chars($c->nombre) . '</option>';
         }
         $this->template->content = View::factory('user/create')
                 ->bind('options', $options)
@@ -348,7 +348,7 @@ class Controller_User extends Controller_DefaultTemplate {
             $this->template->styles = array('media/css/tablas.css' => 'all');
             $this->template->scripts = array('media/js/jquery.tablesorter.min.js');
             $this->template->title.=' ' . $oficina->oficina;
-            $this->template->titulo = '<v>' . $oficina->oficina . '</v>';
+            $this->template->titulo = '<v>' . HTML::chars($oficina->oficina) . '</v>';
             $this->template->descripcion = 'Lista de Personal';
             $this->template->content = View::factory('user/personal')
                     ->bind('usuarios', $usuarios);

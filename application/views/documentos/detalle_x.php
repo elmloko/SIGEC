@@ -25,8 +25,8 @@
 <div id="formulario" >
 <a href="/documento/editar/<?php echo $d->id; ?>" class="uibutton" title="Editar documento"><img src="/media/images/edit-doc.png" align="absmiddle" /> Editar documento</a>
 <a href="/plantilla/word/<?php echo (int) $d->id; ?>" class="uibutton" target="_blank" title="Imprimir documento" ><img src="/media/images/print.png"/> Imprimir</a>
-<a href="/hojaruta/deriv/?nur=<?php echo $d->nur; ?>" class="uibutton" title="Derivar a partir del documento, si ya esta derivado muestra el seguiemiento" ><img src="/media/images/derivar-doc.png"/> Derivar</a>
-<a href="/word/carta.php?id=<?php echo $d->nur; ?>" class="uibutton" title="Enviar a un documento word" ><img src="/media/images/word07.gif"/> Enviar a Word</a>
+<a href="/hojaruta/deriv/?nur=<?php echo HTML::chars($d->nur); ?>" class="uibutton" title="Derivar a partir del documento, si ya esta derivado muestra el seguiemiento" ><img src="/media/images/derivar-doc.png"/> Derivar</a>
+<a href="/word/carta.php?id=<?php echo HTML::chars($d->nur); ?>" class="uibutton" title="Enviar a un documento word" ><img src="/media/images/word07.gif"/> Enviar a Word</a>
 <div style="text-align:center; margin: 5px 0; border-bottom: 1px solid #ccc;">
 </div>
 <?php if(sizeof($mensajes)>0):?>
@@ -51,23 +51,23 @@
         <tr>
             <td colspan="2">
         <h2><?php echo strtoupper($tipo);?></h2>
-        <h2 style="color: #23599B;"><?php echo $d->cite_original;?></h2>
-        <h2><?php echo $d->nur;?></h2>
+        <h2 style="color: #23599B;"><?php echo HTML::chars($d->cite_original);?></h2>
+        <h2><?php echo HTML::chars($d->nur);?></h2>
             </td>
         </tr>
     <tr>
         <td><b>DESTINATARIO: </b></td>
-        <td colspan="2"> <?php echo $d->nombre_destinatario;?><br/><b><?php echo $d->cargo_destinatario;?></b></td>
+        <td colspan="2"> <?php echo HTML::chars($d->nombre_destinatario);?><br/><b><?php echo HTML::chars($d->cargo_destinatario);?></b></td>
     </tr>
     <?php if(trim($d->nombre_via)!=''){ ?>
     <tr> 
         <td><b>VIA: </b><br/> </td>
-        <td colspan="2"><?php echo $d->nombre_via;?><br/><b><?php echo $d->cargo_via;?></b></td>
+        <td colspan="2"><?php echo HTML::chars($d->nombre_via);?><br/><b><?php echo HTML::chars($d->cargo_via);?></b></td>
     </tr>
     <?php } ?>
     <tr> 
         <td><b>REMITENTE: </b><br/> </td>
-        <td colspan="2"><?php echo $d->nombre_remitente;?><br/><b><?php echo $d->cargo_remitente;?></b></td>
+        <td colspan="2"><?php echo HTML::chars($d->nombre_remitente);?><br/><b><?php echo HTML::chars($d->cargo_remitente);?></b></td>
     </tr>
     <tr> 
         <td><b>FECHA DE CREACI&Oacute;N: </b><br/> </td>
@@ -110,7 +110,7 @@
     echo Form::close();
     ?>
     <tr> <td><b>REFERENCIA:</b><br/> </td>
-         <td colspan="2"><?php echo $d->referencia;?></td>
+         <td colspan="2"><?php echo HTML::chars($d->referencia);?></td>
     </tr>
    
     <tr><td colspan="3"></td></tr>

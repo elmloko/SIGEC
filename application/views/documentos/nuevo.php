@@ -5,7 +5,7 @@
         <a href="/document/create/<?php echo $d->action;?>">
         <img src="/media/images/<?php echo $d->image?>"/>
         <p><?php echo $d->tipo;?><br/>
-        <span><?php echo $d->descripcion;?></span></p>
+        <span><?php echo HTML::chars($d->descripcion);?></span></p>
         </a>
     </li>
 <?php endforeach;?>

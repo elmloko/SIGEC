@@ -45,23 +45,23 @@ $(function(){
         <?php foreach($documentos as $n):?>
         <tr>
             <td><?php echo HTML::anchor('route/deriv/?hr='. $n['id_nur'],$n['nur']);?></td>
-            <td><?php echo $n['proceso'];?></td>
+            <td><?php echo HTML::chars($n['proceso']);?></td>
             <td><b><?php echo $n['citeOriginal'];?></b></td>
-            <td><b><?php echo $n['codigo'];?></b></td>            
-            <td><?php echo $n['referencia'];?></td>
+            <td><b><?php echo HTML::chars($n['codigo']);?></b></td>            
+            <td><?php echo HTML::chars($n['referencia']);?></td>
             <td><?php echo $n['nombreDestinatario'];?></td>  
             <td><?php echo date('d/m/Y H:i:s',strtotime($n['fecha']));?></td> 
-            <td><?php echo $n['adjuntos']?></td> 
+            <td><?php echo HTML::chars($n['adjuntos'])?></td> 
             <td><?php echo $n['nroHojas']?></td> 
             <td align="center" width="50" >
                 <?php if($n['estado']):?>
-                <a href="/route/trace/?hr=<?php echo $n['id_nur'];?>" title="Seguimeinto <?php echo $n['nur'] ?>" >Derivado</a>
+                <a href="/route/trace/?hr=<?php echo $n['id_nur'];?>" title="Seguimeinto <?php echo HTML::chars($n['nur']) ?>" >Derivado</a>
                 <?php else: ?>
-                <a href="/route/deriv/<?php echo $n['id_nur'];?>" title="Derivar <?php echo $n['nur'] ?>" ><img src="/media/images/derivar.png"/></a>
+                <a href="/route/deriv/<?php echo $n['id_nur'];?>" title="Derivar <?php echo HTML::chars($n['nur']) ?>" ><img src="/media/images/derivar.png"/></a>
                 <?php endif;?>                
             </td>        
             <td>
-                <a href="/print.php/<?php echo $n['id_nur'];?>" title="Imprimir <?php echo $n['nur'] ?>" ><img src="/media/images/printer.png"/> </a>
+                <a href="/print.php/<?php echo $n['id_nur'];?>" title="Imprimir <?php echo HTML::chars($n['nur']) ?>" ><img src="/media/images/printer.png"/> </a>
             </td>
         </tr>
         <?php endforeach;?>

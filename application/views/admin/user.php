@@ -1,4 +1,4 @@
-<h2><?php echo $user->cargo;?></h2>
+<h2><?php echo HTML::chars($user->cargo);?></h2>
 <hr class="azul"/>
 <fieldset>
     <legend>Descripcion Usuario:</legend>

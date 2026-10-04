@@ -29,7 +29,7 @@
     <table width="1000" >
         <tr>
             <td>Entidad:</td>
-            <td width="600" ><?php echo $entidad->entidad; ?></td>
+            <td width="600" ><?php echo HTML::chars($entidad->entidad); ?></td>
         </tr>
         <tr>
             <td>La oficina depende de:</td>

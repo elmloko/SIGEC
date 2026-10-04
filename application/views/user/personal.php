@@ -17,8 +17,8 @@
         <?php $i=1; foreach($usuarios as $u):?>
             <tr>
 
-                <td><?php echo $u->nombre?></td>
-                <td><?php echo $u->cargo?></td>
+                <td><?php echo HTML::chars($u->nombre)?></td>
+                <td><?php echo HTML::chars($u->cargo)?></td>
             </tr>    
         <?php $i++; endforeach;?>
         

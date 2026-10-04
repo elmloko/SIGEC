@@ -159,9 +159,9 @@ div.si label.selectedFile {
     <a href="#" class="link save" id="save" title="Guardar cambios hechos al documento" > Guardar</a>
  |  
  <?php if($documento->estado==1):?> 
- <a href="/route/trace/?hr=<?php echo $documento->nur; ?>" class="link derivar" title="Ver seguimiento" >Derivado</a>      
+ <a href="/route/trace/?hr=<?php echo HTML::chars($documento->nur); ?>" class="link derivar" title="Ver seguimiento" >Derivado</a>      
  <?php else: ?>
- <a href="/route/deriv/?hr=<?php echo $documento->nur; ?>" class="link derivar" title="Derivar a partir del documento, si ya esta derivado muestra el seguimiento" >Derivar</a>      
+ <a href="/route/deriv/?hr=<?php echo HTML::chars($documento->nur); ?>" class="link derivar" title="Derivar a partir del documento, si ya esta derivado muestra el seguimiento" >Derivar</a>      
  <?php endif;?>
  |  <a href="/word/<?php echo $tipo->action;?>/<?php echo $documento->id; ?>" class="link word" target="_blank" title="Editar este documento en word" >Editar en Word</a>       
 
@@ -196,7 +196,7 @@ echo Form::input('cargo_des',$documento->cargo_destinatario,array('id'=>'cargo_d
 <?php if($documento->id_tipo==5):?>
 <p>
 <label>Institución Destinatario</label>
-    <input type="text" size="40" value="<?php echo $documento->institucion_destinatario;?>" name="institucion_des" />    
+    <input type="text" size="40" value="<?php echo HTML::chars($documento->institucion_destinatario);?>" name="institucion_des" />    
 </p>
 <input type="hidden" size="40" value="" name="via" />    
 <input type="hidden" size="40" value="" name="cargovia" />    
@@ -264,7 +264,7 @@ echo Form::input('cargovia',$documento->cargo_via,array('id'=>'cargovia','size'=
 <?php
 echo Form::label('referencia', 'Referencia:',array('class'=>'form'));
 ?>
-    <textarea name="referencia" id="referencia" style="width: 525px;"><?php echo $documento->referencia?></textarea>
+    <textarea name="referencia" id="referencia" style="width: 525px;"><?php echo HTML::chars($documento->referencia)?></textarea>
 </td>
 </tr>
 <tr>

@@ -68,21 +68,21 @@ $("#theTable").colResizable({
             <td class="codigo" align="center">
                 <a href="/documento/edit/<?php echo $d->id;?>" ><?php echo substr($d->codigo,0,-13).'<br/>'.substr($d->codigo,-13);?></a>               
             </td>
-            <td ><?php echo $d->nombre_destinatario;?><br/><b><?php echo $d->cargo_destinatario;?></b></td>
-            <td ><?php echo $d->referencia;?></td>
+            <td ><?php echo HTML::chars($d->nombre_destinatario);?><br/><b><?php echo HTML::chars($d->cargo_destinatario);?></b></td>
+            <td ><?php echo HTML::chars($d->referencia);?></td>
             
             <td align="right" valign="center" >
-                <a href="/route/deriv/?hr=<?php echo $d->nur;?>"><?php echo $d->nur;?></a>            
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($d->nur);?>"><?php echo HTML::chars($d->nur);?></a>            
             </td>
             <td align="right" valign="center" ><?php echo Date::fecha_corta($d->fecha_creacion); ?>
              </td> 
             <td style="text-align: right;" >
                 <a href="/word/<?php echo $tipo->action;?>/<?php echo $d->id;?>" title="Editar documento en Word" class="icon" ><img src="/media/images/word07.gif"/></a>                
                 <?php if($d->estado==1):?>                
-                <a href="/route/trace/?hr=<?php echo $d->nur;?>" title="Ver seguimiento" class="icon" ><img src="/media/images/tick.png"/></a>
+                <a href="/route/trace/?hr=<?php echo HTML::chars($d->nur);?>" title="Ver seguimiento" class="icon" ><img src="/media/images/tick.png"/></a>
                 <?php else: ?>   
                 <?php if($d->nur!=''):?>
-                <a href="/route/deriv/?hr=<?php echo $d->nur;?>" title="Derivar" class="icon" ><img src="/media/images/deriva.png" height="16"/></a>                     
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($d->nur);?>" title="Derivar" class="icon" ><img src="/media/images/deriva.png" height="16"/></a>                     
                 <?php else:?>
                 <a href="/document/asignar/<?php echo $d->id;?>" title="Asignar Hoja de Ruta pendiente" class="icon"><img src="/media/images/hojaruta.png" height="16"/></a>            
                 <?php endif;?>

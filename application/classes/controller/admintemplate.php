@@ -21,6 +21,10 @@ class Controller_AdminTemplate extends Controller_Template {
             }
             $this->user = $auth->get_user();
             $session = Session::instance();
+            // ingreso con la contraseña por defecto: primero debe cambiarla (ver Controller_DefaultTemplate)
+            if ($session->get('debe_cambiar_pass')) {
+                $this->request->redirect('/user/pass');
+            }
             //actualizamos o adicionamos session
             $usuario_sesion = ORM::factory('sesiones')
                     ->where('user_id', '=', $auth->get_user()->id)

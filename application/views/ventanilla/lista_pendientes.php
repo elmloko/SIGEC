@@ -57,18 +57,18 @@ $(function(){
     foreach ($pendientes as $d): ?>
         <tr>
             <td style="text-align: right;" >
-                <a href="/route/deriv/?hr=<?php echo $d['nur'];?>"><?php echo $d['nur'];?></a>            
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($d['nur']);?>"><?php echo HTML::chars($d['nur']);?></a>            
             </td>
             <td class="codigo" align="center">
-                <a href="/document/detalle/?id=<?php echo $d['id'];?>" ><?php echo $d['cite_original'];?></a>               
+                <a href="/document/detalle/?id=<?php echo $d['id'];?>" ><?php echo HTML::chars($d['cite_original']);?></a>               
             </td>
             <td>
-                <?php echo $d['nombre_destinatario'];?><br/><b><?php echo $d['cargo_destinatario'];?><br/><?php echo $d['institucion_destinatario'];?></b>
+                <?php echo HTML::chars($d['nombre_destinatario']);?><br/><b><?php echo HTML::chars($d['cargo_destinatario']);?><br/><?php echo HTML::chars($d['institucion_destinatario']);?></b>
             </td>
             <td>
-                <b><?php echo $d['nombre_remitente'];?></b><br/><?php echo $d['cargo_remitente'];?>
+                <b><?php echo HTML::chars($d['nombre_remitente']);?></b><br/><?php echo HTML::chars($d['cargo_remitente']);?>
             </td>
-            <td ><?php echo $d['referencia'];?></td>
+            <td ><?php echo HTML::chars($d['referencia']);?></td>
             <td><?php
                     $mes=(int)date('m',strtotime($d['fecha_creacion']));                       
                     $mes=$meses[$mes];                        
@@ -78,7 +78,7 @@ $(function(){
                 </td> 
             <td style="text-align: right;" >
                 <a href="/window/editar/<?php echo $d['id'];?>" title="Editar documento" ><img src="/media/images/edit.png"/></a>              
-                <a href="/route/deriv/?hr=<?php echo $d['nur'];?>" title="Derivar" ><img src="/media/images/derivar.png"/></a>            
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($d['nur']);?>" title="Derivar" ><img src="/media/images/derivar.png"/></a>            
             </td>             
         </tr>        
     <?php endforeach; ?>

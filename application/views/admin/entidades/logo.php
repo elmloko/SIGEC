@@ -30,7 +30,7 @@
                         ?>
                         <img src="/<?php echo $foto ?>?t=<?php echo time(); ?>" height="90" width="240" alt="" class=" img-rounded" style="margin: 0">                                        
                         <h3 class="text-center col-lg-12">                                        
-                            <?php echo $entidad->sigla; ?>                                       
+                            <?php echo HTML::chars($entidad->sigla); ?>                                       
                         </h3>                                    
                         <span> <a href="javascript:;"  title="<?php echo $title ?>"  alt="<?php echo $title ?>" id="<?php echo $id; ?>" class="col-md-12  text-center">
                                 <?php echo $link; ?>
@@ -65,7 +65,7 @@
             </div>
             <div id="subir_foto">
                 <form action="/admin/entidades/subirfoto" class="dropzone" id="myAwesomeDropzone">
-                    <input type="hidden" name="username" id="ci" value="<?php echo $entidad->sigla; ?>"/>
+                    <input type="hidden" name="username" id="ci" value="<?php echo HTML::chars($entidad->sigla); ?>"/>
                     <input type="hidden" name="idp" id="idp" value="<?php echo $entidad->id; ?>"/>
 
                 </form> 

@@ -2,7 +2,7 @@
 <ul>
     <?php foreach($lista as $l):?>
     <li>
-        <a href="/reportes/<?php echo $l->accion;?>"><span><?php echo $l->nombre;?></span></a>
+        <a href="/reportes/<?php echo $l->accion;?>"><span><?php echo HTML::chars($l->nombre);?></span></a>
     </li>
     <?php endforeach;?>
 </ul>

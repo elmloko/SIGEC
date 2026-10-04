@@ -156,7 +156,7 @@ class Controller_Admin_Oficinas extends Controller_AdminTemplate
                         $correlativo->id_tipo = $t->id;
                         $correlativo->save();
                     }
-                    $info['Exito!'] = 'Se creo correctamente la oficina <b>' . $oficina->oficina . '</b>';
+                    $info['Exito!'] = 'Se creo correctamente la oficina <b>' . HTML::chars($oficina->oficina) . '</b>';
                     $_POST = array();
                 }
             }

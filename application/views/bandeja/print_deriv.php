@@ -34,18 +34,18 @@
             <?php $id=''; foreach($derivado as $d):?>
             <tr>
                 <td>
-                    <?php echo $d['nur'];?>
+                    <?php echo HTML::chars($d['nur']);?>
                 </td>
                 <td>
-                    <?php echo $d['codigo'];?>
+                    <?php echo HTML::chars($d['codigo']);?>
                 </td>
                 <td>
-                    <?php echo $d['proveido'];?>
+                    <?php echo HTML::chars($d['proveido']);?>
                 </td>
                 <td>
-                    <?php echo $d['a_oficina'];?><br/>
-                    <?php echo $d['nombre_receptor'];?><br/>
-                    <?php echo $d['cargo_receptor'];?>
+                    <?php echo HTML::chars($d['a_oficina']);?><br/>
+                    <?php echo HTML::chars($d['nombre_receptor']);?><br/>
+                    <?php echo HTML::chars($d['cargo_receptor']);?>
                 </td>
                 <td>
                     <?php echo $d['fecha_emision']; $id=$d['id']?>

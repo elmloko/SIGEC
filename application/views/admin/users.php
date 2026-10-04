@@ -48,17 +48,17 @@ $(function(){
         <?php foreach($users as $k=>$v ): ?>
         <tr>
             <td>
-                <a href="/admin/user/detalle/<?php echo $v['id_user']?>"><?php echo $v['username']?></a>   
+                <a href="/admin/user/detalle/<?php echo $v['id_user']?>"><?php echo HTML::chars($v['username'])?></a>   
                 
             </td>
             <td>
-             <a href="/admin/user/detalle/<?php echo $v['id_user']?>"><?php echo $v['nombre']?></a>   
+             <a href="/admin/user/detalle/<?php echo $v['id_user']?>"><?php echo HTML::chars($v['nombre'])?></a>   
             </td>
             <td>
-             <?php echo $v['cargo']?>   
+             <?php echo HTML::chars($v['cargo'])?>   
             </td>
             <td>
-             <?php echo $v['oficina']?>   
+             <?php echo HTML::chars($v['oficina'])?>   
             </td>
         </tr>
         <?php endforeach;?>

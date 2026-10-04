@@ -80,17 +80,17 @@
                                     <?php echo Form::checkbox('s', $e->id, FALSE, array('class' => 'check')); ?> 
                                 </td>
                                 <td>
-                                    <?php echo $e->nombre; ?> 
+                                    <?php echo HTML::chars($e->nombre); ?> 
                                 </td>
                                 <td>
-                                    <?php echo $e->cargo; ?>              
+                                    <?php echo HTML::chars($e->cargo); ?>              
                                 </td>
 
                                 <td>
-                                    <?php echo $e->oficina; ?> 
+                                    <?php echo HTML::chars($e->oficina); ?> 
                                 </td>
                                 <td>
-                                    <?php echo $e->sigla; ?> 
+                                    <?php echo HTML::chars($e->sigla); ?> 
                                 </td>            
 
                             </tr>

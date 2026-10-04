@@ -57,7 +57,20 @@ class Auth_ORM extends Kohana_Auth_ORM {
         if (empty($password) || !is_string($password)) {
             return FALSE;
         }
-        return $this->_login($username, $password, $remember);
+        // limite de intentos fallidos (ver LoginLimite); mientras dure el bloqueo ni se verifica la contraseña
+        $clave = is_object($username) ? $username->username : (string) $username;
+        if (LoginLimite::espera($clave) > 0) {
+            return FALSE;
+        }
+        if ($this->_login($username, $password, $remember)) {
+            LoginLimite::exito($clave);
+            // con la contraseña por defecto (la misma para todas las cuentas nuevas o restablecidas)
+            // solo se deja cambiarla: ver Controller_DefaultTemplate / Controller_AdminTemplate
+            Session::instance()->set('debe_cambiar_pass', $this->es_pass_defecto($password));
+            return TRUE;
+        }
+        LoginLimite::fallo($clave);
+        return FALSE;
     }
 
     protected function _login($user, $password, $remember)

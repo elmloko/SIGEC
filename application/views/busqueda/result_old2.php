@@ -43,7 +43,7 @@
                 <tr>
                     <td ><b><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['institucion_remitente']); ?></b></td>
                     <td class="codigo" align="center">
-                        <a href="/route/trace/?hr=<?php echo $d['nur']; ?>"><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['nur']); ?>
+                        <a href="/route/trace/?hr=<?php echo HTML::chars($d['nur']); ?>"><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['nur']); ?>
                         </a> 
                     </td>
                     <td class="codigo" align="center">
@@ -58,7 +58,7 @@
                         <br/><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['cargo_remitente']); ?></td>
                     <td ><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['referencia']); ?></td>           
                     <td ><?php echo $d['fecha_creacion']; ?></td>           
-                    <td ><a href="/route/trace/?hr=<?php echo $d['nur']; ?>" title="Ver seguimiento" class="uiButton" >Ver seguimiento</a></td>           
+                    <td ><a href="/route/trace/?hr=<?php echo HTML::chars($d['nur']); ?>" title="Ver seguimiento" class="uiButton" >Ver seguimiento</a></td>           
                 </tr>        
             <?php endforeach; ?>
         </tbody>

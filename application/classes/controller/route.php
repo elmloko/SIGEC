@@ -719,7 +719,7 @@ class Controller_route extends Controller_DefaultTemplate {
             $this->template->styles = array('media/css/tablas.css' => 'all');
             $this->template->scripts = array('media/js/jquery.tablesorter.min.js');
             $this->template->title.=' / ' . $oficina->oficina;
-            $this->template->titulo = '<v>' . $oficina->oficina . '</v>';
+            $this->template->titulo = '<v>' . HTML::chars($oficina->oficina) . '</v>';
             $this->template->descripcion = 'Lista de Personal';
             $this->template->content = View::factory('user/personal')
                     ->bind('usuarios', $usuarios);

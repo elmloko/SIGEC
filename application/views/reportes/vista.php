@@ -34,16 +34,16 @@
             foreach ($results as $r): ?>
                 <tr>
                     <td><?php echo $i; ?></td>
-                    <td><a href="/route/trace/?hr=<?php echo $r['nur']; ?>"><?php echo $r['nur']; ?></a></td>
-                    <td><?php echo $r['cite_original']; ?></td>
+                    <td><a href="/route/trace/?hr=<?php echo HTML::chars($r['nur']); ?>"><?php echo HTML::chars($r['nur']); ?></a></td>
+                    <td><?php echo HTML::chars($r['cite_original']); ?></td>
                     <td><?php echo $r['fecha_emision']; ?></td>
-                    <td><?php echo $r['institucion_remitente']; ?></td>            
-                    <td><?php echo $r['nombre_remitente']; ?><br/><b><?php echo $r['cargo_remitente']; ?></b></td>
-                    <td><?php echo $r['referencia']; ?></td>            
-                    <td><?php echo $r['nombre_destinatario']; ?><br/><b><?php echo $r['cargo_destinatario']; ?></b></td>
+                    <td><?php echo HTML::chars($r['institucion_remitente']); ?></td>            
+                    <td><?php echo HTML::chars($r['nombre_remitente']); ?><br/><b><?php echo HTML::chars($r['cargo_remitente']); ?></b></td>
+                    <td><?php echo HTML::chars($r['referencia']); ?></td>            
+                    <td><?php echo HTML::chars($r['nombre_destinatario']); ?><br/><b><?php echo HTML::chars($r['cargo_destinatario']); ?></b></td>
                     <td><?php echo $r['fecha_emision']; ?></td>            
                     <td><?php echo $r['estado']; ?></td>
-                    <!-- <td><?php echo $r['nombre_emisor']; ?></td> -->
+                    <!-- <td><?php echo HTML::chars($r['nombre_emisor']); ?></td> -->
                 </tr>
         <?php $i++;
     endforeach; ?>        
@@ -73,15 +73,15 @@ if ($tipo_rep == 2) {
             foreach ($results as $r): ?>
                 <tr>
                     <td><?php echo $i; ?></td>
-                    <td><a href="/route/trace/?hr=<?php echo $r['nur']; ?>"><?php echo $r['nur']; ?></a></td>
-                    <td><?php echo $r['cite_original']; ?></td>
+                    <td><a href="/route/trace/?hr=<?php echo HTML::chars($r['nur']); ?>"><?php echo HTML::chars($r['nur']); ?></a></td>
+                    <td><?php echo HTML::chars($r['cite_original']); ?></td>
                     <td><?php echo $r['fecha_emision']; ?></td>                    
-                    <td><?php echo $r['nombre_remitente']; ?><br/><b><?php echo $r['cargo_remitente']; ?></b></td>
-                    <td><?php echo $r['referencia']; ?></td>            
-                    <td><?php echo $r['nombre_destinatario']; ?><br/><b><?php echo $r['cargo_destinatario']; ?></b></td>
+                    <td><?php echo HTML::chars($r['nombre_remitente']); ?><br/><b><?php echo HTML::chars($r['cargo_remitente']); ?></b></td>
+                    <td><?php echo HTML::chars($r['referencia']); ?></td>            
+                    <td><?php echo HTML::chars($r['nombre_destinatario']); ?><br/><b><?php echo HTML::chars($r['cargo_destinatario']); ?></b></td>
                     <td><?php echo $r['fecha_emision']; ?></td>            
                     <td><?php echo $r['estado']; ?></td>
-                    <!-- <td><?php echo $r['nombre_emisor']; ?></td> -->
+                    <!-- <td><?php echo HTML::chars($r['nombre_emisor']); ?></td> -->
                 </tr>
         <?php $i++;
     endforeach; ?>        

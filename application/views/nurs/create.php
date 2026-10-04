@@ -1,7 +1,7 @@
-<h2 style="border-bottom: 1px dotted #ccc;">Crear NURI a partir del documento : <?php echo $documento->codigo;?><BR/><span>A continuacion elija el proceso para generar un nuevo NURI</span></h2>
+<h2 style="border-bottom: 1px dotted #ccc;">Crear NURI a partir del documento : <?php echo HTML::chars($documento->codigo);?><BR/><span>A continuacion elija el proceso para generar un nuevo NURI</span></h2>
 
 <label>Rerefencia:</label>
-<?php echo $documento->referencia;?>
+<?php echo HTML::chars($documento->referencia);?>
 <fieldset>
     <legend>Formulario para crear un NURI</legend>
     <h2></h2>

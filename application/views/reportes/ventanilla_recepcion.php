@@ -28,16 +28,16 @@
         <?php $i=1; foreach($results as $r):?>
         <tr>
             <td><?php echo $i;?></td>
-            <td><b><?php echo $r['nur'];?></b></td>
-            <td><?php echo $r['cite_original'];?></td>
-            <td><?php echo $r['nombre_destinatario'];?><br/>
-                <b><?php echo $r['cargo_destinatario'];?></b>
+            <td><b><?php echo HTML::chars($r['nur']);?></b></td>
+            <td><?php echo HTML::chars($r['cite_original']);?></td>
+            <td><?php echo HTML::chars($r['nombre_destinatario']);?><br/>
+                <b><?php echo HTML::chars($r['cargo_destinatario']);?></b>
             </td>            
-            <td><?php echo $r['nombre_remitente'];?><br/>
-                <b><?php echo $r['cargo_remitente'];?></b>
+            <td><?php echo HTML::chars($r['nombre_remitente']);?><br/>
+                <b><?php echo HTML::chars($r['cargo_remitente']);?></b>
             </td>
-            <td><?php echo $r['referencia'];?></td>            
-            <td><?php echo $r['adjuntos'];?></td>            
+            <td><?php echo HTML::chars($r['referencia']);?></td>            
+            <td><?php echo HTML::chars($r['adjuntos']);?></td>            
             <td><?php echo $r['hojas'];?></td>            
             <td><?php echo (1 == $r['estado']) ? 'Si' : 'No';?></td>            
         </tr>

@@ -290,7 +290,7 @@ for ($i = 5; $i >= 0; $i--) {
                     <span class="es-kpi-icono" style="background:<?php echo $t['fondo']; ?>;color:<?php echo $t['color']; ?>"><i class="fa <?php echo $t['icono']; ?>"></i></span>
                     <b><?php echo $n($t['valor']); ?></b>
                 </span>
-                <span class="es-kpi-nombre"><?php echo $t['titulo']; ?></span>
+                <span class="es-kpi-nombre"><?php echo HTML::chars($t['titulo']); ?></span>
                 <span class="es-kpi-pie"><?php echo $t['pie']; ?></span>
                 <span class="es-kpi-ver"><?php echo (int) $t['valor'] === 0 ? '—' : 'Ver la lista →'; ?></span>
             </a>

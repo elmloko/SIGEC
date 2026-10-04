@@ -79,7 +79,7 @@
 
 <p style="float: right; margin-top: -15px;"><a href="javascript:void(0)" id="imprime" class="uiButton print" title="imprimir"><img src="/media/images/print.png" align="absmiddle" alt=""/>Imprimir</a></p>
 </h2>
-<div id="oficina" style="font-size: 16px; text-align: center;"><?php echo $oficina->oficina;?>
+<div id="oficina" style="font-size: 16px; text-align: center;"><?php echo HTML::chars($oficina->oficina);?>
 </div>
 
 <div id="container" style="width:100%; height: 600px; margin: 0 auto;"></div>
@@ -96,8 +96,8 @@
     <tbody>
         <?php $i=1; foreach ($pendientes as $p):?>
         <tr>            
-            <td><?php echo $p['nombre']?>
-            <br/><b><?php echo $p['cargo']?></b></td>
+            <td><?php echo HTML::chars($p['nombre'])?>
+            <br/><b><?php echo HTML::chars($p['cargo'])?></b></td>
             <td><?php echo $p['oficial']?></td>            
             <td><?php echo $p['copia']?></td>            
             <td><?php echo $p['archivado']?></td>            

@@ -63,7 +63,7 @@
                     <?php echo $e->tipo; ?> 
                 </td>            
                 <td>
-                    <?php echo $e->descripcion; ?>              
+                    <?php echo HTML::chars($e->descripcion); ?>              
                 </td>                        
             </tr>
         <?php endforeach; ?>

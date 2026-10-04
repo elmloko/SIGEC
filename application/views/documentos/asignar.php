@@ -21,14 +21,14 @@
     <div class="card card-underline">
         <div class="card-head">
             <header>
-                <span>Asignar hoja de ruta al documento:</span><span class="text-primary-dark"><?php echo $documento->cite_original ?></span>
+                <span>Asignar hoja de ruta al documento:</span><span class="text-primary-dark"><?php echo HTML::chars($documento->cite_original) ?></span>
             </header>
         </div>
         <div class="card-body">
 
             <div class="row">
                 <div class="col-md-10">
-                    Referencia: <?php echo $documento->referencia ?>
+                    Referencia: <?php echo HTML::chars($documento->referencia) ?>
                 </div>
                 <div class="col-md-2">
                     <a href="/document/newHR/<?php echo $documento->id; ?>" class="btn btn-sm btn-accent-dark" > + ASIGNAR NUEVA HOJA RUTA</a>    
@@ -74,9 +74,9 @@
                     <tbody>
                         <?php foreach ($pendientes as $p): ?>
                             <tr>
-                                <td><?php echo $p->nur; ?></td>
-                                <td><?php echo $p->referencia; ?></td>
-                                <td><a href="/document/asignacion/?hr=<?php echo $p->nur; ?>&id_doc=<?php echo $documento->id; ?>" class="btn btn-sm text-accent-dark btn-default-light" title="Asignar a la hoja de ruta '<?php echo $p->nur; ?>'"><i class="md md-class"></i> Asignar</a></td>
+                                <td><?php echo HTML::chars($p->nur); ?></td>
+                                <td><?php echo HTML::chars($p->referencia); ?></td>
+                                <td><a href="/document/asignacion/?hr=<?php echo HTML::chars($p->nur); ?>&id_doc=<?php echo $documento->id; ?>" class="btn btn-sm text-accent-dark btn-default-light" title="Asignar a la hoja de ruta '<?php echo HTML::chars($p->nur); ?>'"><i class="md md-class"></i> Asignar</a></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

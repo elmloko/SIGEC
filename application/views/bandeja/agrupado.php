@@ -7,17 +7,17 @@
             <div class="card-head">
                 <header><i class="fa fa-link"></i> Correspondencia Agrupada</header>
                 <div class=" pull-right">
-                    <a href="/print/agrupado/?code=<?php echo $padre->nur; ?>" target="_blank" class="btn btn-sm btn-primary-dark"><i class="fa fa-print"></i> Imprimir</a>
+                    <a href="/print/agrupado/?code=<?php echo HTML::chars($padre->nur); ?>" target="_blank" class="btn btn-sm btn-primary-dark"><i class="fa fa-print"></i> Imprimir</a>
                 </div>
             </div>
             <div class="card-body">
-                <header ><h4 class=" text-accent-dark">Principal : <a href="/route/trace/?hr=<?php echo $padre->nur; ?>"><?php echo $padre->nur; ?></a></h4></header>
+                <header ><h4 class=" text-accent-dark">Principal : <a href="/route/trace/?hr=<?php echo HTML::chars($padre->nur); ?>"><?php echo HTML::chars($padre->nur); ?></a></h4></header>
                 <div class="row">
                     <div class="col-md-2">
                         Cite Original:
                     </div>
                     <div class="col-md-10">
-                        <?php echo $padre->cite_original; ?>
+                        <?php echo HTML::chars($padre->cite_original); ?>
                     </div>
                 </div>
                 <div class="row">
@@ -25,7 +25,7 @@
                         Referencia:
                     </div>
                     <div class="col-md-10">
-                        <?php echo $padre->referencia; ?>
+                        <?php echo HTML::chars($padre->referencia); ?>
                     </div>
                 </div>
                 <div class="row">
@@ -33,8 +33,8 @@
                         Destinatario:
                     </div>
                     <div class="col-md-10">
-                        <?php echo $padre->nombre_destinatario; ?>
-                        <br/><?php echo $padre->cargo_destinatario; ?>
+                        <?php echo HTML::chars($padre->nombre_destinatario); ?>
+                        <br/><?php echo HTML::chars($padre->cargo_destinatario); ?>
                     </div>
                 </div>
                 <div class="row">
@@ -42,8 +42,8 @@
                         Remitente:
                     </div>
                     <div class="col-md-10">
-                        <?php echo $padre->nombre_remitente; ?>
-                        <br/><?php echo $padre->cargo_remitente; ?>
+                        <?php echo HTML::chars($padre->nombre_remitente); ?>
+                        <br/><?php echo HTML::chars($padre->cargo_remitente); ?>
                     </div>
                 </div>
                 <hr>
@@ -52,17 +52,17 @@
                     <?php foreach ($hijos as $h): ?>
                         <tr>
                             <td>
-                                <a href="/route/trace/?hr=<?php echo $h['nur']; ?>"><?php echo $h['nur']; ?></a>                        
+                                <a href="/route/trace/?hr=<?php echo HTML::chars($h['nur']); ?>"><?php echo HTML::chars($h['nur']); ?></a>                        
                             </td>
                             <td>
                                 <?php echo $h['documento']; ?>
                             </td>
                             <td>
-                                <?php echo $h['referencia']; ?>
+                                <?php echo HTML::chars($h['referencia']); ?>
                             </td>
                             <td>
-                                <?php echo $h['destinatario']; ?>
-                                <br/><b><?php echo $h['cargo']; ?></b>
+                                <?php echo HTML::chars($h['destinatario']); ?>
+                                <br/><b><?php echo HTML::chars($h['cargo']); ?></b>
                             </td>
 
                         </tr>

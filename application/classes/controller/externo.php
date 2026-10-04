@@ -141,7 +141,8 @@ class Controller_Externo extends Controller
                 $entidad_id = $id_entidad;
                 $gestion_de_consulta = $gestion;
                 $navegador_web = SqlSafe::value(Arr::get($_POST, 'client_web_browser', ''));
-                $visita_ip = SqlSafe::value(isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']));
+                // Client-IP / X-Forwarded-For las escribe el propio visitante: se usa la IP real de la conexion
+                $visita_ip = SqlSafe::value(Arr::get($_SERVER, 'REMOTE_ADDR', ''));
                 $visita_url = SqlSafe::value($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
                 $ciudad = SqlSafe::value(Arr::get($_POST, 'client_city', ''));
                 $pais = SqlSafe::value(Arr::get($_POST, 'client_country', ''));
@@ -397,6 +398,17 @@ class Controller_Externo extends Controller
         $result = db::query(Database::SELECT, $sql)->execute();
         $result1 = db::query(Database::SELECT, "SELECT @pv_resultado AS resultado, @pv_mensaje AS mensaje, @pv_mensajebd AS mensajebd;")->execute();
 
+        // el reclamo recien creado queda como "propio" de esta sesion: solo quien lo registro puede verle
+        // los datos de contacto y editarlo (el procedimiento no devuelve el id, se busca el ultimo igual)
+        $nuevo = DB::query(Database::SELECT, 'SELECT MAX(id) AS id FROM observacion_seguimiento_externo
+                    WHERE id_seguimiento = :seg AND observacion = :obs AND correo = :correo AND telefono = :tel')
+            ->param(':seg', Arr::get($_POST, 'id_seguimiento', ''))
+            ->param(':obs', Arr::get($_POST, 'observacion', ''))
+            ->param(':correo', Arr::get($_POST, 'email', ''))
+            ->param(':tel', Arr::get($_POST, 'telefono', ''))
+            ->execute()->get('id');
+        ReclamoExterno::agregar($nuevo);
+
         // --- [INICIO] OBTENER USUARIO CON RECLAMO ---
         $sql_seguimiento_con_reclamo = "SELECT 
                                             *
@@ -453,10 +465,10 @@ class Controller_Externo extends Controller
                     </head>
                     <body>
                     <p>
-                        Estimado Sr(a): <span><b>' . $nombre_receptor . '</b>.</span>
+                        Estimado Sr(a): <span><b>' . HTML::chars($nombre_receptor) . '</b>.</span>
                     </p>
                     <p>
-                        En fecha ' . $fecha_actual . ' a horas ' . $hora_actual . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur . '</span> con <span style="text-decoration: underline;">Referencia: </span>"' . $referencia . '".
+                        En fecha ' . $fecha_actual . ' a horas ' . $hora_actual . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . HTML::chars($nur) . '</span> con <span style="text-decoration: underline;">Referencia: </span>"' . HTML::chars($referencia) . '".
                     </p>
                     <p>
                         Usted puede revisar los RECLAMOS realizados en el siguiente enlace: <a href="' . $link_bandeja_reclamos . '">' . $link_bandeja_reclamos . '</a>
@@ -478,10 +490,11 @@ class Controller_Externo extends Controller
         $mail->CharSet = 'UTF-8';
         $mail->SMTPAuth = true;
         //$mail->SMTPKeepAlive = true;
-        $mail->Host = "mail.oopp.gob.bo";
-        $mail->Port = 25;
-        $mail->Username = "sigec@oopp.gob.bo";
-        $mail->Password = "0;!g*F9cI6Mn";
+        $smtp = Kohana::$config->load('smtp_secret');
+        $mail->Host = $smtp->get('host', 'mail.oopp.gob.bo');
+        $mail->Port = $smtp->get('port', 25);
+        $mail->Username = $smtp->get('username', 'sigec@oopp.gob.bo');
+        $mail->Password = $smtp->get('password');
         $mail->SMTPSecure = 'tls';
         $mail->SetFrom('sigec@oopp.gob.bo', 'SIGEC');
         $mail->Subject = $asunto;
@@ -568,13 +581,13 @@ class Controller_Externo extends Controller
                     </head>
                     <body>
                     <p>
-                        Estimado Sr(a): <span><b>' . $nombre_receptor . '</b>.</span>
+                        Estimado Sr(a): <span><b>' . HTML::chars($nombre_receptor) . '</b>.</span>
                     </p>
                     <p>
-                        En fecha ' . $fecha_actual . ' a horas ' . $hora_actual . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur . '</span> con <span style="text-decoration: underline;">Referencia: </span>"' . $referencia . '".
+                        En fecha ' . $fecha_actual . ' a horas ' . $hora_actual . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . HTML::chars($nur) . '</span> con <span style="text-decoration: underline;">Referencia: </span>"' . HTML::chars($referencia) . '".
                     </p>
                     <p>
-                        Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="https://sigec.oopp.gob.bo/route/trace/?hr=' . $nur . '">' . $nur . '</a>
+                        Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="https://sigec.oopp.gob.bo/route/trace/?hr=' . HTML::chars($nur) . '">' . HTML::chars($nur) . '</a>
                     </p>
                     <p>
                         ____________________________________________________________________
@@ -593,10 +606,11 @@ class Controller_Externo extends Controller
         $mail->CharSet = 'UTF-8';
         $mail->SMTPAuth = true;
         //$mail->SMTPKeepAlive = true;
-        $mail->Host = "mail.oopp.gob.bo";
-        $mail->Port = 25;
-        $mail->Username = "sigec@oopp.gob.bo";
-        $mail->Password = "0;!g*F9cI6Mn";
+        $smtp = Kohana::$config->load('smtp_secret');
+        $mail->Host = $smtp->get('host', 'mail.oopp.gob.bo');
+        $mail->Port = $smtp->get('port', 25);
+        $mail->Username = $smtp->get('username', 'sigec@oopp.gob.bo');
+        $mail->Password = $smtp->get('password');
         $mail->SMTPSecure = 'tls';
         $mail->SetFrom('sigec@oopp.gob.bo', 'SIGEC');
         $mail->Subject = $asunto;
@@ -608,8 +622,21 @@ class Controller_Externo extends Controller
     }
     */
 
+    /** Corta la peticion si el reclamo no fue registrado en esta misma sesion. */
+    private function exigir_reclamo_propio($id_observacion)
+    {
+        if (!ReclamoExterno::es_propio($id_observacion)) {
+            $this->response->status(403);
+            header('HTTP/1.1 403 Forbidden');
+            header('Content-Type: application/json');
+            echo json_encode(array('resultado' => 0, 'mensaje' => 'Solo puede modificar los reclamos que registró en esta sesión.'));
+            exit;
+        }
+    }
+
     public function action_getObservacionAEditar()
     {
+        $this->exigir_reclamo_propio(Arr::get($_POST, 'id_observacion', ''));
         $id_observacion = SqlSafe::value(Arr::get($_POST, 'id_observacion', ''));
 
         $sql = "SELECT 
@@ -627,6 +654,7 @@ class Controller_Externo extends Controller
 
     public function action_editarReclamo()
     {
+        $this->exigir_reclamo_propio(Arr::get($_POST, 'id_observacion', ''));
         $id_observacion = SqlSafe::value(Arr::get($_POST, 'id_observacion', ''));
         $id_seguimiento = SqlSafe::value(Arr::get($_POST, 'id_seguimiento', ''));
         $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
@@ -715,7 +743,7 @@ class Controller_Externo extends Controller
                                 En fecha ' . $fecha_observacion_formateada . ' a horas ' . $hora_observacion_formateada . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur_observacion . '</span>.
                             </p>
                             <p>
-                                La respuesta a su reclamo es la siguiente: <span style="font-weight: bold;">' . $respuesta . '</span>.
+                                La respuesta a su reclamo es la siguiente: <span style="font-weight: bold;">' . HTML::chars($respuesta) . '</span>.
                             </p>                        
                             <p>
                                 Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="' . $http . $_SERVER['SERVER_NAME'] . '/externo/seguimientoExterno/?hr=' . $nur_observacion . '">' . $nur_observacion . '</a>
@@ -773,7 +801,7 @@ class Controller_Externo extends Controller
                             En fecha ' . $fecha_observacion_formateada . ' a horas ' . $hora_observacion_formateada . ' se ha realizado un RECLAMO respecto al estado del Trámite con <span style="text-decoration: underline;">Nº de Hoja de Ruta: </span><span style="font-weight: bold;">' . $nur_observacion . '</span>.
                         </p>
                         <p>
-                            La respuesta a su reclamo es la siguiente: <span style="font-weight: bold;">' . $respuesta . '</span>.
+                            La respuesta a su reclamo es la siguiente: <span style="font-weight: bold;">' . HTML::chars($respuesta) . '</span>.
                         </p>                        
                         <p>
                             Usted puede revisar la Hoja de Ruta en el siguiente enlace: <a href="' . $http . $_SERVER['SERVER_NAME'] . '/externo/seguimientoExterno/?hr=' . $nur_observacion . '">' . $nur_observacion . '</a>
@@ -1021,10 +1049,11 @@ class Controller_Externo extends Controller
         $mail->CharSet = 'UTF-8';
         $mail->SMTPAuth = true;
         //$mail->SMTPKeepAlive = true;
-        $mail->Host = "mail.oopp.gob.bo";
-        $mail->Port = 25;
-        $mail->Username = "sigec@oopp.gob.bo";
-        $mail->Password = "0;!g*F9cI6Mn";
+        $smtp = Kohana::$config->load('smtp_secret');
+        $mail->Host = $smtp->get('host', 'mail.oopp.gob.bo');
+        $mail->Port = $smtp->get('port', 25);
+        $mail->Username = $smtp->get('username', 'sigec@oopp.gob.bo');
+        $mail->Password = $smtp->get('password');
         $mail->SMTPSecure = 'tls';
         $mail->SetFrom('reclamos@oopp.gob.bo', 'reclamos');
         //$mail->SetFrom('sigec' . $contador . '@oopp.gob.bo', 'SIGEC');

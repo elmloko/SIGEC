@@ -93,12 +93,12 @@
             <tbody>
                 <?php foreach ($enviados as $e): ?>
                     <tr>
-                        <td><?php echo $e['nur'] ?></td>
-                        <td><?php echo $e['nombre_emisor'] ?><br/><?php echo $e['cargo_emisor'] ?></td>
+                        <td><?php echo HTML::chars($e['nur']) ?></td>
+                        <td><?php echo HTML::chars($e['nombre_emisor']) ?><br/><?php echo HTML::chars($e['cargo_emisor']) ?></td>
                         <td><?php echo $e['fecha_emision'] ?></td>
-                        <td><?php echo $e['nombre_receptor'] ?><br/><?php echo $e['cargo_receptor'] ?><br/><?php echo $e['a_oficina']?></td>
+                        <td><?php echo HTML::chars($e['nombre_receptor']) ?><br/><?php echo HTML::chars($e['cargo_receptor']) ?><br/><?php echo HTML::chars($e['a_oficina'])?></td>
                         <td><?php echo $e['fecha_recepcion'] ?></td>
-                        <td><?php echo $e['proveido'] ?></td>
+                        <td><?php echo HTML::chars($e['proveido']) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

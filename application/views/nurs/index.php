@@ -50,22 +50,22 @@ $(function()
         <?php foreach($results as $n):?>
         <tr>
             <td><b><?php echo $n->nur;;?></b></td>
-            <td><?php echo $n->cite_original;?></td>                                                
-            <td><?php echo $n->nombre_destinatario;?><br/><b><?php echo $n->cargo_destinatario;?></b></td>
-            <td><?php echo $n->nombre_remitente;?><br/><b><?php echo $n->cargo_remitente;?></b></td>
-            <td><?php echo $n->referencia;?></td>                       
-            <td><?php echo $n->adjuntos;?></td>                       
+            <td><?php echo HTML::chars($n->cite_original);?></td>                                                
+            <td><?php echo HTML::chars($n->nombre_destinatario);?><br/><b><?php echo HTML::chars($n->cargo_destinatario);?></b></td>
+            <td><?php echo HTML::chars($n->nombre_remitente);?><br/><b><?php echo HTML::chars($n->cargo_remitente);?></b></td>
+            <td><?php echo HTML::chars($n->referencia);?></td>                       
+            <td><?php echo HTML::chars($n->adjuntos);?></td>                       
             <td><?php echo $n->hojas;?></td>                       
             <td><?php echo $n->fecha_creacion;?></td>                       
             <td align="center" width="50" >
                 <?php if($n->estado):?>
-                <a href="/seguimiento/?nur=<?php echo $n->nur;?>" title="Ver seguimiento del NUR <?php echo $n->nur; ?>" >Derivado</a>                
+                <a href="/seguimiento/?nur=<?php echo HTML::chars($n->nur);?>" title="Ver seguimiento del NUR <?php echo HTML::chars($n->nur); ?>" >Derivado</a>                
                 <?php else: ?>
-                <a href="/hojaruta/derivar/?nur=<?php echo $n->nur;?>" title="Derivar <?php echo $n->nur; ?>" ><img src="/media/images/deriv.png"/></a>                
+                <a href="/hojaruta/derivar/?nur=<?php echo HTML::chars($n->nur);?>" title="Derivar <?php echo HTML::chars($n->nur); ?>" ><img src="/media/images/deriv.png"/></a>                
                 <?php endif;?>                
             </td>        
             <td>
-                <a href="/print_hr.php?nur=<?php echo $n->nur;?>" title="Imprimir <?php echo $n->nur; ?>" ><img src="/media/images/printer.png"/> </a>
+                <a href="/print_hr.php?nur=<?php echo HTML::chars($n->nur);?>" title="Imprimir <?php echo HTML::chars($n->nur); ?>" ><img src="/media/images/printer.png"/> </a>
             </td>
         </tr>
         <?php endforeach;?>

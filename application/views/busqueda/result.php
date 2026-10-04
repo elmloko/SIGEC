@@ -38,7 +38,7 @@
                                     <tr>
                                         <td ><b><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['institucion_remitente']); ?></b></td>
                                         <td class="codigo" align="center">
-                                            <a href="/route/trace/?hr=<?php echo $d['nur']; ?>"><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['nur']); ?>
+                                            <a href="/route/trace/?hr=<?php echo HTML::chars($d['nur']); ?>"><?php echo str_replace($name, "<span class='resultado'>$name</span>", $d['nur']); ?>
                                             </a> 
                                         </td>
                                         <td class="codigo" align="center">
@@ -56,7 +56,7 @@
                                         <td ><?php if ($d['estado'] == 0 && $d['original'] == 1): ?>
                                                 No Derivado          
                                             <?php else: ?>
-                                                <a href="/route/trace/?hr=<?php echo $d['nur']; ?>" title="Ver seguimiento" class="text-success text-xl" ><i class="md md- md-verified-user "></i></a>           
+                                                <a href="/route/trace/?hr=<?php echo HTML::chars($d['nur']); ?>" title="Ver seguimiento" class="text-success text-xl" ><i class="md md- md-verified-user "></i></a>           
                                             <?php endif; ?>                                        
                                         </td>
                                     </tr>        

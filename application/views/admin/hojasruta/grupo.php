@@ -78,7 +78,7 @@
                 <tbody>
                 <?php foreach ($hijos as $h): ?>
                     <tr>
-                        <td><a href="/route/trace/?hr=<?php echo $h['nur']; ?>" target="_blank"><b><?php echo HTML::chars($h['nur']); ?></b></a></td>
+                        <td><a href="/route/trace/?hr=<?php echo HTML::chars($h['nur']); ?>" target="_blank"><b><?php echo HTML::chars($h['nur']); ?></b></a></td>
                         <td><?php echo HTML::chars($h['cite_original']); ?></td>
                         <td><?php echo HTML::chars($h['referencia']); ?></td>
                         <td><?php echo HTML::chars($h['oficial']); ?></td>

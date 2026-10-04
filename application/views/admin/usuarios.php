@@ -45,11 +45,11 @@ $(function(){
 <?php $i=1; foreach ($usuarios as $u):?>
         <tr>
             <td><?php echo $i; $i++;?></td>
-            <td><?php echo $u->username;?></td>
-            <td><?php echo $u->nombre;?></td>
-            <td><?php echo $u->cargo;?></td>
-            <td><?php echo $u->email;?></td>
-            <td><?php echo $u->oficina;?></td>
+            <td><?php echo HTML::chars($u->username);?></td>
+            <td><?php echo HTML::chars($u->nombre);?></td>
+            <td><?php echo HTML::chars($u->cargo);?></td>
+            <td><?php echo HTML::chars($u->email);?></td>
+            <td><?php echo HTML::chars($u->oficina);?></td>
             <td><?php echo $u->nivel;?></td>
             <td><?php echo HTML::anchor('admin/user/'.$u->id,'Detalle');?></td>
         </tr>

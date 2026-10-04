@@ -47,7 +47,7 @@ error_reporting(E_ALL);
                             </td>
                             <td valign="top" colspan="3">
                                 <h4 class="text-primary-dark">
-                                    <?php echo $s->referencia; ?>
+                                    <?php echo HTML::chars($s->referencia); ?>
                                 </h4>
                             </td>
                         </tr>
@@ -56,15 +56,15 @@ error_reporting(E_ALL);
                             </td>
                             <td class="derecha" valign="top">
                                 <span class="proveido text-accent-light">
-                                    <i class=" fa fa-comments-o"></i> <?php echo $s->observacion; ?></span>
+                                    <i class=" fa fa-comments-o"></i> <?php echo HTML::chars($s->observacion); ?></span>
                                 <br/>
                             </td>
                         </tr>
                         <tr>
                             <td width="88">
-                                <a href="/externo/seguimientoExterno/?hr=<?php echo $s->nur; ?>"
+                                <a href="/externo/seguimientoExterno/?hr=<?php echo HTML::chars($s->nur); ?>"
                                    class="nur<?php echo $s->oficial; ?>">
-                                    <?php echo $s->nur ?>
+                                    <?php echo HTML::chars($s->nur) ?>
                                 </a>
                             </td>
                             <td colspan="2">

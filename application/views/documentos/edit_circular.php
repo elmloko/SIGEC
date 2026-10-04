@@ -146,7 +146,7 @@ div.si label.selectedFile {
 }
     
 </style>
-<h2 class="subtitulo">Editar <?php echo $documento->codigo;?> - <b><?php echo $documento->nur;?></b><br/><span> Editar documento <?php echo $documento->codigo;?> </span></h2>
+<h2 class="subtitulo">Editar <?php echo HTML::chars($documento->codigo);?> - <b><?php echo HTML::chars($documento->nur);?></b><br/><span> Editar documento <?php echo HTML::chars($documento->codigo);?> </span></h2>
 <div class="tabs">
     <ul class="tabNavigation">
         <li><a href="#editar">Edición</a></li>
@@ -158,7 +158,7 @@ div.si label.selectedFile {
 <div style="border-bottom: 1px solid #ccc; background: #F2F7FC; display: block; padding: 10px 0;   width: 100%;  ">    
     <a href="#" class="link save" id="save" title="Guardar cambios hechos al documento" > Guardar</a>
  | <a href="/pdf/<?php echo $tipo->action?>.php?id=<?php echo $documento->id; ?>" class="link pdf" target="_blank" title="Imprimir PDF" >Imprimir PDF</a>
- |  <a href="/hojaruta/derivar/?nur=<?php echo $documento->nur; ?>" class="link derivar" title="Derivar a partir del documento, si ya esta derivado muestra el seguimiento" >Derivar</a>      
+ |  <a href="/hojaruta/derivar/?nur=<?php echo HTML::chars($documento->nur); ?>" class="link derivar" title="Derivar a partir del documento, si ya esta derivado muestra el seguimiento" >Derivar</a>      
  |  <a href="/word/print.php?id=<?php echo $documento->id; ?>" class="link word" target="_blank" title="Enviar a un documento word" >Editar en Word</a>       
 </div>
     <form action="/documento/editar/<?php echo $documento->id;?>" method="post" id="frmCreate" >  
@@ -191,7 +191,7 @@ echo Form::input('cargo_des',$documento->cargo_destinatario,array('id'=>'cargo_d
 <?php if($documento->id_tipo==5):?>
 <p>
 <label>Institución Destinatario</label>
-    <input type="text" size="40" value="<?php echo $documento->institucion_destinatario;?>" name="institucion_des" />    
+    <input type="text" size="40" value="<?php echo HTML::chars($documento->institucion_destinatario);?>" name="institucion_des" />    
 </p>
 <input type="hidden" size="40" value="" name="via" />    
 <input type="hidden" size="40" value="" name="cargovia" />    
@@ -259,7 +259,7 @@ echo Form::input('cargovia',$documento->cargo_via,array('id'=>'cargovia','size'=
 <?php
 echo Form::label('referencia', 'Referencia:',array('class'=>'form'));
 ?>
-    <textarea name="referencia" id="referencia" style="width: 525px;"><?php echo $documento->referencia?></textarea>
+    <textarea name="referencia" id="referencia" style="width: 525px;"><?php echo HTML::chars($documento->referencia)?></textarea>
 </td>
 </tr>
 <tr>

@@ -27,7 +27,11 @@ class Controller_login extends Controller_Mintemplate {
                 $validate = Validation::factory($this->request->post());
                 $validate->rule('username', 'not_empty')
                         ->rule('password', 'not_empty');
-                if ($validate->check()) {
+                // el limite se aplica en Auth_ORM::login (vale para todas las pantallas de ingreso); aqui solo el aviso
+                $espera = LoginLimite::espera(html::chars(Arr::get($_POST, 'username', '')));
+                if ($espera > 0) {
+                    $this->template->errors['login'] = 'Demasiados intentos fallidos. Espere ' . ceil($espera / 60) . ' minuto(s) e inténtelo de nuevo.';
+                } elseif ($validate->check()) {
                     //si activo el recordar
                     $remember = FALSE;
                     if (isset($_POST['remember'])) {

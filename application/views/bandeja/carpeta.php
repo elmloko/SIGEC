@@ -32,10 +32,10 @@
             <tbody>
                 <?php foreach ($carpeta as $c): ?>
                     <tr>
-                        <td><a href="/route/trace/?hr=<?php echo $c['nur'] ?>"><?php echo $c['nur']; ?></a></td>
-                        <td><?php echo $c['codigo']; ?></td>            
-                        <td><?php echo $c['referencia']; ?></td>
-                        <td><?php echo $c['observaciones']; ?></td>
+                        <td><a href="/route/trace/?hr=<?php echo HTML::chars($c['nur']) ?>"><?php echo HTML::chars($c['nur']); ?></a></td>
+                        <td><?php echo HTML::chars($c['codigo']); ?></td>            
+                        <td><?php echo HTML::chars($c['referencia']); ?></td>
+                        <td><?php echo HTML::chars($c['observaciones']); ?></td>
                         <td><?php echo $c['fecha_archivo']; ?></td>            
                         <td>
                             <?php if ($c['id_user'] == $user->id): ?>

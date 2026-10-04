@@ -87,22 +87,22 @@
                                                 <a class="entidad-seleccionada" onclick="obtenerEntidadSeleccionada()"
                                                    nombre="ministro"
                                                    style="font-family: Arial,Helvetica,sans-serif;">
-                                                    <?php echo $v['nombre'] ?>
+                                                    <?php echo HTML::chars($v['nombre']) ?>
                                                 </a>
                                             </li>
                                             -->
                                             <li class="entidad fa fa-home"
                                                 id_entidad="<?php echo $v['id_entidad'] ?>"
-                                                nombre_entidad="<?php echo $v['nombre_entidad'] ?>"
+                                                nombre_entidad="<?php echo HTML::chars($v['nombre_entidad']) ?>"
                                                 sigla_entidad="<?php echo $v['sigla_entidad'] ?>"
                                                 estado="<?php echo $v['estado'] ?>"
                                                 codigo_entidad="<?php echo $v['codigo_entidad'] ?>"
-                                                nombre_mae="<?php echo $v['nombre_mae'] ?>"
-                                                cargo_mae="<?php echo $v['cargo_mae'] ?>">
+                                                nombre_mae="<?php echo HTML::chars($v['nombre_mae']) ?>"
+                                                cargo_mae="<?php echo HTML::chars($v['cargo_mae']) ?>">
 
                                                 <a class="entidad-seleccionada" onclick="obtenerEntidadSeleccionada()"
                                                    style="font-family: Arial,Helvetica,sans-serif;">
-                                                    <?php echo $v['nombre_entidad'] ?>
+                                                    <?php echo HTML::chars($v['nombre_entidad']) ?>
                                                 </a>
                                             </li>
                                             <br>

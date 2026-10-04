@@ -56,7 +56,7 @@ $(function(){
     <?php echo Form::label('Entidad'); ?>    
     </td>
     <td>
-    <?php echo $entidad->entidad; ?>
+    <?php echo HTML::chars($entidad->entidad); ?>
     </td>
 </tr>
 <tr>
@@ -64,7 +64,7 @@ $(function(){
     <?php echo Form::label('Oficina');?>
     </td>
     <td>
-    <?php echo $oficina->oficina;?>    
+    <?php echo HTML::chars($oficina->oficina);?>    
     </td>
     
 </tr>

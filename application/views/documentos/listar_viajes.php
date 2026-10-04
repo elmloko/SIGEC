@@ -62,20 +62,20 @@ $(function(){
             <td class="codigo" align="center">
                 <a href="/documento/edit/<?php echo $d->id;?>" ><?php echo substr($d->codigo,0,-13).'<br/>'.substr($d->codigo,-13);?></a>               
             </td>
-            <td ><?php echo $d->nombre_destinatario;?><br/><b><?php echo $d->cargo_destinatario;?></b></td>
-            <td ><?php echo $d->referencia;?></td>
+            <td ><?php echo HTML::chars($d->nombre_destinatario);?><br/><b><?php echo HTML::chars($d->cargo_destinatario);?></b></td>
+            <td ><?php echo HTML::chars($d->referencia);?></td>
             
             <td align="right" valign="center" >
-                <a href="/route/deriv/?hr=<?php echo $d->nur;?>"><?php echo $d->nur;?></a>            
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($d->nur);?>"><?php echo HTML::chars($d->nur);?></a>            
             </td>
             <td align="right" valign="center" ><?php echo Date::fecha_corta($d->fecha_creacion); ?>
              </td> 
             <td style="text-align: right;" >
                 <a href="/excel/<?php echo $tipo->action;?>/<?php echo $d->id;?>" title="Enviar a excel para su impresión" class="uiButton" ><img src="/media/images/excel.png"/></a>                                
                 <?php if($d->estado==1):?>                
-                <a href="/route/trace/?hr=<?php echo $d->nur;?>" title="Ver seguimiento" class="uiButton" ><img src="/media/images/tick.png"/></a>
+                <a href="/route/trace/?hr=<?php echo HTML::chars($d->nur);?>" title="Ver seguimiento" class="uiButton" ><img src="/media/images/tick.png"/></a>
                 <?php else: ?>                
-                <a href="/route/deriv/?hr=<?php echo $d->nur;?>" title="Derivar" class="uiButton" ><img src="/media/images/deriva.png" height="16"/></a>          
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($d->nur);?>" title="Derivar" class="uiButton" ><img src="/media/images/deriva.png" height="16"/></a>          
                 <?php endif;?>
                 <a href="/documento/edit/<?php echo $d->id;?>" title="Editar documento" class="uiButton" ><img src="/media/images/24/pen.png" height="16"/></a>                                  
             </td>             

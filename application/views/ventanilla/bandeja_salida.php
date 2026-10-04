@@ -161,22 +161,22 @@ input[type="text"]{ line-height: 20px; height: 20px; font-size: 14px;}
 <div class="bandeja">
     <table class="oficial<?php echo $s->oficial;?>">
         <tr class="header">
-            <td width="85" align="center"><a href="/seguimiento/id/<?php echo $s->nur;?>"<b style="font-size:12px;"><?php  echo $s->nur?></b></a></td>
-            <td colspan="2"><?php echo $s->a_oficina; ?></td>            
+            <td width="85" align="center"><a href="/seguimiento/id/<?php echo HTML::chars($s->nur);?>"<b style="font-size:12px;"><?php  echo HTML::chars($s->nur)?></b></a></td>
+            <td colspan="2"><?php echo HTML::chars($s->a_oficina); ?></td>            
             <td class="derecha"><?php $fecha =  new Controller_myClass($s->fecha); echo $fecha->larga();?></td>
-            <td><?php if($s->hijo==1):?><a href="/bandeja/agrupado/<?php echo $s->nur;?>"><img src="/media/images/docs.gif" title="Agrupado" align="right"/></a><?php endif;?></td>
+            <td><?php if($s->hijo==1):?><a href="/bandeja/agrupado/<?php echo HTML::chars($s->nur);?>"><img src="/media/images/docs.gif" title="Agrupado" align="right"/></a><?php endif;?></td>
          </tr>         
         <tr>
             <td valign="bottom"  rowspan="2" class="nur<?php echo $s->oficial;?>" ><br/><br/><br/></td>
-            <td><?php echo $s->nombre_receptor; ?><br/><b><?php echo $s->cargo_receptor; ?></b></td>            
+            <td><?php echo HTML::chars($s->nombre_receptor); ?><br/><b><?php echo HTML::chars($s->cargo_receptor); ?></b></td>            
             <td> <?php echo $s->accion; ?></td>
-            <td><b>Documento: </b> <?php echo $s->codigo; ?></td>
+            <td><b>Documento: </b> <?php echo HTML::chars($s->codigo); ?></td>
                 <td align="right">
-                    <a href="#?=300" rel="popup_name" title="Cancelar derivacion" class="poplight uiButton" nur="<?php echo $s->id;?>" id_nur="<?php echo $s->nur;?>" hs="<?php echo $s->nur;?>"  id_seg="<?php echo $s->id;?>" nuri="<?php echo $s->nur?>"><img src="/media/images/reestablecer.png" align="absmiddle"  /> C</a>                    
+                    <a href="#?=300" rel="popup_name" title="Cancelar derivacion" class="poplight uiButton" nur="<?php echo $s->id;?>" id_nur="<?php echo HTML::chars($s->nur);?>" hs="<?php echo HTML::chars($s->nur);?>"  id_seg="<?php echo $s->id;?>" nuri="<?php echo HTML::chars($s->nur)?>"><img src="/media/images/reestablecer.png" align="absmiddle"  /> C</a>                    
                 </td>
         </tr>
         <tr>
-            <td colspan="5"><b>Proveido: </b><?php echo $s->proveido;?></td>
+            <td colspan="5"><b>Proveido: </b><?php echo HTML::chars($s->proveido);?></td>
         </tr>
     </table>    
 </div>     

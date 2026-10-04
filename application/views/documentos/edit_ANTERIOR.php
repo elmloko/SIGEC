@@ -194,7 +194,7 @@
                             <?php if ($documento->id_tipo == 5): ?>
                                 <p>
                                     <label>Institución Destinatario</label>
-                                    <input type="text" size="40" value="<?php echo $documento->institucion_destinatario; ?>" name="institucion_des" />    
+                                    <input type="text" size="40" value="<?php echo HTML::chars($documento->institucion_destinatario); ?>" name="institucion_des" />    
                                 </p>
                                 <input type="hidden" size="40" value="" name="via" />    
                                 <input type="hidden" size="40" value="" name="cargovia" />    
@@ -244,10 +244,10 @@
                         <td style="padding-left: 5px;" valign="top">
                             <input type="submit" name="documento" value="Modificar documento" class="button2" />   
                             <?php if ($documento->estado == 1): ?> 
-                                <a href="/route/trace/?hr=<?php echo $documento->nur; ?>" class="button" title="Ver seguimiento" ><img src="/media/images/tick.png"/>Ver Seg</a>      
+                                <a href="/route/trace/?hr=<?php echo HTML::chars($documento->nur); ?>" class="button" title="Ver seguimiento" ><img src="/media/images/tick.png"/>Ver Seg</a>      
                             <?php else: ?>
                                 <?php if ($documento->nur != ''): ?>
-                                    <a href="/route/deriv/?hr=<?php echo $documento->nur; ?>" class="button" title="Derivar documento" ><img src="/media/images/deriva.png"/> Derivar</a>      
+                                    <a href="/route/deriv/?hr=<?php echo HTML::chars($documento->nur); ?>" class="button" title="Derivar documento" ><img src="/media/images/deriva.png"/> Derivar</a>      
                                 <?php else: ?>
                                     <a href="/document/asignar/<?php echo $documento->id; ?>" class="button">Asignar HR</a>
                                 <?php endif; ?>
@@ -258,7 +258,7 @@
                             <?php
                             echo Form::label('referencia', 'Referencia:', array('class' => 'form'));
                             ?>
-                            <textarea name="referencia" id="referencia" style="width: 425px;"><?php echo $documento->referencia ?></textarea>
+                            <textarea name="referencia" id="referencia" style="width: 425px;"><?php echo HTML::chars($documento->referencia) ?></textarea>
                         </td>
                         <td style="padding-left: 5px;" valign="top">
                             <?php echo Form::input('addDest', '+Agregar Destinatario', array('class' => 'button2', 'type' => 'button', 'id' => 'addDest', 'rel' => $user->id)); ?>

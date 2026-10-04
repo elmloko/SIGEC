@@ -48,7 +48,7 @@
     <div class="card card-underline">
         <div class="card-head">
             <header>
-                <span class="text-medium">Editar: </span><span class="text-info"><?php echo $documento->nur ?> </span>
+                <span class="text-medium">Editar: </span><span class="text-info"><?php echo HTML::chars($documento->nur) ?> </span>
             </header>
                             <span class=" pull-right">
                     <a href="/ventanilla" class="btn btn-sm btn-success " title="Recepcionar nuevo"> + Recepcionar
@@ -90,7 +90,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <!-- Muestra los Archivos  -->
-                                 <a href="/print/hr/?code=<?php echo $documento->nur; ?>"
+                                 <a href="/print/hr/?code=<?php echo HTML::chars($documento->nur); ?>"
                                     class="btn btn-sm btn-accent-dark" title="Imprimir hoja de ruta"><i
                                     class="fa fa-print"></i> Hoja de Ruta</a>
 
@@ -99,7 +99,7 @@
                                     <?php
                                     echo Form::input('submit', 'Modificar', array('type' => 'submit', 'class' => 'btn btn-sm btn-primary-dark', 'id' => 'crear'));
                                     ?>
-                                    <a href="/route/deriv/?hr=<?php echo $documento->nur; ?>"
+                                    <a href="/route/deriv/?hr=<?php echo HTML::chars($documento->nur); ?>"
                                        class="btn btn-sm btn-default"
                                        title="Derivar a partir del documento, si ya esta derivado muestra el seguimiento">Derivar</a>
 
@@ -136,7 +136,7 @@
                         <div class="col-md-8">
                             <div class="form-group">
                                 <textarea id="descripcion" name="descripcion" class="required form-control"
-                                          index="5"><?php echo $documento->referencia; ?></textarea>
+                                          index="5"><?php echo HTML::chars($documento->referencia); ?></textarea>
                                 <?php
                                 echo Form::label('referencia', 'Referencia:', array('class' => ''));
                                 ?>

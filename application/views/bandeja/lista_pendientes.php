@@ -60,7 +60,7 @@ $('a.link2').click(function(){
 });    
     });
 </script>
-<h2 class="subtitulo">Pendientes: <?php echo  $user->nombre;?> | <b><?php echo $user->cargo;?></b><br/><span>Correspondencia pendiente </span></h2>
+<h2 class="subtitulo">Pendientes: <?php echo  HTML::chars($user->nombre);?> | <b><?php echo HTML::chars($user->cargo);?></b><br/><span>Correspondencia pendiente </span></h2>
 <div id="popup_name" class="popup_block">  
     <form method="post" action="/hojaruta/responder">    
     <table class="classy">
@@ -111,7 +111,7 @@ $('a.link2').click(function(){
     <h2 style="text-align: center; color: #3263A0; ">Lista de correspondencia pendiente</h2>
     <form action="/bandeja/doa" method="post" id="doa" >
     <?php foreach($entrada as $s): ?>
-<div class="bandeja tipo<?php echo $s->oficial;?>" style="display:inline-block;" oficina="<?php echo $s->de_oficina?>" proceso="<?php echo $s->referencia?>"  fecha="<?php echo $s->fecha;?>" hojaruta="<?php echo $s->nur;?>">
+<div class="bandeja tipo<?php echo $s->oficial;?>" style="display:inline-block;" oficina="<?php echo HTML::chars($s->de_oficina)?>" proceso="<?php echo HTML::chars($s->referencia)?>"  fecha="<?php echo $s->fecha;?>" hojaruta="<?php echo HTML::chars($s->nur);?>">
     <table class="oficial<?php echo $s->oficial;?>">
         <tr>
             <td width="88" align="center" valign="top" class="nur<?php echo $s->oficial;?>">
@@ -120,9 +120,9 @@ $('a.link2').click(function(){
 			</td>
             <td width="50%" colspan="2" valign="top">
 				<div>
-				<h2 class="referencia"><a href="/documento/detalle/<?php echo $s->id_doc?>" style="color:#366FB0;line-height: 22px;  "><?php echo $s->referencia; ?></a></h2>
-				<span class="oficina">Procedencia: <b><?php echo $s->de_oficina;?></b><span><br/>
-                                        <span class="remite">Remite: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?php echo $s->nombre_emisor; ?> | <b><?php echo $s->cargo_emisor; ?></b></span><br/>
+				<h2 class="referencia"><a href="/documento/detalle/<?php echo $s->id_doc?>" style="color:#366FB0;line-height: 22px;  "><?php echo HTML::chars($s->referencia); ?></a></h2>
+				<span class="oficina">Procedencia: <b><?php echo HTML::chars($s->de_oficina);?></b><span><br/>
+                                        <span class="remite">Remite: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?php echo HTML::chars($s->nombre_emisor); ?> | <b><?php echo HTML::chars($s->cargo_emisor); ?></b></span><br/>
 				<span class="accion"><?php echo $s->accion;?></span><br/>                                
 				<br/> 				
                                 </div>
@@ -130,13 +130,13 @@ $('a.link2').click(function(){
             <td class="derecha" valign="top">
                                 <div>
                                     <span><b>F.Recepción: </b><?php echo Date::fecha($s->fecha2);?></span><br/><br/>
-                                    <span><b>Proveido: </b><?php echo $s->proveido;?></span>
+                                    <span><b>Proveido: </b><?php echo HTML::chars($s->proveido);?></span>
                                 </div>
             </td>            
          </tr>
          <tr>
              <td width="88">
-                 <a href="/seguimiento/?nur=<?php echo $s->nur;?>" class="nur<?php echo $s->oficial;?>"><?php  echo $s->nur?></a>
+                 <a href="/seguimiento/?nur=<?php echo HTML::chars($s->nur);?>" class="nur<?php echo $s->oficial;?>"><?php  echo HTML::chars($s->nur)?></a>
              </td>
              <td colspan="2">                
 <?php  $segundos=(time()-strtotime($s->fecha2)); ?>

@@ -133,7 +133,7 @@
                         <div class="hbox-column width-2">
                             <?php if (file_exists(DOCROOT . 'static/fotos/' . $cuenta['username'] . '.jpg')): ?>
                                 <img class="img-circle img-responsive pull-left"
-                                     src="/static/fotos/<?php echo $cuenta['username'] ?>.jpg?<?php echo time() ?>"
+                                     src="/static/fotos/<?php echo HTML::chars($cuenta['username']) ?>.jpg?<?php echo time() ?>"
                                      alt=""/>
                                 <?php
                             else:
@@ -146,21 +146,21 @@
                             <div class="clearfix">
                                 <div class="col-lg-12 margin-bottom-lg">
                                     <span class="text-lg text-medium">
-                                        <?php echo $cuenta['nombre']; ?>
+                                        <?php echo HTML::chars($cuenta['nombre']); ?>
                                     </span>
                                 </div>
                             </div>
                             <div class="clearfix opacity-75">
                                 <div class="col-md-12">
                                     <span class="glyphicon glyphicon-phone text-sm"></span>
-                                    &nbsp;<?php echo $cuenta['cargo']; ?>
+                                    &nbsp;<?php echo HTML::chars($cuenta['cargo']); ?>
                                 </div>
                             </div>
                             <div class="clearfix">
                                 <div class="col-lg-12">
                                     <span class="opacity-75">
                                         <span class="glyphicon glyphicon-map-marker text-sm"></span>
-                                        &nbsp;<?php echo $cuenta['oficina']; ?>
+                                        &nbsp;<?php echo HTML::chars($cuenta['oficina']); ?>
                                     </span>
                                 </div>
                             </div>

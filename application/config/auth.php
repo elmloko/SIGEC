@@ -5,7 +5,7 @@ return array(
 	'driver'       => 'ORM',
 	'hash_method'  => 'sha256',
 	'hash_key'     => '2, 4, 6, 7, 9, 15, 20, 23, 25, 30',
-	'lifetime'     => 1209600,
+	'lifetime'     => 604800, // 7 dias (antes 14) para la sesion "recordarme"
 	'session_key'  => 'session_native', //'auth_user'
 
 	// Username/password combinations for the Auth File driver

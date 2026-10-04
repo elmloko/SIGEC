@@ -27,14 +27,14 @@
         <?php $i=1; foreach($results as $r):?>
         <tr>
             <td><?php echo $i;?></td>
-            <td><a href="/route/trace/?hr=<?php echo $r['nur'];?>"><?php echo $r['nur'];?></a></td>
-            <td><?php echo $r['codigo'];?></td> 
+            <td><a href="/route/trace/?hr=<?php echo HTML::chars($r['nur']);?>"><?php echo HTML::chars($r['nur']);?></a></td>
+            <td><?php echo HTML::chars($r['codigo']);?></td> 
             <td><?php echo $r['fecha'];?></td>
-            <td><?php echo $r['nombre_emisor'];?><br><?php echo $r['cargo_emisor'];?></td>
-            <td><?php echo $r['nombre_destinatario'];?><br><?php echo $r['cargo_destinatario'];?></td>
-            <td><?php echo $r['referencia'];?></td>  
-  <td><?php echo $r['proveido'];?></td>
-<td><?php echo $r['de_oficina'];?></td>  
+            <td><?php echo HTML::chars($r['nombre_emisor']);?><br><?php echo HTML::chars($r['cargo_emisor']);?></td>
+            <td><?php echo HTML::chars($r['nombre_destinatario']);?><br><?php echo HTML::chars($r['cargo_destinatario']);?></td>
+            <td><?php echo HTML::chars($r['referencia']);?></td>  
+  <td><?php echo HTML::chars($r['proveido']);?></td>
+<td><?php echo HTML::chars($r['de_oficina']);?></td>  
         </tr>
         <?php $i++; endforeach;?>
         

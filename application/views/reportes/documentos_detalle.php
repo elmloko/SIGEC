@@ -58,12 +58,12 @@ $(function(){
             <td class="codigo" align="center">
                 <b><?php echo substr($d->codigo,0,-13).'<br/>'.substr($d->codigo,-13);?></b>               
             </td>
-            <td ><?php echo $d->nombre_destinatario;?><br/><b><?php echo $d->cargo_destinatario;?></b></td>
-            <td ><?php echo $d->nombre_remitente;?><br/><b><?php echo $d->cargo_remitente;?></b></td>
-            <td ><?php echo $d->referencia;?></td>
+            <td ><?php echo HTML::chars($d->nombre_destinatario);?><br/><b><?php echo HTML::chars($d->cargo_destinatario);?></b></td>
+            <td ><?php echo HTML::chars($d->nombre_remitente);?><br/><b><?php echo HTML::chars($d->cargo_remitente);?></b></td>
+            <td ><?php echo HTML::chars($d->referencia);?></td>
             
             <td align="right" valign="center" >
-                <a href="/route/trace/?hr=<?php echo $d->nur;?>"><?php echo $d->nur;?></a>            
+                <a href="/route/trace/?hr=<?php echo HTML::chars($d->nur);?>"><?php echo HTML::chars($d->nur);?></a>            
             </td>
             <td align="right" valign="center" ><?php echo Date::fecha_corta($d->fecha_creacion); ?>
              </td>                       

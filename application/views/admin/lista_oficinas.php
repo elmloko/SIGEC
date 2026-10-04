@@ -56,13 +56,13 @@ $(function(){
                 <?php echo $o['id'];?>
             </td>
             <td>
-                <a href="/admin/user/lista/<?php echo $o['id'];?>"><?php echo $o['oficina'];?></a>
+                <a href="/admin/user/lista/<?php echo $o['id'];?>"><?php echo HTML::chars($o['oficina']);?></a>
             </td>
             <td>
-                <a href="/admin/user/lista/<?php echo $o['id'];?>"><?php echo $o['sigla'];?></a>
+                <a href="/admin/user/lista/<?php echo $o['id'];?>"><?php echo HTML::chars($o['sigla']);?></a>
             </td>
             <td>
-                <a href="/admin/oficinas/lista/<?php echo $o['id_entidad'];?>" title="<?php echo $o['entidad'];?>"><?php echo $o['sigla_entidad'];?></a>
+                <a href="/admin/oficinas/lista/<?php echo $o['id_entidad'];?>" title="<?php echo HTML::chars($o['entidad']);?>"><?php echo $o['sigla_entidad'];?></a>
             </td>
             <td>
                 <a href="/admin/user/lista/<?php echo $o['id'];?>"><img src="/media/images/16x16/Write.png" /></a>

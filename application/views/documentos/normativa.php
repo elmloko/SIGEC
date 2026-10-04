@@ -25,7 +25,7 @@ $('table tbody tr:odd').addClass('even');
     <tbody>
         <?php foreach ($documentos as $documento): ?>
         <tr>
-            <td  ><?php echo $documento->titulo;?></td><td id="tamanio"><?php echo number_format($documento->tamanio/1024,0,',','.');?> Kb</td><td id="fecha"><?php echo date('d/m/Y', $documento->fecha_subida);?></td>
+            <td  ><?php echo HTML::chars($documento->titulo);?></td><td id="tamanio"><?php echo number_format($documento->tamanio/1024,0,',','.');?> Kb</td><td id="fecha"><?php echo date('d/m/Y', $documento->fecha_subida);?></td>
             <td id="doc">
                 <?php $archivo=pathinfo($documento->nombre_documento);
                 echo HTML::anchor('upload/'.$documento->nombre_documento, '',array('class'=>strtolower($archivo['extension']),'target'=>'_blank'));?>

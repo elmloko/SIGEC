@@ -186,11 +186,11 @@ class Controller_Ajax extends Controller
         $total = $result_total[0]['total'];
         foreach ($result as $row) {
             $data[] = array(
-                'cite_original' => '<b>' . $row->cite_original . '</b>',
+                'cite_original' => '<b>' . HTML::chars($row->cite_original) . '</b>',
                 'nur' => $row->nur,
                 'id_tipo' => $row->tipo,
-                'nombre_destinatario' => $row->nombre_destinatario,
-                'referencia' => $row->referencia,
+                'nombre_destinatario' => HTML::chars($row->nombre_destinatario),
+                'referencia' => HTML::chars($row->referencia),
                 'estado' => utf8_encode($row->estado)
             );
         }
@@ -674,18 +674,18 @@ class Controller_Ajax extends Controller
         foreach ($result as $row) {
             $orders[] = array(
                 'nur' => $row['nur'],
-                'cite_original' => $row['cite_original'],
-                'nombre_destinatario' => $row['nombre_destinatario'],
-                'cargo_destinatario' => $row['cargo_destinatario'],
+                'cite_original' => HTML::chars($row['cite_original']),
+                'nombre_destinatario' => HTML::chars($row['nombre_destinatario']),
+                'cargo_destinatario' => HTML::chars($row['cargo_destinatario']),
                 // 'institucion_destinatario' => $row['institucion_destinatario'],
                 // 'institucion_remitente' => $row['institucion_remitente'],
-                'nombre_remitente' => $row['nombre_remitente'],
-                'cargo_remitente' => $row['cargo_remitente'],
-                'referencia' => $row['referencia'],
+                'nombre_remitente' => HTML::chars($row['nombre_remitente']),
+                'cargo_remitente' => HTML::chars($row['cargo_remitente']),
+                'referencia' => HTML::chars($row['referencia']),
                 'fecha_creacion' => $row['fecha_creacion'],
                 // 'estado' => $row['estado'],
-                'nombre' => $row['nombre'] . ' / ' . $row['cargo'],
-                'cargo' => $row['cargo'],
+                'nombre' => HTML::chars($row['nombre']) . ' / ' . HTML::chars($row['cargo']),
+                'cargo' => HTML::chars($row['cargo']),
             );
         }
         $data[] = array(
@@ -854,23 +854,23 @@ class Controller_Ajax extends Controller
           foreach ($result as $row) {
           $orders[] = array(
           'nur' => $row['nur'],
-          'cite_original' => $row['cite_original'],
-          'nombre_destinatario' => $row['nombre_destinatario'],
-          'cargo_destinatario' => $row['cargo_destinatario'],
+          'cite_original' => HTML::chars($row['cite_original']),
+          'nombre_destinatario' => HTML::chars($row['nombre_destinatario']),
+          'cargo_destinatario' => HTML::chars($row['cargo_destinatario']),
           // 'institucion_destinatario' => $row['institucion_destinatario'],
           // 'institucion_remitente' => $row['institucion_remitente'],
-          'nombre_remitente' => $row['nombre_remitente'],
-          'cargo_remitente' => $row['cargo_remitente'],
-          'referencia' => $row['referencia'],
+          'nombre_remitente' => HTML::chars($row['nombre_remitente']),
+          'cargo_remitente' => HTML::chars($row['cargo_remitente']),
+          'referencia' => HTML::chars($row['referencia']),
           'fecha_creacion' => $row['fecha_creacion'],
           // 'estado' => $row['estado'],
-          'nombre' => $row['nombre'] . ' / ' . $row['cargo'],
-          'cargo' => $row['cargo'],
+          'nombre' => HTML::chars($row['nombre']) . ' / ' . HTML::chars($row['cargo']),
+          'cargo' => HTML::chars($row['cargo']),
           );
           } */
         $data[] = array(
             'TotalRows' => $total_rows,
-            'Rows' => $result
+            'Rows' => Salida::filas($result, array('accion_realizada'))
         );
         echo json_encode($data);
     }
@@ -1113,18 +1113,18 @@ class Controller_Ajax extends Controller
         foreach ($result as $row) {
             $orders[] = array(
                 'nur' => $row['nur'],
-                'cite_original' => $row['cite_original'],
-                'nombre_destinatario' => $row['nombre_destinatario'],
-                'cargo_destinatario' => $row['cargo_destinatario'],
+                'cite_original' => HTML::chars($row['cite_original']),
+                'nombre_destinatario' => HTML::chars($row['nombre_destinatario']),
+                'cargo_destinatario' => HTML::chars($row['cargo_destinatario']),
                 // 'institucion_destinatario' => $row['institucion_destinatario'],
                 // 'institucion_remitente' => $row['institucion_remitente'],
-                'nombre_remitente' => $row['nombre_remitente'],
-                'cargo_remitente' => $row['cargo_remitente'],
-                'referencia' => $row['referencia'],
+                'nombre_remitente' => HTML::chars($row['nombre_remitente']),
+                'cargo_remitente' => HTML::chars($row['cargo_remitente']),
+                'referencia' => HTML::chars($row['referencia']),
                 'fecha_creacion' => $row['fecha_creacion'],
                 'estado' => $row['estado'],
-                'nombre_receptor' => $row['nombre_receptor'] . ' / ' . $row['cargo_receptor'],
-                'cargo_receptor' => $row['cargo_receptor'],
+                'nombre_receptor' => HTML::chars($row['nombre_receptor']) . ' / ' . HTML::chars($row['cargo_receptor']),
+                'cargo_receptor' => HTML::chars($row['cargo_receptor']),
                 'fecha_recepcion' => $row['fecha_recepcion'],
                 'd1' => $row['d1'],
                 'd2' => $row['d2'],
@@ -1431,14 +1431,14 @@ class Controller_Ajax extends Controller
         foreach ($result as $row) {
             $orders[] = array(
                 'nur' => $row['nur'],
-                'cite_original' => $row['cite_original'],
-                'nombre_destinatario' => $row['nombre_destinatario'],
-                'cargo_destinatario' => $row['cargo_destinatario'],
-                'institucion_destinatario' => $row['institucion_destinatario'],
-                'institucion_remitente' => $row['institucion_remitente'],
-                'nombre_remitente' => $row['nombre_remitente'],
-                'cargo_remitente' => $row['cargo_remitente'],
-                'referencia' => $row['referencia'],
+                'cite_original' => HTML::chars($row['cite_original']),
+                'nombre_destinatario' => HTML::chars($row['nombre_destinatario']),
+                'cargo_destinatario' => HTML::chars($row['cargo_destinatario']),
+                'institucion_destinatario' => HTML::chars($row['institucion_destinatario']),
+                'institucion_remitente' => HTML::chars($row['institucion_remitente']),
+                'nombre_remitente' => HTML::chars($row['nombre_remitente']),
+                'cargo_remitente' => HTML::chars($row['cargo_remitente']),
+                'referencia' => HTML::chars($row['referencia']),
                 'fecha_creacion' => $row['fecha_creacion']
             );
         }

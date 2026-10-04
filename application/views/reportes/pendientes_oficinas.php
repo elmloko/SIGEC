@@ -78,7 +78,7 @@
 </script>
 
 <h2 class="subtitulo">Reporte: Pendientes por oficinas<br/><span>Lista de pendientes por oficina</span></h2>
-<div id="oficina" style="font-size: 16px; text-align: center;"><?php echo $entidad->entidad;?></div>
+<div id="oficina" style="font-size: 16px; text-align: center;"><?php echo HTML::chars($entidad->entidad);?></div>
 <div id="container" style="width: 850px; height: 650px; margin: 0 auto"></div>
 <table id="theTable">
     <thead>
@@ -92,8 +92,8 @@
     <tbody>
         <?php $i=1; foreach ($pendientes as $p):?>
         <tr>            
-            <td><?php echo $p['nombre']?>
-            <br/><b><?php echo $p['cargo']?></b></td>
+            <td><?php echo HTML::chars($p['nombre'])?>
+            <br/><b><?php echo HTML::chars($p['cargo'])?></b></td>
             <td><?php echo $p['oficial']?></td>            
             <td><?php echo $p['copia']?></td>            
             <td><?php echo $p['archivado']?></td>            

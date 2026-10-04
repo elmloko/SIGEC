@@ -109,7 +109,7 @@
             <tr>
                 <td> 
                     <?php
-                    echo $p['nombre'];
+                    echo HTML::chars($p['nombre']);
                     ?>
                 </td>
                 <td> 

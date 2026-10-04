@@ -12,12 +12,12 @@
         <?php foreach($result as $n):?>
         <tr>
             <td><?php echo HTML::anchor('seguimiento/hs/'. $n['id'],$n['nuri']);?></td>
-            <td><?php echo $n['proceso'];?></td>
-            <td><?php echo $n['referencia'];?></td>
-            <td><?php echo $n['codigo'];?></td>
-            <td><?php echo $n['codigo'];?></td>
-            <td><?php echo $n['codigo'];?></td>
-            <td><?php echo $n['codigo'];?></td>
+            <td><?php echo HTML::chars($n['proceso']);?></td>
+            <td><?php echo HTML::chars($n['referencia']);?></td>
+            <td><?php echo HTML::chars($n['codigo']);?></td>
+            <td><?php echo HTML::chars($n['codigo']);?></td>
+            <td><?php echo HTML::chars($n['codigo']);?></td>
+            <td><?php echo HTML::chars($n['codigo']);?></td>
         </tr>
         <?php endforeach;?>
     </tbody>

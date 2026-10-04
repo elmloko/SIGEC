@@ -17,23 +17,23 @@
     *{ font-size: 13px; }
 </style>
 <h2 style="text-align: center;"><?php // echo strtoupper($d->id_tipo);?></h2>
-<h2 style="text-align: center; color: #23599B;"><?php echo $d->cite_original;?></h2>
-<h2 style="text-align: center;"><?php echo $d->nur;?></h2>
+<h2 style="text-align: center; color: #23599B;"><?php echo HTML::chars($d->cite_original);?></h2>
+<h2 style="text-align: center;"><?php echo HTML::chars($d->nur);?></h2>
 <hr/>
 <table>
     <tr>
         <td><b>Destinatario:</b></td>
-        <td colspan="2"><?php echo $d->nombre_destinatario;?><br/><b><?php echo $d->cargo_destinatario;?></b></td>
+        <td colspan="2"><?php echo HTML::chars($d->nombre_destinatario);?><br/><b><?php echo HTML::chars($d->cargo_destinatario);?></b></td>
     </tr>
     <?php if(trim($d->nombre_via)!=''){ ?>
     <tr> 
         <td><b>Via:</b><br/> </td>
-        <td colspan="2"><?php echo $d->nombre_via;?><br/><b><?php echo $d->cargo_via;?></b></td>
+        <td colspan="2"><?php echo HTML::chars($d->nombre_via);?><br/><b><?php echo HTML::chars($d->cargo_via);?></b></td>
     </tr>
     <?php } ?>
     <tr> 
         <td><b>Remitente:</b><br/> </td>
-        <td colspan="2"><?php echo $d->nombre_remitente;?><br/><b><?php echo $d->cargo_remitente;?></b></td>
+        <td colspan="2"><?php echo HTML::chars($d->nombre_remitente);?><br/><b><?php echo HTML::chars($d->cargo_remitente);?></b></td>
     </tr>
     <tr> 
         <td><b>Fecha de Creacion:</b><br/> </td>
@@ -75,7 +75,7 @@
     ?>
 
     <tr> <td><b>Referencia:</b><br/> </td>
-         <td colspan="2"><?php echo $d->referencia;?></td>
+         <td colspan="2"><?php echo HTML::chars($d->referencia);?></td>
     </tr>
    
     <tr><td colspan="3"><hr/></td></tr>

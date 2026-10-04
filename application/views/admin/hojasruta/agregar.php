@@ -11,7 +11,7 @@
     <div class="card-head">
         <header><i class="fa fa-user-plus"></i> Agregar destinatario a la hoja de ruta <b><?php echo HTML::chars($ref->nur); ?></b></header>
         <tools class="pull-right">
-            <a href="/route/trace/?hr=<?php echo $ref->nur; ?>" class="btn btn-sm btn-default">Volver al seguimiento</a>
+            <a href="/route/trace/?hr=<?php echo HTML::chars($ref->nur); ?>" class="btn btn-sm btn-default">Volver al seguimiento</a>
         </tools>
     </div>
     <div class="card-body">
@@ -50,7 +50,7 @@
                 <button type="submit" name="enviar" value="1" class="btn btn-sm btn-primary-dark">
                     <i class="md md-person-add"></i> Agregar destinatario (copia)
                 </button>
-                <a href="/route/trace/?hr=<?php echo $ref->nur; ?>" class="btn btn-sm btn-default">Cancelar</a>
+                <a href="/route/trace/?hr=<?php echo HTML::chars($ref->nur); ?>" class="btn btn-sm btn-default">Cancelar</a>
             </div>
         </form>
     </div>

@@ -181,23 +181,23 @@ input[type="text"]{line-height: 20px; height: 20px; font-size: 14px;}
     <table class="oficial<?php echo $s->oficial;?>">
         <tr class="header">
             <td width="80" align="center"><b><?php echo form::checkbox('archivar',$s->id)?></b></td>
-            <td><?php echo $s->de_oficina; ?></td>
-            <td><?php echo $s->proceso; ?></td>            
+            <td><?php echo HTML::chars($s->de_oficina); ?></td>
+            <td><?php echo HTML::chars($s->proceso); ?></td>            
             <td colspan="2"><?php $fecha =  new Controller_myClass($s->fecha); echo $fecha->larga();?></td>
          </tr>         
         <tr>
-            <td  rowspan="2" class="nur<?php echo $s->oficial;?>" ><br/><br/><br/><a href="/seguimiento/id/<?php echo $s->id_nur;?>"<b style="font-size:12px;"><?php  echo $s->nur?></b></a></td>
-            <td><?php echo $s->nombre_emisor; ?><br/><b><?php echo $s->cargo_emisor; ?></b></td>            
+            <td  rowspan="2" class="nur<?php echo $s->oficial;?>" ><br/><br/><br/><a href="/seguimiento/id/<?php echo $s->id_nur;?>"<b style="font-size:12px;"><?php  echo HTML::chars($s->nur)?></b></a></td>
+            <td><?php echo HTML::chars($s->nombre_emisor); ?><br/><b><?php echo HTML::chars($s->cargo_emisor); ?></b></td>            
             <td> <?php echo $s->accion; ?></td>
-            <td><b>Documento: </b> <?php echo $s->codigo; ?></td>
+            <td><b>Documento: </b> <?php echo HTML::chars($s->codigo); ?></td>
                 <td align="right">
-                    <a href="#?w=350" class="poplight" rel="popup_name" title="Responder al nuri <?php echo $s->nur;?>" id_nur="<?php echo $s->id_nur;?>" id_seg="<?php echo $s->id;?>" nuri="<?php echo $s->nur?>"><img src="/media/images/24/outbox.png" /></a>  
-                    <a href="/hojaruta/derivar/?id=<?php echo $s->id_nur;?>" title="Derivar" id_nur="<?php echo $s->id_nur;?>" id_seg="<?php echo $s->id;?>" nuri="<?php echo $s->nur?>"><img src="/media/images/document--arrow.png" /></a>  
+                    <a href="#?w=350" class="poplight" rel="popup_name" title="Responder al nuri <?php echo HTML::chars($s->nur);?>" id_nur="<?php echo $s->id_nur;?>" id_seg="<?php echo $s->id;?>" nuri="<?php echo HTML::chars($s->nur)?>"><img src="/media/images/24/outbox.png" /></a>  
+                    <a href="/hojaruta/derivar/?id=<?php echo $s->id_nur;?>" title="Derivar" id_nur="<?php echo $s->id_nur;?>" id_seg="<?php echo $s->id;?>" nuri="<?php echo HTML::chars($s->nur)?>"><img src="/media/images/document--arrow.png" /></a>  
                     <a href="/hojaruta/archivar/<?php echo $s->id;?>" title="Archivar hoja de ruta" ><img src="/media/images/folders.jpg" /></a>                  
                 </td>
         </tr>
         <tr>
-            <td colspan="5"><b>Proveido: </b><?php echo $s->proveido;?></td>
+            <td colspan="5"><b>Proveido: </b><?php echo HTML::chars($s->proveido);?></td>
         </tr>
     </table>
     

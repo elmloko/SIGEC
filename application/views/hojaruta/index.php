@@ -124,19 +124,19 @@ $('a.close, #fade, #cancelar').live('click', function(){ //When clicking on the 
     <tbody>
         <?php foreach($result as $n):?>
         <tr>
-            <td><a href="/route/trace/?hr=<?php echo $n['nur']?>"><?php echo $n['nur'];?></a></td>           
-            <td><b><?php echo $n['cite_original'];?></b></td>                        
-            <td><?php echo $n['nombre_destinatario'];?><br/><b><?php echo $n['cargo_destinatario'];?></b></td>
-            <td><?php echo $n['referencia'];?></td>                       
+            <td><a href="/route/trace/?hr=<?php echo HTML::chars($n['nur'])?>"><?php echo HTML::chars($n['nur']);?></a></td>           
+            <td><b><?php echo HTML::chars($n['cite_original']);?></b></td>                        
+            <td><?php echo HTML::chars($n['nombre_destinatario']);?><br/><b><?php echo HTML::chars($n['cargo_destinatario']);?></b></td>
+            <td><?php echo HTML::chars($n['referencia']);?></td>                       
             <td><?php echo Date::fecha_corta($n['fecha_creacion']);?></td>                       
             <td align="center" width="100" class="noprint"  >
                 <?php if($n['estado']):?>
-                <a href="/route/trace/?hr=<?php echo $n['nur'];?>" title="Ver seguimiento del NUR <?php echo $n['nur'] ?>" class="uiButton" ><img src="/media/images/tick.png"/></a>                
+                <a href="/route/trace/?hr=<?php echo HTML::chars($n['nur']);?>" title="Ver seguimiento del NUR <?php echo HTML::chars($n['nur']) ?>" class="uiButton" ><img src="/media/images/tick.png"/></a>                
                 <?php else: ?>
-                <a href="/route/deriv/?hr=<?php echo $n['nur'];?>" class="uiButton" title="Derivar <?php echo $n['nur'] ?>" ><img src="/media/images/deriva.png"/></a>
-                <a href="#?w=350" class="poplight" rel="popup_name" title="Crear documento a partir del NUR <?php echo $n['nur'];?>" id_nur="<?php echo $n['id_documento'];?>" id_seg="0" nuri="<?php echo $n['nur'];?>"><img src="/media/images/kword_kwd.png" /></a>  
+                <a href="/route/deriv/?hr=<?php echo HTML::chars($n['nur']);?>" class="uiButton" title="Derivar <?php echo HTML::chars($n['nur']) ?>" ><img src="/media/images/deriva.png"/></a>
+                <a href="#?w=350" class="poplight" rel="popup_name" title="Crear documento a partir del NUR <?php echo HTML::chars($n['nur']);?>" id_nur="<?php echo $n['id_documento'];?>" id_seg="0" nuri="<?php echo HTML::chars($n['nur']);?>"><img src="/media/images/kword_kwd.png" /></a>  
                 <?php endif;?>                            
-                <a href="/print.php/?code=<?php echo $n['nur'];?>" title="Imprimir <?php echo $n['nur'] ?>" class="uiButton" ><img src="/media/images/printer.png"/> </a>
+                <a href="/print.php/?code=<?php echo HTML::chars($n['nur']);?>" title="Imprimir <?php echo HTML::chars($n['nur']) ?>" class="uiButton" ><img src="/media/images/printer.png"/> </a>
             </td>
         </tr>
         <?php endforeach;?>

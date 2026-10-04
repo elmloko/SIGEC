@@ -285,7 +285,7 @@
             <div class="col-md-3 col-xs-5">
                 <?php if (file_exists(DOCROOT . 'static/fotos/' . $user->username . '.jpg')): ?>
                     <img class="img-circle border-white border-xl img-responsive " width="110"
-                         src="/static/fotos/<?php echo $user->username ?>.jpg?t=<?php echo time(); ?>" alt=""/>
+                         src="/static/fotos/<?php echo HTML::chars($user->username) ?>.jpg?t=<?php echo time(); ?>" alt=""/>
                     <?php
                 else:
                     ?>
@@ -293,8 +293,8 @@
                          src="/static/fotos/<?php echo $user->genero . '.jpg' ?>?t=<?php echo time(); ?>" alt=""/>
                 <?php endif; ?>
 
-                <h3><?php echo $user->nombre; ?><br/>
-                    <small><?php echo $user->cargo ?></small>
+                <h3><?php echo HTML::chars($user->nombre); ?><br/>
+                    <small><?php echo HTML::chars($user->cargo) ?></small>
                 </h3>
             </div><!--end .col -->
             <div class="col-md-9 col-xs-7">
@@ -307,7 +307,7 @@
         </div><!--end .row -->
         <div class="overlay overlay-shade-bottom stick-bottom-left force-padding text-right">
             <div class="pull-right">
-                <strong class="text-xl"><?php echo $user->email ?></strong><br/>
+                <strong class="text-xl"><?php echo HTML::chars($user->email) ?></strong><br/>
                 <span class="text-light opacity-75">Ultimo Ingreso: <?php echo Date::fuzzy_span($user->last_login); ?></span>
             </div>
         </div>
@@ -342,7 +342,7 @@
                                                 <?php if (file_exists(DOCROOT . 'static/fotos/' . $usuario['username'] . '.jpg')): ?>
                                                     <img class="img-circle border-white border-xl img-responsive "
                                                          width="110"
-                                                         src="/static/fotos/<?php echo $usuario['username'] ?>.jpg"
+                                                         src="/static/fotos/<?php echo HTML::chars($usuario['username']) ?>.jpg"
                                                          alt=""/>
                                                     <?php
                                                 else:
@@ -354,8 +354,8 @@
                                                 <?php endif; ?>
                                             </div>
                                             <div class="tile-text text-sm">
-                                                <?php echo $usuario['nombre'] ?>
-                                                <small><?php echo $usuario['cargo'] ?></small>
+                                                <?php echo HTML::chars($usuario['nombre']) ?>
+                                                <small><?php echo HTML::chars($usuario['cargo']) ?></small>
                                             </div>
                                         </a>
                                     </li>
@@ -416,7 +416,7 @@
             </div>
             <div id="subir_foto">
                 <form action="/user/subirfoto" class="dropzone" id="myAwesomeDropzone">
-                    <input type="hidden" name="username" id="ci" value="<?php echo $user->username; ?>"/>
+                    <input type="hidden" name="username" id="ci" value="<?php echo HTML::chars($user->username); ?>"/>
                     <input type="hidden" name="idp" id="idp" value="<?php echo $user->id; ?>"/>
 
                 </form>
@@ -445,7 +445,7 @@
                       method="post"
                       action="/user/profile">
                     <div class="inline-labels">
-                        <input type="hidden" id="ci" name="username" value="<?php echo $user->username ?>"/>
+                        <input type="hidden" id="ci" name="username" value="<?php echo HTML::chars($user->username) ?>"/>
                         <label>X1 <input type="hidden" size="4" id="x1" name="x1"/></label>
                         <label>Y1 <input type="hidden" size="4" id="y1" name="y1"/></label>
                         <label>X2 <input type="hidden" size="4" id="x2" name="x2"/></label>

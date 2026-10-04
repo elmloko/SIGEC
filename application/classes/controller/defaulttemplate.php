@@ -17,6 +17,12 @@ class Controller_DefaultTemplate extends Controller_Template {
                 $this->request->redirect('/login');
             }
             $session = Session::instance();
+            // ingreso con la contraseña por defecto: no se deja usar el sistema hasta cambiarla
+            $en_cambio_pass = strtolower($this->request->controller()) === 'user'
+                && in_array(strtolower($this->request->action()), array('pass', 'logout'), TRUE);
+            if ($session->get('debe_cambiar_pass') && !$en_cambio_pass) {
+                $this->request->redirect('/user/pass');
+            }
             //actualizamos o adicionamos session
             $usuario_sesion = ORM::factory('sesiones')
                     ->where('user_id', '=', $auth->get_user()->id)

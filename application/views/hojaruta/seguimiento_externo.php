@@ -121,9 +121,9 @@
 
 <div class="card card-underline">
     <div class=" card-head">
-        <header><i class="fa fa-tags"></i> Hoja de Ruta : <?php echo $detalle['nur'] ?></header>
+        <header><i class="fa fa-tags"></i> Hoja de Ruta : <?php echo HTML::chars($detalle['nur']) ?></header>
         <div class="toolss pull-right">
-            <a href="/externo/seguimiento/?hr=<?php echo $detalle['nur']; ?>" target="_blank"
+            <a href="/externo/seguimiento/?hr=<?php echo HTML::chars($detalle['nur']); ?>" target="_blank"
                class="btn btn-sm btn-primary"><i class="md md-print"></i> Imprimir</a>
         </div>
     </div>
@@ -135,7 +135,7 @@
             </div>
 
             <div class="col-lg-10 col-md-10">
-                <span class="text-medium text-primary-dark"><?php echo $detalle['referencia']; ?></span>
+                <span class="text-medium text-primary-dark"><?php echo HTML::chars($detalle['referencia']); ?></span>
             </div>
         </div>
 
@@ -146,7 +146,7 @@
 
             <div class="col-lg-5 col-md-5">
                 <span class="text-medium"><a
-                            href="/document/detalle/<?php echo $detalle['id_documento']; ?>"><?php echo $detalle['codigo']; ?></a></span>
+                            href="/document/detalle/<?php echo $detalle['id_documento']; ?>"><?php echo HTML::chars($detalle['codigo']); ?></a></span>
             </div>
 
             <div class="col-lg-2 col-md-2">
@@ -154,7 +154,7 @@
             </div>
 
             <div class="col-lg-3 col-md-3">
-                <?php echo $detalle['proceso']; ?>
+                <?php echo HTML::chars($detalle['proceso']); ?>
             </div>
         </div>
 
@@ -164,8 +164,8 @@
             </div>
 
             <div class="col-lg-5 col-md-5">
-                <span class="text-medium"><?php echo $detalle['destinatario']; ?>
-                    / <?php echo $detalle['cargo_destinatario']; ?></span>
+                <span class="text-medium"><?php echo HTML::chars($detalle['destinatario']); ?>
+                    / <?php echo HTML::chars($detalle['cargo_destinatario']); ?></span>
             </div>
 
             <div class="col-lg-2 col-md-2">
@@ -183,8 +183,8 @@
             </div>
 
             <div class="col-lg-5 col-md-5">
-                <span class="text-medium"><?php echo $detalle['remitente']; ?>
-                    / <?php echo $detalle['cargo_remitente']; ?></span>
+                <span class="text-medium"><?php echo HTML::chars($detalle['remitente']); ?>
+                    / <?php echo HTML::chars($detalle['cargo_remitente']); ?></span>
             </div>
 
             <div class="col-lg-2 col-md-2">
@@ -280,11 +280,11 @@
                                                 <?php endif; ?>
 
                                                 <span class="text-medium"><a
-                                                            href="/route/oficina/<?php echo $s->id_de_oficina ?>"><?php echo $s->de_oficina; ?></a>
+                                                            href="/route/oficina/<?php echo $s->id_de_oficina ?>"><?php echo HTML::chars($s->de_oficina); ?></a>
                                                     <br/> <a href="/user/profile/"
-                                                             class="text-primary-dark"><?php echo $s->nombre_emisor; ?></a></span><br>
+                                                             class="text-primary-dark"><?php echo HTML::chars($s->nombre_emisor); ?></a></span><br>
                                                 <span class="opacity-75">
-                                                    <?php echo $s->cargo_emisor; ?>
+                                                    <?php echo HTML::chars($s->cargo_emisor); ?>
                                                 </span>
                                             </p>
 
@@ -341,13 +341,13 @@
                                                 <?php endif; ?>
 
                                                 <span class="text-medium"><a
-                                                            href="/route/oficina/<?php echo $s->id_a_oficina ?>"><?php echo $s->a_oficina; ?></a>
+                                                            href="/route/oficina/<?php echo $s->id_a_oficina ?>"><?php echo HTML::chars($s->a_oficina); ?></a>
 
                                                     <br/> <a href="/user/profile/"
-                                                             class="text-primary-dark"><?php echo $s->nombre_receptor; ?></a></span><br>
+                                                             class="text-primary-dark"><?php echo HTML::chars($s->nombre_receptor); ?></a></span><br>
 
                                                 <span class="opacity-75">
-                                                    <?php echo $s->cargo_receptor; ?>
+                                                    <?php echo HTML::chars($s->cargo_receptor); ?>
                                                 </span>
                                             </p>
 
@@ -432,18 +432,20 @@
                                                             foreach ($observaciones_result as $key => $fila_observacion) {
                                                                 ?>
                                                                 <tr id="observacion-<?php echo $fila_observacion['id']; ?>">
-                                                                    <td id="observacion-seguimiento-observacion"><?php echo $fila_observacion['observacion']; ?></td>
-                                                                    <td id="observacion-seguimiento-correo"><?php echo $fila_observacion['correo']; ?></td>
-                                                                    <td id="observacion-seguimiento-telefono"><?php echo $fila_observacion['telefono']; ?></td>
-                                                                    <td id="observacion-seguimiento-telefono"><?php echo $fila_observacion['respuesta']; ?></td>
+                                                                    <td id="observacion-seguimiento-observacion"><?php echo HTML::chars($fila_observacion['observacion']); ?></td>
+                                                                    <?php $reclamo_propio = ReclamoExterno::es_propio($fila_observacion['id']); ?>
+                                                                    <td id="observacion-seguimiento-correo"><?php echo $reclamo_propio ? HTML::chars($fila_observacion['correo']) : '<i>reservado</i>'; ?></td>
+                                                                    <td id="observacion-seguimiento-telefono"><?php echo $reclamo_propio ? HTML::chars($fila_observacion['telefono']) : '<i>reservado</i>'; ?></td>
+                                                                    <td id="observacion-seguimiento-telefono"><?php echo HTML::chars($fila_observacion['respuesta']); ?></td>
                                                                     <td id="observacion-seguimiento-telefono"><?php echo $fila_observacion['fecha_observacion_formateada']; ?></td>
                                                                     <!--
                                                                     <td>
-                                                                        <span id="btn-editar-observacion-<?php echo $fila_observacion['id']; ?>"
+                                                                        <?php if ($reclamo_propio): ?>
+                                                                        <span id="btn-editar-observacion-<?php echo (int) $fila_observacion['id']; ?>"
                                                                               class="text-xl text-primary-dark btn-editar-observacion"
                                                                               title="Editar">
                                                                             <i class="md md-mode-edit"></i>
-                                                                        </span>
+                                                                        </span><?php endif; ?>
                                                                     </td>
                                                                     -->
                                                                 </tr>
@@ -521,8 +523,8 @@
                                         foreach ($documentos as $d):
                                             ?>
 
-                                            <a href="/vista/?doc=<?php echo $d->cite_original; ?>&id_seg=<?php echo $s->id; ?>"
-                                               target="_blank"><?php echo $d->codigo; ?></a><br/>
+                                            <a href="/vista/?doc=<?php echo HTML::chars($d->cite_original); ?>&id_seg=<?php echo $s->id; ?>"
+                                               target="_blank"><?php echo HTML::chars($d->codigo); ?></a><br/>
                                         <?php endforeach;
                                         ?>
                                         </span>
@@ -531,7 +533,7 @@
                                 <div class="row">
                                     <div class="col-lg-12 col-md-12">
                                         <span class=" text-medium opacity-75 text-light">
-                                            <i class="md md-message"></i> <?php echo $s->proveido ?>
+                                            <i class="md md-message"></i> <?php echo HTML::chars($s->proveido) ?>
                                         </span>
                                     </div>
                                 </div>
@@ -577,7 +579,7 @@
             </p>
         </div>
 
-        <a href="/externo/seguimiento/?hr=<?php echo $detalle['nur']; ?>" target="_blank"
+        <a href="/externo/seguimiento/?hr=<?php echo HTML::chars($detalle['nur']); ?>" target="_blank"
            class="btn btn-sm btn-primary">
             <i class="md md-print"></i> Imprimir
         </a>

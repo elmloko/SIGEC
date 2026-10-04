@@ -162,7 +162,8 @@ class Controller_Admin_ajax extends Controller
         if ($this->request->is_ajax()) {
             $id = $_POST['id'];
             $oPassword = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
-            $password = hash_hmac('sha256', $oPassword->valor, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
+            // formato viejo a proposito: asi cambiarPassDefecto la reconoce, y al ingresar se obliga a cambiarla
+            $password = Auth::instance()->hash_legado($oPassword->valor);
             // Create the user using form values
             $user = ORM::factory('users', $id);
             if ($user->loaded()) {
@@ -192,7 +193,7 @@ class Controller_Admin_ajax extends Controller
             return;
         }
 
-        $key = '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'; //sigec users
+        $auth = Auth::instance();
         $config = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
         // esta tabla no tiene columna 'id', asi que loaded() no es fiable aqui; se valida por 'campo'
         if ($config->campo !== 'passDefecto') {
@@ -200,8 +201,8 @@ class Controller_Admin_ajax extends Controller
             return;
         }
 
-        $hashAnterior = hash_hmac('sha256', $config->valor, $key);
-        $hashNuevo = hash_hmac('sha256', $nuevo, $key);
+        $hashAnterior = $auth->hash_legado($config->valor);
+        $hashNuevo = $auth->hash_legado($nuevo);
 
         // solo se actualizan los usuarios cuyo password actual sea igual al hash de la contraseña por defecto anterior
         $afectados = ORM::factory('users')->where('password', '=', $hashAnterior)->find_all();
@@ -372,7 +373,7 @@ class Controller_Admin_ajax extends Controller
           $destinatarios=$o_destinos->destinos($id_user);
           foreach($destinatarios as $d)
           {
-          echo '<li> '.HTML::anchor('/admin/user/x_des/?id_user='.$id_user.'&id_destino='.$d->id,'[x]',array('class'=>'delDes')).' <span>'.$d->nombre.'</span> | '.$d->cargo. '</li>';
+          echo '<li> '.HTML::anchor('/admin/user/x_des/?id_user='.$id_user.'&id_destino='.$d->id,'[x]',array('class'=>'delDes')).' <span>'.HTML::chars($d->nombre).'</span> | '.HTML::chars($d->cargo). '</li>';
           }
 
          */
@@ -548,13 +549,13 @@ class Controller_Admin_ajax extends Controller
             $orders[] = array(
 //'id' => "/documento/edit/" . $row['id'],
                 'id' => $row['id'],
-                'username' => $row['username'],
+                'username' => HTML::chars($row['username']),
                 'usuario' => '<a href="/user/profile/' . $row['id'] . '" title="Ver perfil del usuario" class="text-primary-dark">' . $row['usuario'] . '</a>',
-                'email' => $row['email'],
+                'email' => HTML::chars($row['email']),
                 'logins' => $row['logins'],
                 'habilitado' => $row['habilitado'],
-                'oficina' => $row['oficina'],
-                'entidad' => $row['entidad'],
+                'oficina' => HTML::chars($row['oficina']),
+                'entidad' => HTML::chars($row['entidad']),
                 'last_login' => $row['last_login'],
                 'mosca' => $row['mosca'],
                 // 'institucion_destin
@@ -767,16 +768,16 @@ class Controller_Admin_ajax extends Controller
                 'id' => $row['id'],
                 'idd' => $row['id'],
                 'nur' => '<a href="/route/deriv/?hr=' . $row['nur'] . '" title="Derivar Hora de Ruta" class="text-primary-dark">' . $row['nur'] . '</a>',
-                'cite_original' => $row['cite_original'],
+                'cite_original' => HTML::chars($row['cite_original']),
                 'tipo' => $row['tipo'],
                 'destinatario' => $row['destinatario'],
                 //'cargo_destinatario' => $row['cargo_destinatario'],
-                'institucion_destinatario' => $row['institucion_destinatario'],
-                'institucion_remitente' => $row['institucion_remitente'],
+                'institucion_destinatario' => HTML::chars($row['institucion_destinatario']),
+                'institucion_remitente' => HTML::chars($row['institucion_remitente']),
                 'remitente' => $row['remitente'],
                 ///'nombre_remitente' => $row['nombre_remitente'],
                 //'cargo_remitente' => $row['cargo_remitente'],
-                'referencia' => $row['referencia'],
+                'referencia' => HTML::chars($row['referencia']),
                 'fecha_creacion' => $row['fecha_creacion'],
                 'estado' => $row['estado'],
                 'edit' => '<a href="/documento/edit/' . $row['id'] . '" class="text-xl text-primary-dark"  title="Editar ' . $row['tipo'] . '" ><i class="md md-mode-edit"><i/></a>',

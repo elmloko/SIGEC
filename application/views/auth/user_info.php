@@ -1,12 +1,12 @@
 <div class="box">
 
-<p class="intro">This is your user information, <?php echo $user->username ?>.</p>
+<p class="intro">This is your user information, <?php echo HTML::chars($user->username) ?>.</p>
 
 <p>You may <?php echo html::anchor('auth/logout', 'log out') ?>. If no longer want this account, <?php echo html::anchor('auth/delete/'.$user->username, 'delete it') ?>.</p>
 
 <dl>
 	<dt>Username &amp; Email Address</dt>
-	<dd><?php echo $user->username ?> &mdash; <?php echo $user->email ?></dd>
+	<dd><?php echo HTML::chars($user->username) ?> &mdash; <?php echo HTML::chars($user->email) ?></dd>
 
 	<dt>Login Activity</dt>
 	<dd>Last login was <?php echo date('F jS, Y', $user->last_login) ?>, at <?php echo date('h:i:s a', $user->last_login) ?>.<br/>Total logins: <?php echo $user->logins ?></dd>
