@@ -48,7 +48,7 @@ class Controller_User extends Controller_DefaultTemplate
             $actual = (string) Arr::get($_POST, 'pass_old', '');
             $nueva = (string) Arr::get($_POST, 'pass1', '');
             $repetida = (string) Arr::get($_POST, 'pass2', '');
-            if (!$user->loaded() || $auth->hash_password($actual) !== $user->password) {
+            if (!$user->loaded() || !$auth->verificar($actual, $user->password)) {
                 $errors[] = 'La contraseña actual es incorrecta.';
             } elseif (mb_strlen($nueva, 'UTF-8') < 6) {
                 $errors[] = 'La contraseña nueva debe tener al menos 6 caracteres.';
@@ -57,7 +57,7 @@ class Controller_User extends Controller_DefaultTemplate
             } elseif ($nueva === $actual) {
                 $errors[] = 'La contraseña nueva debe ser distinta de la actual.';
             } else {
-                $user->password = $auth->hash_password($nueva);
+                $user->password = $auth->crear_hash($nueva);
                 $user->save();
                 $this->user->password = $user->password;
                 $info[] = 'Su contraseña se cambió correctamente.';
@@ -107,10 +107,10 @@ class Controller_User extends Controller_DefaultTemplate
         //cambiar contraseña
         if (isset($_POST['submit-pass'])) {
             $auth = Auth::instance();
-            $pass_old = $auth->hash_password($_POST['pass_old']);
-            if ($pass_old == $this->user->password) { //verificamos que el password anterior coincida
+            // se compara con la contraseña guardada en la base (la de la sesion puede estar vieja)
+            if ($auth->verificar(Arr::get($_POST, 'pass_old', ''), ORM::factory('users', $this->user->id)->password)) { //verificamos que el password anterior coincida
                 if ($_POST['pass_new'] == $_POST['pass_new2']) {
-                    $user->password = $auth->hash_password($_POST['pass_new']);
+                    $user->password = $auth->crear_hash($_POST['pass_new']);
                     $user->save();
                     $info[] = 'Su contraseña fue cambiada correctamente.';
                     //vitacora

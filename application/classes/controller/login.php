@@ -34,7 +34,8 @@ class Controller_login extends Controller_Mintemplate {
                         $remember = TRUE;
                     }
 
-                    $user = $auth->login(html::chars($_POST['username']), html::chars($_POST['password']), $remember);
+                    // la contraseña va tal cual: Auth_ORM la compara con bcrypt o con el hash viejo
+                    $user = $auth->login(html::chars($_POST['username']), (string) $_POST['password'], $remember);
                     if ($user) {
                         $usuario = ORM::factory('users', $auth->get_user());
 
@@ -86,8 +87,7 @@ class Controller_login extends Controller_Mintemplate {
                     $pass1 = $_POST['pass_new'];
                     $pass2 = $_POST['pass_new2'];
                     if ($pass1 == $pass2) {
-                        $password = hash_hmac('sha256', $pass1, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30');
-                        $user->password = $password;
+                        $user->password = Auth::instance()->crear_hash($pass1);
                         $user->save();
                         $pass->delete();
                         $info = "Se cambio exitosamente su contraseña, ir a <a href='/' class='btn btn-sm btn-primary'><i class='fa fa-user'></i> Formulario de autenticaci&oacute;n</a>";

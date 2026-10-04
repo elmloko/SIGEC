@@ -75,10 +75,11 @@ class Controller_Admin_User extends Controller_AdminTemplate
                 }
                 if (sizeof($error) == 0) {
                     if ($passIngresado !== '') {
-                        $password = hash_hmac('sha256', $passIngresado, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
+                        $password = Auth::instance()->crear_hash($passIngresado);
                     } else {
+                        // la contraseña por defecto queda en el formato viejo (ver Auth_ORM)
                         $oPassword = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
-                        $password = hash_hmac('sha256', $oPassword->valor, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
+                        $password = Auth::instance()->hash_legado($oPassword->valor);
                     }
                     // Create the user using form values
                     $user = ORM::factory('users');
@@ -294,8 +295,9 @@ class Controller_Admin_User extends Controller_AdminTemplate
                     //obtenemos el password por defecto 
 
                     $oPassword = ORM::factory('configuracion')->where('campo', '=', 'passDefecto')->find();
-                    $password = hash_hmac('sha256', $oPassword->valor, '2, 4, 6, 7, 9, 15, 20, 23, 25, 30'); //sigec users
-                    $_POST['password'] = $password;
+                    // va en texto plano: create_user() le aplica el hash (filtro de Model_Auth_User);
+                    // antes se mandaba ya hasheada y quedaba hasheada dos veces
+                    $_POST['password'] = $oPassword->valor;
 
                     // Create the user using form values
                     $user = ORM::factory('user')->create_user($_POST, array(

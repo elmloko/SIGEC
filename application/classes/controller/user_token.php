@@ -57,12 +57,12 @@ class Controller_User extends Controller_DefaultTemplate {
         if ($_POST) {
 
             $auth = Auth::instance();
-            $pass_old = $auth->hash_password($_POST['pass_old']);
-            if ($pass_old == $this->user->password) { //verificamos que el password anterior coincida
+            // se compara con la contraseña guardada en la base (la de la sesion puede estar vieja)
+            if ($auth->verificar(Arr::get($_POST, 'pass_old', ''), ORM::factory('users', $this->user->id)->password)) { //verificamos que el password anterior coincida
                 if ($_POST['pass_new'] == $_POST['pass_new2']) {
                     $user = ORM::factory('users', array('id' => $this->user->id));
                     if ($user->loaded()) {
-                        $user->password = $auth->hash_password($_POST['pass_new']);
+                        $user->password = $auth->crear_hash($_POST['pass_new']);
                         $user->save();
                         $info[] = 'Su contraseña fue  cambiado correctamente';
                         //vitacora
