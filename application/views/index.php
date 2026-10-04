@@ -6,6 +6,11 @@ $meses_cortos = array(1 => 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago
 $hora = (int) date('G');
 $saludo = $hora < 12 ? 'Buenos días' : ($hora < 19 ? 'Buenas tardes' : 'Buenas noches');
 $nombre_corto = trim(strtok((string) $user->nombre, ' '));
+// foto del usuario (static/fotos/{username}.jpg) o la generica segun genero
+$foto_archivo = DOCROOT . 'static/fotos/' . $user->username . '.jpg';
+$foto_usuario = file_exists($foto_archivo)
+    ? '/static/fotos/' . rawurlencode($user->username) . '.jpg?v=' . filemtime($foto_archivo)
+    : '/static/fotos/' . ($user->genero == 'mujer' ? 'mujer' : 'hombre') . '.jpg';
 $hoy = $dias_semana[(int) date('w')] . ', ' . date('j') . ' de ' . $nombres_mes[(int) date('n')] . ' de ' . date('Y');
 
 // documentos generados este mes vs el anterior
@@ -197,6 +202,35 @@ $tarjetas[] = array('titulo' => 'Documentos', 'descripcion' => 'Documentos gener
         background: linear-gradient(120deg, var(--correos-azul, #1A549A), var(--correos-azul-oscuro, #123E73));
         color: #fff;
         box-shadow: 0 4px 14px rgba(18, 62, 115, .25);
+    }
+    .dash-saludo-usuario {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        min-width: 0;
+    }
+    .dash-foto {
+        flex: 0 0 auto;
+        display: block;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        border: 3px solid var(--correos-amarillo, #FECB34);
+        background: #fff;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+    }
+    .dash-foto img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    @media (max-width: 480px) {
+        .dash-foto {
+            width: 56px;
+            height: 56px;
+        }
     }
     .dash-saludo h2 {
         margin: 0 0 4px;
@@ -422,7 +456,11 @@ $tarjetas[] = array('titulo' => 'Documentos', 'descripcion' => 'Documentos gener
 
     <!-- saludo y accesos rapidos -->
     <div class="dash-saludo">
-        <div>
+        <div class="dash-saludo-usuario">
+            <a href="/user/profile" class="dash-foto" title="Mi perfil">
+                <img src="<?php echo HTML::chars($foto_usuario); ?>" alt="<?php echo HTML::chars($user->nombre); ?>"/>
+            </a>
+            <div>
             <h2><?php echo $saludo . ', ' . HTML::chars($nombre_corto); ?></h2>
             <p>
                 <i class="fa fa-user"></i><?php echo HTML::chars($user->cargo); ?>
@@ -431,6 +469,7 @@ $tarjetas[] = array('titulo' => 'Documentos', 'descripcion' => 'Documentos gener
                 <?php endif; ?>
             </p>
             <span class="dash-fecha"><i class="fa fa-calendar"></i> <?php echo ucfirst($hoy); ?></span>
+            </div>
         </div>
         <div class="dash-acciones">
             <div class="btn-group">

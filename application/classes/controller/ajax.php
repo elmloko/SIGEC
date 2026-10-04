@@ -490,8 +490,8 @@ class Controller_Ajax extends Controller
                 ) as d";
 
 
-        $pagenum = $_GET['pagenum'];
-        $pagesize = $_GET['pagesize'];
+        $pagenum = SqlSafe::int($_GET['pagenum']);
+        $pagesize = SqlSafe::int($_GET['pagesize']);
         $start = $pagenum * $pagesize;
         $query = "SELECT SQL_CALC_FOUND_ROWS * FROM (
                      SELECT d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,
@@ -517,11 +517,11 @@ class Controller_Ajax extends Controller
                 $tmpfilteroperator = "";
                 for ($i = 0; $i < $filterscount; $i++) {
                     // get the filter's value.
-                    $filtervalue = $_GET["filtervalue" . $i];
+                    $filtervalue = SqlSafe::value($_GET["filtervalue" . $i]);
                     // get the filter's condition.
                     $filtercondition = $_GET["filtercondition" . $i];
                     // get the filter's column.
-                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    $filterdatafield = SqlSafe::field($_GET["filterdatafield" . $i]);
                     // get the filter's operator.
                     $filteroperator = $_GET["filteroperator" . $i];
 
@@ -630,7 +630,7 @@ class Controller_Ajax extends Controller
 
         if (isset($_GET['sortdatafield'])) {
 
-            $sortfield = $_GET['sortdatafield'];
+            $sortfield = SqlSafe::field($_GET['sortdatafield']);
             $sortorder = $_GET['sortorder'];
 
             if ($sortorder != '') {
@@ -700,8 +700,8 @@ class Controller_Ajax extends Controller
         $query = "SELECT v.id,u.username,u.nombre,u.cargo,v.accion_realizada,v.ip_usuario,v.fecha_hora,u.logins,u.habilitado FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id";
 
 
-        $pagenum = $_GET['pagenum'];
-        $pagesize = $_GET['pagesize'];
+        $pagenum = SqlSafe::int($_GET['pagenum']);
+        $pagesize = SqlSafe::int($_GET['pagesize']);
         $start = $pagenum * $pagesize;
         $query = "SELECT SQL_CALC_FOUND_ROWS * FROM vitacora v INNER JOIN users u ON v.id_usuario=u.id LIMIT $start, $pagesize";
         $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
@@ -721,11 +721,11 @@ class Controller_Ajax extends Controller
                 $tmpfilteroperator = "";
                 for ($i = 0; $i < $filterscount; $i++) {
                     // get the filter's value.
-                    $filtervalue = $_GET["filtervalue" . $i];
+                    $filtervalue = SqlSafe::value($_GET["filtervalue" . $i]);
                     // get the filter's condition.
                     $filtercondition = $_GET["filtercondition" . $i];
                     // get the filter's column.
-                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    $filterdatafield = SqlSafe::field($_GET["filterdatafield" . $i]);
                     // get the filter's operator.
                     $filteroperator = $_GET["filteroperator" . $i];
 
@@ -822,7 +822,7 @@ class Controller_Ajax extends Controller
 
         if (isset($_GET['sortdatafield'])) {
 
-            $sortfield = $_GET['sortdatafield'];
+            $sortfield = SqlSafe::field($_GET['sortdatafield']);
             $sortorder = $_GET['sortorder'];
 
             if ($sortorder != '') {
@@ -894,8 +894,8 @@ class Controller_Ajax extends Controller
                 ) as d";
 
 
-        $pagenum = $_GET['pagenum'];
-        $pagesize = $_GET['pagesize'];
+        $pagenum = SqlSafe::int($_GET['pagenum']);
+        $pagesize = SqlSafe::int($_GET['pagesize']);
         $start = $pagenum * $pagesize;
         $query = "SELECT SQL_CALC_FOUND_ROWS * FROM (
                 SELECT d.nur,d.cite_original,d.nombre_destinatario,d.cargo_destinatario,d.nombre_remitente,d.cargo_remitente,d.referencia,
@@ -928,11 +928,11 @@ class Controller_Ajax extends Controller
                 $tmpfilteroperator = "";
                 for ($i = 0; $i < $filterscount; $i++) {
                     // get the filter's value.
-                    $filtervalue = $_GET["filtervalue" . $i];
+                    $filtervalue = SqlSafe::value($_GET["filtervalue" . $i]);
                     // get the filter's condition.
                     $filtercondition = $_GET["filtercondition" . $i];
                     // get the filter's column.
-                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    $filterdatafield = SqlSafe::field($_GET["filterdatafield" . $i]);
                     // get the filter's operator.
                     $filteroperator = $_GET["filteroperator" . $i];
 
@@ -1055,7 +1055,7 @@ class Controller_Ajax extends Controller
 
         if (isset($_GET['sortdatafield'])) {
 
-            $sortfield = $_GET['sortdatafield'];
+            $sortfield = SqlSafe::field($_GET['sortdatafield']);
             $sortorder = $_GET['sortorder'];
 
             if ($sortorder != '') {
@@ -1273,8 +1273,8 @@ class Controller_Ajax extends Controller
     public function action_jreporte()
     {
 
-        $pagenum = $_GET['pagenum'];
-        $pagesize = $_GET['pagesize'];
+        $pagenum = SqlSafe::int($_GET['pagenum']);
+        $pagesize = SqlSafe::int($_GET['pagesize']);
         $start = $pagenum * $pagesize;
         $query = "SELECT SQL_CALC_FOUND_ROWS * FROM documentos LIMIT $start, $pagesize";
         $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
@@ -1294,11 +1294,11 @@ class Controller_Ajax extends Controller
                 $tmpfilteroperator = "";
                 for ($i = 0; $i < $filterscount; $i++) {
                     // get the filter's value.
-                    $filtervalue = $_GET["filtervalue" . $i];
+                    $filtervalue = SqlSafe::value($_GET["filtervalue" . $i]);
                     // get the filter's condition.
                     $filtercondition = $_GET["filtercondition" . $i];
                     // get the filter's column.
-                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    $filterdatafield = SqlSafe::field($_GET["filterdatafield" . $i]);
                     // get the filter's operator.
                     $filteroperator = $_GET["filteroperator" . $i];
 
@@ -1397,7 +1397,7 @@ class Controller_Ajax extends Controller
 
         if (isset($_GET['sortdatafield'])) {
 
-            $sortfield = $_GET['sortdatafield'];
+            $sortfield = SqlSafe::field($_GET['sortdatafield']);
             $sortorder = $_GET['sortorder'];
 
             if ($sortorder != '') {

@@ -331,6 +331,12 @@ $n = function ($v) {
 
 <div class="col-lg-12">
     <div class="hl-card">
+        <?php if (!empty($aviso_error)): ?>
+            <div style="display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 16px;border-radius:12px;background:#FDECEA;color:#A12B22;font-size:13px">
+                <i class="fa fa-exclamation-triangle" style="margin-top:2px"></i>
+                <span><?php echo HTML::chars($aviso_error); ?></span>
+            </div>
+        <?php endif; ?>
         <?php if (!empty($aviso)): ?>
             <div style="display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 16px;border-radius:12px;background:#E6F6EC;color:#1E7B45;font-size:13px">
                 <i class="fa fa-check-circle" style="margin-top:2px"></i>
@@ -480,22 +486,9 @@ $n = function ($v) {
         $('#hl-form select').on('change', function () {
             $('#hl-form').submit();
         });
-        // eliminar: doble confirmacion, escribiendo el numero de hoja de ruta
-        $('.btn-eliminar-hr').on('click', function (e) {
-            e.preventDefault();
-            var nur = String($(this).data('nur'));
-            if (!confirm('¿ELIMINAR DEFINITIVAMENTE ' + nur + '?\n\nSe borrarán para siempre el documento, todo su seguimiento (derivaciones), sus agrupaciones y su correlativo. Esta acción NO se puede deshacer.')) {
-                return;
-            }
-            var escrito = prompt('Para confirmar, escriba el número: ' + nur);
-            if (escrito === null) {
-                return;
-            }
-            if ($.trim(escrito).toUpperCase() !== nur.toUpperCase()) {
-                alert('El número no coincide. No se eliminó nada.');
-                return;
-            }
-            $(this).closest('form').submit();
+        // eliminar: una sola confirmacion
+        $('.btn-eliminar-hr').on('click', function () {
+            return confirm('¿Eliminar definitivamente ' + $(this).data('nur') + '?\nEsta acción no se puede deshacer.');
         });
     });
 </script>

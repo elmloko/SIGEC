@@ -85,7 +85,16 @@ $iniciales = function ($nombre) {
             </div>
             <div class="gd-cab-proceso">
                 <label for="proceso">Proceso <span class="gd-req">*</span></label>
-                <?php echo Form::select('proceso', $options, '', array('id' => 'proceso', 'class' => 'required', 'title' => 'Elija un tipo de proceso por favor')); ?>
+                <?php
+                // por defecto el proceso "Solicitud"
+                $proceso_defecto = '';
+                foreach ($options as $id_p => $nombre_p) {
+                    if (mb_strtolower(trim($nombre_p), 'UTF-8') == 'solicitud') {
+                        $proceso_defecto = $id_p;
+                    }
+                }
+                echo Form::select('proceso', $options, $proceso_defecto, array('id' => 'proceso', 'class' => 'required', 'title' => 'Elija un tipo de proceso por favor'));
+                ?>
             </div>
         </div>
 

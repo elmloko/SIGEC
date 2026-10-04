@@ -9,6 +9,9 @@ class Controller_Api extends Controller
 
     public function before()
     {
+        if (!Auth::instance()->logged_in()) {
+            throw new HTTP_Exception_403('Acceso no autorizado');
+        }
     }
 
     /*
@@ -16,7 +19,7 @@ class Controller_Api extends Controller
     */
     public function action_destinatatiosPorUsuario($id)
     {
-        $nombre_usuario = $_GET['nombre_usuario'];
+        $nombre_usuario = (string) Arr::get($_GET, 'nombre_usuario', '');
         //$nombre_completo = $_GET['nombre_completo'];
         //echo $id_usuario_logueado;
         //echo $id_usuario_destinatario;
@@ -33,10 +36,11 @@ class Controller_Api extends Controller
                                             FROM
                                                 users
                                             WHERE
-                                                username LIKE '%" . $nombre_usuario . "%'
+                                                username LIKE :nombre_usuario
                                         );";
 
         $resultSet = db::query(Database::SELECT, $query, FALSE)
+            ->param(':nombre_usuario', '%' . $nombre_usuario . '%')
             ->execute()
             ->as_array();
 

@@ -31,8 +31,8 @@ class Controller_Aajax extends Controller {
                 ORDER BY fecha_creacion DESC";
 
         $query = "SELECT * FROM ( " . $esql . " ) as d";
-        $pagenum = $_GET['pagenum'];
-        $pagesize = $_GET['pagesize'];
+        $pagenum = SqlSafe::int($_GET['pagenum']);
+        $pagesize = SqlSafe::int($_GET['pagesize']);
         $start = $pagenum * $pagesize;
 
         $query = "SELECT * FROM ( " . $esql . " ) as d LIMIT $start, $pagesize";
@@ -54,11 +54,11 @@ class Controller_Aajax extends Controller {
                 $tmpfilteroperator = "";
                 for ($i = 0; $i < $filterscount; $i++) {
                     // get the filter's value.
-                    $filtervalue = $_GET["filtervalue" . $i];
+                    $filtervalue = SqlSafe::value($_GET["filtervalue" . $i]);
                     // get the filter's condition.
                     $filtercondition = $_GET["filtercondition" . $i];
                     // get the filter's column.
-                    $filterdatafield = $_GET["filterdatafield" . $i];
+                    $filterdatafield = SqlSafe::field($_GET["filterdatafield" . $i]);
                     // get the filter's operator.
                     $filteroperator = $_GET["filteroperator" . $i];
 
@@ -155,7 +155,7 @@ class Controller_Aajax extends Controller {
         //sort data
         if (isset($_GET['sortdatafield'])) {
 
-            $sortfield = $_GET['sortdatafield'];
+            $sortfield = SqlSafe::field($_GET['sortdatafield']);
             $sortorder = $_GET['sortorder'];
 
             if ($sortorder != '') {

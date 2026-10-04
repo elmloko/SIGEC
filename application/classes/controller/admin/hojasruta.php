@@ -81,6 +81,7 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
             ->bind('tipos', $tipos)
             ->bind('estados', $estados)
             ->set('aviso', Session::instance()->get_once('hr_aviso', ''))
+            ->set('aviso_error', Session::instance()->get_once('hr_aviso_error', ''))
             ->set('q', $filtros['q']);
     }
     // editar los datos del documento asociado a la hoja de ruta
@@ -632,44 +633,49 @@ class Controller_Admin_Hojasruta extends Controller_AdminTemplate
         }
 
         $documento = ORM::factory('documentos')->where('id', '=', $id)->find();
-        if ($documento->loaded()) {
-            $nur = $documento->nur;
-            $codigo = $documento->codigo;
+        if (!$documento->loaded()) {
+            Session::instance()->set('hr_aviso_error', 'El documento ya no existe (quizá ya fue eliminado).');
+            $this->request->redirect('/admin/hojasruta/lista');
+        }
+        $nur = (string) $documento->nur;
+        $codigo = $documento->codigo;
+        $nombre = $nur !== '' ? $nur : $codigo;
 
-            $this->save($this->user->id_entidad, $this->user->id, 'Administrador elimino DEFINITIVAMENTE la hoja de ruta ' . $nur . ' (documento ' . $codigo . ')');
-
-            if ($nur !== '' && $nur !== NULL) {
-                // se borran cinco tablas: o cae todo el expediente o no cae nada
-                $db = Database::instance();
-                $db->begin();
-                try {
-                    $enur = $db->escape($nur);
-
-                    $ids_documentos = array();
-                    $docs = ORM::factory('documentos')->where('nur', '=', $nur)->find_all();
-                    foreach ($docs as $d) {
-                        $ids_documentos[] = (int) $d->id;
-                    }
-                    if (!empty($ids_documentos)) {
-                        db::query(Database::DELETE, 'DELETE FROM archivos WHERE id_documento IN (' . implode(',', $ids_documentos) . ')')->execute();
-                    }
-
-                    db::query(Database::DELETE, 'DELETE FROM seguimiento WHERE nur = ' . $enur)->execute();
-                    db::query(Database::DELETE, 'DELETE FROM agrupaciones WHERE padre = ' . $enur . ' OR hijo = ' . $enur)->execute();
-                    db::query(Database::DELETE, 'DELETE FROM hojasruta WHERE nur = ' . $enur)->execute();
-                    db::query(Database::DELETE, 'DELETE FROM documentos WHERE nur = ' . $enur)->execute();
-                    db::query(Database::DELETE, 'DELETE FROM nurs WHERE nur = ' . $enur)->execute();
-                    $db->commit();
-                } catch (Exception $e) {
-                    $db->rollback();
-                    Kohana::$log->add(Log::ERROR, 'eliminar hoja de ruta: ' . $e->getMessage());
-                    Session::instance()->set('hr_aviso_error', 'No se pudo eliminar la hoja de ruta ' . $nur . ': no se borró nada.');
-                    $this->request->redirect('/admin/hojasruta/editar/' . (int) $id);
-                }
+        // con hoja de ruta cae todo el expediente (todos sus documentos); sin hoja de ruta, solo este documento
+        $ids_documentos = array((int) $documento->id);
+        if ($nur !== '') {
+            foreach (ORM::factory('documentos')->where('nur', '=', $nur)->find_all() as $d) {
+                $ids_documentos[] = (int) $d->id;
             }
-            Session::instance()->set('hr_aviso', 'Se eliminó definitivamente la hoja de ruta ' . ($nur !== '' ? $nur : $codigo) . '.');
+        }
+        $ids = implode(',', array_unique($ids_documentos));
+
+        // o se borra todo o no se borra nada
+        $db = Database::instance();
+        $db->begin();
+        try {
+            db::query(Database::DELETE, 'DELETE FROM archivos WHERE id_documento IN (' . $ids . ')')->execute();
+            db::query(Database::DELETE, 'DELETE FROM nurs_documentos WHERE id_documento IN (' . $ids . ')')->execute();
+            if ($nur !== '') {
+                db::query(Database::DELETE, 'DELETE FROM seguimiento WHERE nur = :nur')->param(':nur', $nur)->execute();
+                db::query(Database::DELETE, 'DELETE FROM agrupaciones WHERE padre = :nur OR hijo = :nur')->param(':nur', $nur)->execute();
+                db::query(Database::DELETE, 'DELETE FROM hojasruta WHERE nur = :nur')->param(':nur', $nur)->execute();
+                db::query(Database::DELETE, 'DELETE FROM nurs WHERE nur = :nur')->param(':nur', $nur)->execute();
+            }
+            $borrados = db::query(Database::DELETE, 'DELETE FROM documentos WHERE id IN (' . $ids . ')')->execute();
+            if ($borrados < 1) {
+                throw new Exception('no se borró ningún registro de documentos (ids ' . $ids . ')');
+            }
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollback();
+            Kohana::$log->add(Log::ERROR, 'eliminar hoja de ruta ' . $nombre . ': ' . $e->getMessage());
+            Session::instance()->set('hr_aviso_error', 'No se pudo eliminar ' . $nombre . ': no se borró nada. Detalle: ' . $e->getMessage());
+            $this->request->redirect('/admin/hojasruta/lista');
         }
 
+        $this->save($this->user->id_entidad, $this->user->id, 'Administrador elimino DEFINITIVAMENTE ' . ($nur !== '' ? 'la hoja de ruta ' . $nur . ' (documento ' . $codigo . ')' : 'el documento ' . $codigo));
+        Session::instance()->set('hr_aviso', 'Se eliminó definitivamente ' . $nombre . '.');
         $this->request->redirect('/admin/hojasruta/lista');
     }
 

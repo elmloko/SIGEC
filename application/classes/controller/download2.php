@@ -49,7 +49,10 @@ class Controller_Download2 extends Controller
     public function action_index()
     {
         $auth = Auth::instance();
-        $id = $_GET['file'];
+        if (!$auth->logged_in()) {
+            throw new HTTP_Exception_403('Acceso no autorizado');
+        }
+        $id = Arr::get($_GET, 'file');
         $session = Session::instance();
         $user = $session->get('auth_user');
         $this->autoRender = false;

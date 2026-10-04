@@ -64,6 +64,17 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
         $('#arch-form').on('submit', function () {
             enviando = true;
         });
+        // cambiar el tipo: un solo aviso propio, sin el "salir del sitio" del navegador
+        $('#frm-cambiar-tipo').on('submit', function () {
+            var msj = 'Se cambiará el tipo de documento y se le asignará un CITE nuevo.';
+            if ($form.serialize() !== inicial) {
+                msj += '\nLos cambios sin guardar de esta página se perderán.';
+            }
+            if (!confirm(msj + '\n\n¿Continuar?')) {
+                return false;
+            }
+            enviando = true;
+        });
     });
 
     function msg() {
@@ -90,6 +101,47 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
         font-weight: 700;
         color: var(--correos-azul, #1A549A);
         word-break: break-word;
+    }
+    .gd-cambiar-tipo-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 6px 0 2px 10px;
+        padding: 5px 12px;
+        border: 1px solid var(--correos-amarillo, #FECB34);
+        border-radius: 6px;
+        background: var(--correos-amarillo-suave, #FFF7DD);
+        color: var(--correos-azul-oscuro, #123E73);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        text-decoration: none;
+        vertical-align: middle;
+    }
+    .gd-cambiar-tipo-btn:hover,
+    .gd-cambiar-tipo-btn:focus {
+        background: var(--correos-amarillo, #FECB34);
+        color: var(--correos-azul-oscuro, #123E73);
+        text-decoration: none;
+    }
+    .gd-cambiar-tipo {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin: 6px 0 2px;
+    }
+    .gd-cambiar-tipo select {
+        max-width: 100%;
+        padding: 3px 6px;
+        border: 1px solid #C9D3E0;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .gd-mensaje.gd-mensaje-error {
+        background: #FDECEA;
+        color: #A12B22;
     }
     .gd-mensaje {
         margin: 16px 22px 0;
@@ -535,6 +587,10 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
 <div class="row">
 
     <div class="col-lg-8">
+        <?php if (!$bloqueado && !empty($tipos_cambio)): ?>
+            <!-- cambiar el tipo de documento: va fuera de frm-editar (no se pueden anidar formularios) -->
+            <form action="/documento/cambiartipo/<?php echo $documento->id; ?>" method="post" id="frm-cambiar-tipo"></form>
+        <?php endif; ?>
         <form action="/documento/edit/<?php echo $documento->id; ?>" class="form form-validate gd-card" method="post" id="frm-editar">
             <!-- tipo de documento, cite y proceso -->
             <div class="gd-cab">
@@ -542,6 +598,29 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                 <div class="gd-cab-titulo">
                     <h2><?php echo $bloqueado ? 'Ver' : 'Editar'; ?> <?php echo HTML::chars(mb_strtolower($tipo->tipo, 'UTF-8')); ?><?php if ($bloqueado): ?> <small style="display:inline;font-size:12px;color:#1A549A"><i class="fa fa-lock"></i> solo lectura</small><?php endif; ?></h2>
                     <span class="gd-cab-codigo"><?php echo HTML::chars($documento->codigo); ?></span>
+                    <?php if (!$bloqueado && !empty($tipos_cambio)): ?>
+                        <a href="javascript:void(0);" class="gd-cambiar-tipo-btn" id="gd-cambiar-tipo-btn" title="Cambiar a otro tipo de documento (informe, comunicado, etc.)">
+                            <i class="fa fa-exchange"></i> Cambiar tipo de documento
+                        </a>
+                        <div class="gd-cambiar-tipo" id="gd-cambiar-tipo" style="display:none">
+                            <select name="id_tipo" form="frm-cambiar-tipo" required>
+                                <option value="">-- Seleccione el nuevo tipo --</option>
+                                <?php foreach ($tipos_cambio as $id_t => $nombre_t): ?>
+                                    <option value="<?php echo (int) $id_t; ?>"><?php echo HTML::chars($nombre_t); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="submit" form="frm-cambiar-tipo" class="btn btn-xs btn-primary">Cambiar</button>
+                            <a href="javascript:void(0);" class="btn btn-xs btn-default-bright" id="gd-cambiar-tipo-cancelar">Cancelar</a>
+                        </div>
+                        <script type="text/javascript">
+                            (function () {
+                                var btn = document.getElementById('gd-cambiar-tipo-btn');
+                                var panel = document.getElementById('gd-cambiar-tipo');
+                                btn.onclick = function () { panel.style.display = 'flex'; btn.style.display = 'none'; };
+                                document.getElementById('gd-cambiar-tipo-cancelar').onclick = function () { panel.style.display = 'none'; btn.style.display = ''; };
+                            })();
+                        </script>
+                    <?php endif; ?>
                     <small>
                         <?php if ($documento->nur != ''): ?>Hoja de ruta <b><?php echo HTML::chars($documento->nur); ?></b> &middot; <?php endif; ?>
                         Creado el <?php echo $documento->fecha_creacion ? date('d/m/Y H:i', strtotime($documento->fecha_creacion)) : '-'; ?>
@@ -553,6 +632,9 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                 </div>
             </div>
 
+            <?php if (!empty($error_tipo)): ?>
+                <div class="gd-mensaje gd-mensaje-error"><i class="fa fa-exclamation-triangle"></i> <?php echo HTML::chars($error_tipo); ?></div>
+            <?php endif; ?>
             <?php if (sizeof($mensajes) > 0): ?>
                 <div class="gd-mensaje">
                     <?php foreach ($mensajes as $k => $v): ?>

@@ -19,6 +19,119 @@ class Controller_Documento extends Controller_DefaultTemplate {
         parent::after();
     }
 
+    /**
+     * Cite nuevo para un documento del tipo $tipo en la oficina $oficina_id: toma el siguiente correlativo
+     * (oficina, tipo, gestion) y arma el codigo con la plantilla del tipo (tipos.cite o tipos.cite_tipo).
+     */
+    private function nuevo_cite($tipo, $oficina_id, $anio) {
+        $oOficina = New Model_Oficinas();
+        //obtenemos informe juridico
+        if ($this->es_juridico()) {
+            $correlativo = $oOficina->correlativoJuridico(156, $tipo->id, $anio);
+        } else {
+            $correlativo = $oOficina->correlativo($oficina_id, $tipo->id, $anio);
+        }
+        return $this->armar_cite($tipo, $oficina_id, $anio, $correlativo);
+    }
+
+    // los documentos de juridica (oficina 156 y sus dependientes) llevan un solo correlativo, el de la 156
+    private function es_juridico() {
+        $oficina = ORM::factory('oficinas', $this->user->id_oficina);
+        return $oficina->padre == 156 || $oficina->id == 156;
+    }
+
+    /** Arma el codigo del cite con la plantilla del tipo para el correlativo $cor (ej. '0073'). */
+    private function armar_cite($tipo, $oficina_id, $anio, $cor) {
+        $oficina = ORM::factory('oficinas', $this->user->id_oficina);
+        $oOficina = New Model_Oficinas();
+        $abre = $oOficina->tipo($tipo->id);
+        $entidad = ORM::factory('entidades')->where('id', '=', $oficina->id_entidad)->find();
+        //variables que usan las plantillas del cite
+        $ofi = $oOficina->sigla($oficina_id);
+        $ent = $entidad->sigla;
+        $mosca = $this->user->mosca;
+        $aniom = $anio;
+        $tip = $tipo->abreviatura;
+        $cite_propio = '';
+        $plantilla = $tipo->cite_propio > 0 ? $tipo->cite : $tipo->cite_tipo;
+        eval("\$str = \"$plantilla\";");
+        return $str;
+    }
+
+    /**
+     * Si el cite del documento es el ultimo emitido de su tipo (nadie genero otro despues),
+     * devuelve ese numero al correlativo para que se vuelva a usar y no quede un salto.
+     */
+    private function liberar_cite($documento, $anio) {
+        $tipo = ORM::factory('tipos', $documento->id_tipo);
+        $correlativo = ORM::factory('correlativo')
+                ->where('id_oficina', '=', $this->es_juridico() ? 156 : $documento->id_oficina)
+                ->and_where('id_tipo', '=', $tipo->id)
+                ->and_where('gestion', '=', $anio)
+                ->find();
+        if (!$correlativo->loaded() || $correlativo->correlativo < 1) {
+            return;
+        }
+        $ultimo = $this->armar_cite($tipo, $documento->id_oficina, $anio, substr('000' . $correlativo->correlativo, -4));
+        $anterior = $this->armar_cite($tipo, $documento->id_oficina, $anio, substr('000' . ($correlativo->correlativo - 1), -4));
+        // (si la plantilla no usa el numero, ambos coinciden y no se toca nada)
+        if ($ultimo === $documento->codigo && $anterior !== $ultimo) {
+            $correlativo->correlativo = $correlativo->correlativo - 1;
+            $correlativo->save();
+        }
+    }
+
+    /** Tipos a los que se puede cambiar un documento: los que el usuario puede generar, sin los que llevan datos propios. */
+    private function tipos_para_cambio($documento) {
+        return DB::query(Database::SELECT, "SELECT t.id, t.tipo FROM usertipo u INNER JOIN tipos t ON t.id = u.id_tipo
+                WHERE u.id_user = :u AND t.activo = 1 AND t.id <> 6 AND t.id <> :actual
+                AND t.action NOT IN ('sol_pasajes', 'inf_viaje') ORDER BY t.tipo")
+                ->param(':u', (int) $this->user->id)
+                ->param(':actual', (int) $documento->id_tipo)
+                ->execute()->as_array('id', 'tipo');
+    }
+
+    /**
+     * Solo se cambia el tipo mientras el documento no tenga hoja de ruta, y si su tipo actual
+     * no lleva datos propios (pasajes/viajes) que se perderian al cambiarlo.
+     */
+    private function tipo_cambiable($documento) {
+        if ($documento->nur != '') {
+            return FALSE;
+        }
+        $actual = ORM::factory('tipos', $documento->id_tipo);
+        return !in_array($actual->action, array('sol_pasajes', 'inf_viaje'));
+    }
+
+    // cambia el tipo de documento (ej. nota interna -> informe) y le asigna el cite del nuevo tipo
+    public function action_cambiartipo($id = '') {
+        $documento = ORM::factory('documentos')->where('id', '=', $id)->and_where('id_user', '=', $this->user->id)->find();
+        if (!$documento->loaded() || $this->request->method() !== Request::POST) {
+            $this->request->redirect('/document');
+        }
+        $id_tipo = (int) Arr::get($_POST, 'id_tipo', 0);
+        $permitidos = $this->tipos_para_cambio($documento);
+        if ($documento->nur != '') {
+            $error = 'hoja_ruta';
+        } elseif (!$this->tipo_cambiable($documento) || !isset($permitidos[$id_tipo])) {
+            $error = 'tipo';
+        } else {
+            $tipo = ORM::factory('tipos', $id_tipo);
+            $anterior = $documento->codigo;
+            $tipo_anterior = ORM::factory('tipos', $documento->id_tipo)->tipo;
+            $anio = $documento->fecha_creacion ? date('Y', strtotime($documento->fecha_creacion)) : date('Y');
+            $this->liberar_cite($documento, $anio);
+            $codigo = $this->nuevo_cite($tipo, $documento->id_oficina, $anio);
+            $documento->id_tipo = $tipo->id;
+            $documento->codigo = $codigo;
+            $documento->cite_original = $codigo;
+            $documento->save();
+            $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ', cambió el documento <b>' . $anterior . '</b> (' . $tipo_anterior . ') a ' . $tipo->tipo . ': <b>' . $codigo . '</b>');
+            $error = '';
+        }
+        $this->request->redirect('/documento/edit/' . $documento->id . '?' . ($error ? 'error_tipo=' . $error : 'tipo_cambiado=1'));
+    }
+
     //nuevo
     public function action_transferir($id) {
 
@@ -80,33 +193,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 else {
                     $oficina_id = $oficina->id;
                 }
-                $oOficina = New Model_Oficinas();                              
-                //obtenemos informe juridico
-                if($oficina->padre==156||$oficina->id==156){
-                    $correlativo = $oOficina->correlativoJuridico(156, $tipo->id, date('Y'));
-                }
-                else{
-                $correlativo = $oOficina->correlativo($oficina_id, $tipo->id, date('Y'));    
-                }  
-                //$correlativo = $oOficina->correlativo($oficina_id, $tipo->id, date('Y'));    
-                $abre = $oOficina->tipo($tipo->id);
-                $entidad = ORM::factory('entidades')->where('id', '=', $oficina->id_entidad)->find();
-                //variables para el cite
-                $ofi = $oOficina->sigla($oficina_id);
-                $cor = $correlativo;
-                $ent = $entidad->sigla;
-                $mosca = $this->user->mosca;
-                $anio = date('Y');
-                $aniom = date('Y');
-                $tip = $tipo->abreviatura;
-                if ($tipo->cite_propio > 0) {
-                    eval("\$str = \"$tipo->cite\";");
-                    $codigo = $str;
-                } else {
-                    $cite_propio = '';
-                    eval("\$str = \"$tipo->cite_tipo\";");
-                    $codigo = $str;                   
-                }                
+                $codigo = $this->nuevo_cite($tipo, $oficina_id, date('Y'));
                 if ($_POST['proceso'] > 0 && $_POST['proceso'] < 30) {
                     $proceso = $_POST['proceso'];
                 } else
@@ -305,6 +392,15 @@ class Controller_Documento extends Controller_DefaultTemplate {
         if ($documento->loaded()) {
             // una vez recibido por el destinatario, el documento y sus archivos ya no se modifican
             $envio = EstadoDocumento::de($documento);
+            // resultado de /documento/cambiartipo
+            if (Arr::get($_GET, 'tipo_cambiado')) {
+                $mensajes['Tipo cambiado!'] = 'Se cambió el tipo de documento y se asignó el cite ' . HTML::chars($documento->codigo) . '.';
+            } elseif (Arr::get($_GET, 'error_tipo') == 'hoja_ruta') {
+                $error_tipo = 'Este documento ya tiene hoja de ruta asignada: no se puede cambiar su tipo.';
+            } elseif (Arr::get($_GET, 'error_tipo')) {
+                $error_tipo = 'No se puede cambiar este documento al tipo seleccionado.';
+            }
+            $tipos_cambio = $this->tipo_cambiable($documento) ? $this->tipos_para_cambio($documento) : array();
             if ($envio['recibido'] && (isset($_POST['referencia']) || isset($_POST['adjuntar']))) {
                 $error_archivo = 'Este documento ya fue recibido por el destinatario: no se puede modificar.';
                 $_POST = array();
@@ -463,6 +559,8 @@ class Controller_Documento extends Controller_DefaultTemplate {
                     ->bind('mensajes', $mensajes)
                     ->bind('error_archivo', $error_archivo)
                     ->bind('envio', $envio)
+                    ->bind('tipos_cambio', $tipos_cambio)
+                    ->bind('error_tipo', $error_tipo)
                     ->bind('archivos', $archivos);
         } else {
          //   $this->template->title .= ' / ' . $documento->codigo;

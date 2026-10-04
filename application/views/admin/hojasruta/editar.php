@@ -673,19 +673,10 @@ $tiene_hr = trim($documento->nur) !== '';
             $(this).closest('form')[0].submit();
         });
 
-        // eliminar: dos confirmaciones, la segunda escribiendo el numero
+        // eliminar: una sola confirmacion
         $('#he-eliminar').on('click', function (e) {
             e.preventDefault();
-            var nur = String($(this).data('nur'));
-            if (!confirm('¿ELIMINAR DEFINITIVAMENTE ' + nur + '?\n\nSe borrarán para siempre el documento, todo su seguimiento (derivaciones), sus agrupaciones y su correlativo. Esta acción NO se puede deshacer.')) {
-                return;
-            }
-            var escrito = prompt('Para confirmar, escriba el número: ' + nur);
-            if (escrito === null) {
-                return;
-            }
-            if ($.trim(escrito).toUpperCase() !== nur.toUpperCase()) {
-                alert('El número no coincide. No se eliminó nada.');
+            if (!confirm('¿Eliminar definitivamente ' + $(this).data('nur') + '?\nEsta acción no se puede deshacer.')) {
                 return;
             }
             enviando = true;
