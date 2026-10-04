@@ -11,7 +11,8 @@ RewriteBase /
 </Files>
 
 # Protect application and system files from being viewed
-RewriteRule ^(?:application|modules|system)\b.* index.php/$0 [L]
+# (vendor: librerias de composer; nbproject: proyecto de NetBeans)
+RewriteRule ^(?:application|modules|system|vendor|nbproject)\b.* index.php/$0 [L]
 
 # Allow any files or directories that exist to be displayed directly
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -20,8 +21,13 @@ RewriteCond %{REQUEST_FILENAME} !-d
 # Rewrite all other URLs to index.php/URL
 RewriteRule .* index.php/$0 [PT]
 
-#CORS
-#Header set Access-Control-Allow-Origin "*"
-Header set Access-Control-Allow-Origin: "*"
-Header set Access-Control-Allow-Methods: "GET, POST, PUT, DELETE"
-Header set Access-Control-Allow-Headers: "Authorization"
+# Cabeceras de seguridad (antes: CORS abierto a cualquier sitio con "*"; el sistema no lo necesita,
+# todas sus llamadas AJAX son al mismo dominio)
+<IfModule mod_headers.c>
+	# no dejar que otros sitios muestren SIGEC dentro de un iframe (clickjacking)
+	Header always set X-Frame-Options "SAMEORIGIN"
+	# el navegador no debe adivinar el tipo de archivo (evita ejecutar subidas como script)
+	Header always set X-Content-Type-Options "nosniff"
+	# a sitios externos solo se envia el dominio, no la URL completa (con numeros de hoja de ruta)
+	Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
