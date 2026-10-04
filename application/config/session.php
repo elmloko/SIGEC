@@ -26,6 +26,9 @@ return array(
     'native' => array(
         'name' => 'session_native',
         'encrypted' => TRUE,
-        'lifetime' => 108000,
+        // duracion maxima de la sesion: 10 horas (una jornada); antes 30 horas
+        'lifetime' => 36000,
+        // sin ninguna peticion durante 2 horas, la sesion se cierra (ver classes/session/native.php)
+        'inactividad' => 7200,
     ),
 );

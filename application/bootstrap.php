@@ -46,6 +46,19 @@ spl_autoload_register(array('Kohana', 'auto_load'));
  */
 ini_set('unserialize_callback_func', 'spl_autoload_call');
 
+/**
+ * Cookies de sesion y de "recordarme":
+ *  - httponly: el JavaScript de la pagina no puede leerlas (si alguien inyecta un script, no roba la sesion)
+ *  - secure: solo viajan por HTTPS, cuando el sitio se abre por HTTPS (por HTTP no se marca, o no habria login)
+ *  - la sesion solo acepta ids creados por el servidor y solo por cookie (no por la URL)
+ */
+Cookie::$httponly = TRUE;
+Cookie::$secure = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+    || strtolower((string) (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) ? $_SERVER['HTTP_X_FORWARDED_PROTO'] : '')) === 'https';
+ini_set('session.use_only_cookies', 1);
+ini_set('session.use_trans_sid', 0);
+ini_set('session.use_strict_mode', 1);
+
 // -- Configuration and initialization -----------------------------------------
 
 /**
