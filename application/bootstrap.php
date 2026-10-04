@@ -58,6 +58,14 @@ Cookie::$secure = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !=
 ini_set('session.use_only_cookies', 1);
 ini_set('session.use_trans_sid', 0);
 ini_set('session.use_strict_mode', 1);
+// SameSite=Lax: el navegador no manda la cookie de sesion en formularios enviados desde otros sitios (CSRF);
+// los enlaces normales hacia SIGEC (ej. desde un correo) siguen funcionando
+if (PHP_VERSION_ID >= 70300) {
+    ini_set('session.cookie_samesite', 'Lax');
+} else {
+    // PHP 5.6 no tiene la opcion: se agrega al final del path de la cookie
+    Cookie::$path = '/; samesite=Lax';
+}
 
 // -- Configuration and initialization -----------------------------------------
 
@@ -103,6 +111,15 @@ Kohana::$log->attach(new Log_File(APPPATH . 'logs'));
  * Attach a file reader to config. Multiple readers are supported.
  */
 Kohana::$config->attach(new Config_File);
+
+/**
+ * Clave para firmar las cookies de Kohana (ej. "recordarme"). Antes quedaba en el valor por defecto (TRUE),
+ * facil de adivinar. Se deriva de la contraseña de la base de datos: es secreta, no queda en el codigo
+ * y no requiere otro archivo. Al cambiar esa contraseña, los "recordarme" vigentes piden volver a ingresar.
+ */
+$db_conf = Kohana::$config->load('database')->get('default');
+Cookie::$salt = hash('sha256', 'sigec-cookie|' . $db_conf['connection']['password'] . '|' . $db_conf['connection']['username']);
+unset($db_conf);
 
 /**
  * Enable modules. Modules are referenced by a relative or absolute path.
@@ -159,3 +176,6 @@ Route::set('default', '(<controller>(/<action>(/<id>)))')
         ));
 
 set_exception_handler(array('Exceptionhandler', 'handle'));
+
+// todo POST debe venir de una pagina de SIGEC (proteccion CSRF, ver classes/csrf.php y config/csrf.php)
+Csrf::verificar();
