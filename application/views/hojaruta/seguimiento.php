@@ -1040,9 +1040,6 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
                         WHERE os.id_seguimiento = :id AND os.nur = :nur AND os.id_estado = '2'
                         ORDER BY os.fecha_observacion DESC")
                     ->param(':id', $id_seguimiento)->param(':nur', (string) $s->nur)->execute()->as_array();
-                // observaciones externas de este paso
-                $observaciones = DB::query(Database::SELECT, "SELECT id, observacion, correo, telefono FROM observacion_seguimiento_externo WHERE id_seguimiento = :id")
-                    ->param(':id', $id_seguimiento)->execute()->as_array();
                 // documentos generados en este paso
                 $documentos_paso = ORM::factory('documentos')->where('id_seguimiento', '=', $id_seguimiento)->find_all();
                 // carpeta donde se archivo
@@ -1105,7 +1102,7 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
                             <div class="tr-proveido"><i class="md md-message"></i><?php echo HTML::chars($s->proveido); ?></div>
                         <?php endif; ?>
 
-                        <?php if ($archivos_paso || count($documentos_paso) || $archivado || $justificaciones || $observaciones): ?>
+                        <?php if ($archivos_paso || count($documentos_paso) || $archivado || $justificaciones): ?>
                             <div class="tr-extras">
                                 <?php foreach ($archivos_paso as $af):
                                     $nombre_af = substr($af->nombre_archivo, 13);
@@ -1132,10 +1129,6 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
                                 <?php if ($justificaciones): ?>
                                     <a href="#" class="tr-alerta-obs" data-toggle="modal" data-target="#tr-justif-<?php echo $id_seguimiento; ?>">
                                         <i class="fa fa-exclamation-triangle"></i> Justificación por retraso (<?php echo count($justificaciones); ?>)</a>
-                                <?php endif; ?>
-                                <?php if ($observaciones): ?>
-                                    <a href="#" class="tr-alerta-obs" data-toggle="modal" data-target="#tr-obs-<?php echo $id_seguimiento; ?>">
-                                        <i class="fa fa-search"></i> Observaciones (<?php echo count($observaciones); ?>)</a>
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
@@ -1183,33 +1176,6 @@ $urgente = $detalleTiempoDelTramite['tipo_tramite'] !== 'NO URGENTE';
                                             <p><b><?php echo date('d/m/Y H:i', strtotime($j['fecha_observacion'])); ?></b> &middot; <?php echo HTML::chars($j['nombre']); ?>
                                                 <small class="text-muted">(<?php echo HTML::chars($j['cargo']); ?>)</small><br/><?php echo nl2br(HTML::chars($j['observacion'])); ?></p>
                                         <?php endforeach; ?>
-                                    </div>
-                                    <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button></div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                    <?php if ($observaciones): ?>
-                        <div class="modal fade" id="tr-obs-<?php echo $id_seguimiento; ?>" role="dialog">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                        <h4 class="modal-title">Observaciones</h4>
-                                    </div>
-                                    <div class="modal-body">
-                                        <table class="table">
-                                            <thead><tr><th>Observación</th><th>Correo</th><th>Teléfono</th></tr></thead>
-                                            <tbody>
-                                            <?php foreach ($observaciones as $o): ?>
-                                                <tr>
-                                                    <td><?php echo HTML::chars($o['observacion']); ?></td>
-                                                    <td><?php echo HTML::chars($o['correo']); ?></td>
-                                                    <td><?php echo HTML::chars($o['telefono']); ?></td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
                                     </div>
                                     <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button></div>
                                 </div>

@@ -16,11 +16,9 @@ class Csrf {
 
     /**
      * Paginas publicas sin sesion: un envio desde otro sitio no puede abusar de la sesion de nadie.
-     * (externo/guardarRespuestaReclamo NO va aqui: la usa el personal con sesion iniciada)
      */
     protected static $publicas = array(
         'externo/index', 'externo/busqueda', 'externo/buscarhojaderuta', 'externo/seguimientoexterno',
-        'externo/guardarreclamo', 'externo/getseguimientoreclamo', 'externo/getobservacionaeditar', 'externo/editarreclamo',
     );
 
     /**

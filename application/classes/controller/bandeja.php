@@ -645,43 +645,6 @@ class Controller_Bandeja extends Controller_DefaultTemplate
             ->bind('count', $count)
             ->bind('page_links', $page_links);
     }
-
-    /* BANDEJA DE RECLAMOS */
-    public function action_reclamos()
-    {
-        $user = $this->user;
-
-        // === [INICIO] PARAMETROS DE LA BASE DE DATOS ===
-        $database_instance = Database::instance('sigec');
-        $database_instance_array = (Array)$database_instance;
-
-        //      Se adiciona { "\0*\0" } cuando el atributo del objeto es 'protected'
-        $params_database_instance = $database_instance_array["\0*\0" . '_config']['connection'];
-        $hostname_DB = $params_database_instance['hostname'];
-        $database_name = $params_database_instance['database'];
-        $username_DB = $params_database_instance['username'];
-        $password_DB = $params_database_instance['password'];
-
-        $database = new PDO('mysql:host=' . $hostname_DB . ';dbname=' . $database_name, $username_DB, $password_DB);
-        $database->exec("SET NAMES 'utf8';");
-        // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
-
-        $sql_observaciones_externas = "CALL get_observaciones_externas_user('$user->id');";
-        $observaciones_externas = $database->prepare($sql_observaciones_externas);
-        $observaciones_externas->execute();
-        $result_observaciones_externas = $observaciones_externas->fetchAll(PDO::FETCH_OBJ);
-        do {
-            $observaciones_externas->fetchAll(PDO::FETCH_OBJ);
-        } while ($observaciones_externas->nextRowSet());
-
-        $this->template->styles = array('media/css/tablas.css' => 'all', 'media/css/modal.css' => 'screen');
-        $this->template->title .= ' / Correspondencia con Reclamos';
-        $this->template->titulo .= 'Reclamos ';
-        $this->template->descripcion = 'Correspondencia para pronta respuesta';
-        $this->template->content = View::factory('bandeja/lista_reclamos')
-            ->bind('result_observaciones_externas', $result_observaciones_externas)
-            ->bind('user', $this->user);
-    }
 }
 
 ?>
