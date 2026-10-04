@@ -27,7 +27,7 @@ class Controller_Externo extends Controller
     public function action_busqueda()
     {
         //echo json_encode("hola");
-        $param_id_entidad = $_GET['id_entidad'];
+        $param_id_entidad = SqlSafe::value(Arr::get($_GET, 'id_entidad', ''));
 
         // --- [INICIO] INICIALIZAR LA VISTA ---
         $view = View::factory('busqueda/documentacion_externa');
@@ -75,11 +75,11 @@ class Controller_Externo extends Controller
 
         // === [INICIO] LISTA DE DOCUMENTACION EXTERNA ===
         if (isset($_POST['buscar'])) {
-            $hoja_de_ruta = $_POST['hoja-de-ruta'];
+            $hoja_de_ruta = SqlSafe::value(Arr::get($_POST, 'hoja-de-ruta', ''));
             $nur = $hoja_de_ruta;
             $hoja_de_ruta = str_pad($hoja_de_ruta, 5, "0", STR_PAD_LEFT);
             $id_entidad = $param_id_entidad;
-            $gestion = $_POST['gestiones'];
+            $gestion = SqlSafe::value(Arr::get($_POST, 'gestiones', ''));
             $gestion_seleccionada = $gestion;
 
             $prefijo_entidad = "";
@@ -140,16 +140,16 @@ class Controller_Externo extends Controller
                 //      [INICIO] GUARDAR EL REGISTRO DE VISITAS
                 $entidad_id = $id_entidad;
                 $gestion_de_consulta = $gestion;
-                $navegador_web = $_POST['client_web_browser'];
-                $visita_ip = isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
-                $visita_url = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-                $ciudad = $_POST['client_city'];
-                $pais = $_POST['client_country'];
-                $isp = $_POST['client_isp'];
-                $latitud = strlen($_POST['client_latitude']) > 0 ? $_POST['client_latitude'] : "0.00000000";
-                $longitud = strlen($_POST['client_longitude']) > 0 ? $_POST['client_latitude'] : "0.00000000";
-                $nombre_region = $_POST['client_region_name'];
-                $timezone = $_POST['client_timezone'];
+                $navegador_web = SqlSafe::value(Arr::get($_POST, 'client_web_browser', ''));
+                $visita_ip = SqlSafe::value(isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']));
+                $visita_url = SqlSafe::value($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+                $ciudad = SqlSafe::value(Arr::get($_POST, 'client_city', ''));
+                $pais = SqlSafe::value(Arr::get($_POST, 'client_country', ''));
+                $isp = SqlSafe::value(Arr::get($_POST, 'client_isp', ''));
+                $latitud = is_numeric(Arr::get($_POST, 'client_latitude')) ? (float) $_POST['client_latitude'] : "0.00000000";
+                $longitud = is_numeric(Arr::get($_POST, 'client_longitude')) ? (float) $_POST['client_longitude'] : "0.00000000";
+                $nombre_region = SqlSafe::value(Arr::get($_POST, 'client_region_name', ''));
+                $timezone = SqlSafe::value(Arr::get($_POST, 'client_timezone', ''));
 
                 $this->guardarRegistroDeVisitas(
                     $entidad_id,
@@ -260,9 +260,9 @@ class Controller_Externo extends Controller
         // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
 
         // === [INICIO] LISTA DE DOCUMENTACION EXTERNA ===
-        $hoja_de_ruta = $_POST['hoja_de_ruta'];
-        $id_entidad = $_POST['id_entidad_seleccionada'];
-        $gestion = $_POST['gestion_seleccionada'];
+        $hoja_de_ruta = SqlSafe::value(Arr::get($_POST, 'hoja_de_ruta', ''));
+        $id_entidad = SqlSafe::value(Arr::get($_POST, 'id_entidad_seleccionada', ''));
+        $gestion = SqlSafe::value(Arr::get($_POST, 'gestion_seleccionada', ''));
 
         $sql_documentacion_externa = "CALL get_seguimiento_externo('$hoja_de_ruta','$id_entidad', '$gestion');";
         $documentacion_externa = $database->prepare($sql_documentacion_externa);
@@ -298,7 +298,7 @@ class Controller_Externo extends Controller
         // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
 
         //$id = Arr::get($_GET, 'hr', '');
-        $id = $_GET['hr'];
+        $id = SqlSafe::value(Arr::get($_GET, 'hr', ''));
         if ($id != '') {
             //obtenemos el documento ligado al nur
             $documento = ORM::factory('documentos')->where('nur', '=', $id)->and_where('original', '=', 1)->find();
@@ -376,11 +376,11 @@ class Controller_Externo extends Controller
         $database->exec("SET NAMES 'utf8';");
         // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
 
-        $id_seguimiento = $_POST['id_seguimiento'];
-        $nur = $_POST['nur'];
-        $observacion = $_POST['observacion'];
-        $telefono = $_POST['telefono'];
-        $email = $_POST['email'];
+        $id_seguimiento = SqlSafe::value(Arr::get($_POST, 'id_seguimiento', ''));
+        $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
+        $observacion = SqlSafe::value(Arr::get($_POST, 'observacion', ''));
+        $telefono = SqlSafe::value(Arr::get($_POST, 'telefono', ''));
+        $email = SqlSafe::value(Arr::get($_POST, 'email', ''));
 
         $sql = "CALL abm_observacion_externa(
                 null,
@@ -512,8 +512,8 @@ class Controller_Externo extends Controller
         $database->exec("SET NAMES 'utf8';");
         // === [FIN] PARAMETROS DE LA BASE DE DATOS ===
 
-        $nur = $_GET['nur'];
-        $id_seguimiento = $_GET['id_seguimiento'];
+        $nur = SqlSafe::value(Arr::get($_GET, 'nur', ''));
+        $id_seguimiento = SqlSafe::value(Arr::get($_GET, 'id_seguimiento', ''));
 
         // --- [INICIO] OBTENER USUARIO CON RECLAMO ---
         $sql_seguimiento_con_reclamo = "SELECT
@@ -610,7 +610,7 @@ class Controller_Externo extends Controller
 
     public function action_getObservacionAEditar()
     {
-        $id_observacion = $_POST['id_observacion'];
+        $id_observacion = SqlSafe::value(Arr::get($_POST, 'id_observacion', ''));
 
         $sql = "SELECT 
                     *
@@ -627,12 +627,12 @@ class Controller_Externo extends Controller
 
     public function action_editarReclamo()
     {
-        $id_observacion = $_POST['id_observacion'];
-        $id_seguimiento = $_POST['id_seguimiento'];
-        $nur = $_POST['nur'];
-        $observacion = $_POST['observacion'];
-        $telefono = $_POST['telefono'];
-        $email = $_POST['correo'];
+        $id_observacion = SqlSafe::value(Arr::get($_POST, 'id_observacion', ''));
+        $id_seguimiento = SqlSafe::value(Arr::get($_POST, 'id_seguimiento', ''));
+        $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
+        $observacion = SqlSafe::value(Arr::get($_POST, 'observacion', ''));
+        $telefono = SqlSafe::value(Arr::get($_POST, 'telefono', ''));
+        $email = SqlSafe::value(Arr::get($_POST, 'correo', ''));
 
         $sql = "CALL abm_observacion_externa(
                 '$id_observacion',
@@ -657,8 +657,12 @@ class Controller_Externo extends Controller
     // === [INICIO] Guardar Respuesta al Reclamo de Documentacion Externa: /externo/guardarRespuestaReclamo
     public function action_guardarRespuestaReclamo()
     {
-        $id_observacion = $_POST['id_observacion'];
-        $respuesta_observacion = $_POST['respuesta_observacion'];
+        // la respuesta la da el personal desde la bandeja de reclamos, no el ciudadano
+        if (!Auth::instance()->logged_in()) {
+            throw new HTTP_Exception_403('Acceso no autorizado');
+        }
+        $id_observacion = SqlSafe::value(Arr::get($_POST, 'id_observacion', ''));
+        $respuesta_observacion = SqlSafe::value(Arr::get($_POST, 'respuesta_observacion', ''));
 
         $sql = "CALL abm_observacion_externa(
                     '$id_observacion',
@@ -796,7 +800,7 @@ class Controller_Externo extends Controller
         require Kohana::find_file('vendor/fpdf17', 'fpdf');
         require Kohana::find_file('vendor/fpdf17', 'code39');
 
-        $hr = $_GET['hr'];
+        $hr = SqlSafe::value(Arr::get($_GET, 'hr', ''));
         if(strpos($hr, 'E/') !== false) {
             //$hr = 'MT/2015-04144';
 

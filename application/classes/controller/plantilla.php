@@ -13,13 +13,40 @@ class Controller_plantilla extends Controller {
             $session = Session::instance();
             $this->user = $session->get('auth_user');
             parent::before();
+            // todas las acciones reciben el id de un documento: solo si el usuario puede verlo
+            if (!$this->puede_ver(ORM::factory('documentos', (int) $this->request->param('id')))) {
+                throw new HTTP_Exception_403('No tiene acceso a este documento');
+            }
         } else {
             $url = substr($_SERVER['REQUEST_URI'], 1);
             $this->request->redirect('/login?url=' . $url);
         }
     }
 
-//documento a excel para impresion    
+    /**
+     * Puede generar la plantilla: el autor, quien interviene en su hoja de ruta (derivo o recibio),
+     * y los usuarios con prioridad, super o administrador (nivel 5), como en document/detalle.
+     */
+    private function puede_ver($documento) {
+        if (!$documento->loaded()) {
+            return FALSE;
+        }
+        $u = $this->user;
+        if ((int) $documento->id_user === (int) $u->id || $u->prioridad == 1 || $u->super != 0 || (int) $u->nivel === 5) {
+            return TRUE;
+        }
+        if ($documento->nur == '') {
+            return FALSE;
+        }
+        $interviene = DB::query(Database::SELECT, 'SELECT 1 FROM seguimiento
+                WHERE nur = :nur AND (derivado_a = :u OR derivado_por = :u) LIMIT 1')
+                ->param(':nur', (string) $documento->nur)
+                ->param(':u', (int) $u->id)
+                ->execute()->count();
+        return $interviene > 0;
+    }
+
+//documento a excel para impresion
     public function action_word($id = '') {
 
         $documento = ORM::factory('documentos', $id);
@@ -34,7 +61,7 @@ class Controller_plantilla extends Controller {
         INNER JOIN pasajes p ON d.id=p.id_documento
         INNER JOIN tipoviaje t ON t.id=p.tipo_viaje
         INNER JOIN mediotransporte m ON m.id=p.medio_transporte
-        WHERE d.id='$id'";
+        WHERE d.id=" . (int) $id;
             
 
             $data = array();
@@ -142,7 +169,7 @@ class Controller_plantilla extends Controller {
         INNER JOIN pasajes p ON d.id=p.id_documento
         INNER JOIN tipoviaje t ON t.id=p.tipo_viaje
         INNER JOIN mediotransporte m ON m.id=p.medio_transporte
-        WHERE d.id='$id'";
+        WHERE d.id=" . (int) $id;
         $data = array();
         $i = 1;
         $marca = array(0 => '', 1 => 'X');
@@ -234,7 +261,7 @@ class Controller_plantilla extends Controller {
         INNER JOIN pasajes p ON d.id=p.id_documento
         INNER JOIN tipoviaje t ON t.id=p.tipo_viaje
         INNER JOIN mediotransporte m ON m.id=p.medio_transporte
-        WHERE d.id='$id'";
+        WHERE d.id=" . (int) $id;
 
         $modelo = New Model_Hojasruta();
         $report = $modelo->select($sql);
@@ -326,7 +353,7 @@ class Controller_plantilla extends Controller {
         INNER JOIN viajes v ON d.id=v.id_documento       
         INNER JOIN mediotransporte m ON m.id=v.medio_transporte1
 	INNER JOIN mediotransporte mm ON mm.id=v.medio_transporte2
-        WHERE d.id='$id'";
+        WHERE d.id=" . (int) $id;
 
         $modelo = New Model_Hojasruta();
         $report = $modelo->select($sql);

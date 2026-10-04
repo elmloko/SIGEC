@@ -25,6 +25,20 @@ class Controller_Ventanillaexterna extends Controller
         //$this->template->title = 'SIGEC';
     }
 
+    /**
+     * Esta ventanilla es publica (sin login): el ciudadano solo puede editar y descargar
+     * los documentos que registro el mismo, en esta sesion.
+     */
+    private function mis_documentos()
+    {
+        return (array) Session::instance()->get('ventanilla_externa_docs', array());
+    }
+
+    private function es_mio($id_documento)
+    {
+        return in_array((int) $id_documento, $this->mis_documentos(), TRUE);
+    }
+
     //modulo para ventanilla
     public function action_index()
     {
@@ -48,11 +62,11 @@ class Controller_Ventanillaexterna extends Controller
             $id_proceso = '4';
             $id_usuario = $id_user;
             $id_tipo = '70';
-            $nombre_destinatario = $_POST['destinatario'];
-            $cargo_destinatario = $_POST['cargodes'];
-            $referencia = $_POST['referencia'];
-            $adjuntos = $_POST['adjunto'];
-            $hojas = $_POST['hojas'];
+            $nombre_destinatario = SqlSafe::value(Arr::get($_POST, 'destinatario', ''));
+            $cargo_destinatario = SqlSafe::value(Arr::get($_POST, 'cargodes', ''));
+            $referencia = SqlSafe::value(Arr::get($_POST, 'referencia', ''));
+            $adjuntos = SqlSafe::value(Arr::get($_POST, 'adjunto', ''));
+            $hojas = SqlSafe::int(Arr::get($_POST, 'hojas', 0));
             // '0000' cuando es insertado por el CIUDADANO
             $entidad_sisin = '0000';
             $prioridad = '1';
@@ -76,7 +90,13 @@ class Controller_Ventanillaexterna extends Controller
             $result = DB::query(Database::SELECT, $sql)->execute();
             $result1 = DB::query(Database::SELECT, "SELECT @pv_resultado AS pv_resultado, @pv_mensaje AS pv_mensaje, @pv_mensajebd AS pv_mensajebd;")->execute();
 
-            $this->request->redirect('ventanillaExterna/edit/' . $result1[0]['pv_resultado']);
+            // el documento recien creado queda habilitado para editarlo en esta sesion
+            $id_creado = (int) $result1[0]['pv_resultado'];
+            $mios = $this->mis_documentos();
+            $mios[] = $id_creado;
+            Session::instance()->set('ventanilla_externa_docs', array_slice(array_unique($mios), -20));
+
+            $this->request->redirect('ventanillaExterna/edit/' . $id_creado);
 
             /*
             if ($documento->id) {
@@ -116,6 +136,10 @@ class Controller_Ventanillaexterna extends Controller
 
     public function action_edit($id)
     {
+        if (!$this->es_mio($id)) {
+            throw new HTTP_Exception_403('Acceso no autorizado');
+        }
+        $id = (int) $id;
 
         $user = new Model_Users();
         $user->id = 255;
@@ -262,9 +286,12 @@ class Controller_Ventanillaexterna extends Controller
 
     public function action_download()
     {
-        $id = $_GET['file'];
+        $id = (int) Arr::get($_GET, 'file', 0);
         //$this->autoRender = false;
         $archivo = ORM::factory('archivos', $id);
+        if ($archivo->loaded() && !$this->es_mio($archivo->id_documento)) {
+            throw new HTTP_Exception_403('Acceso no autorizado');
+        }
         if ($archivo->loaded()) {
             //ahora vemos que solo el que estee autorizado pueda descargar
             //  $file='/archivos/'.$archivo->sub_directorio.'/'.$archivo->nombre_archivo;
