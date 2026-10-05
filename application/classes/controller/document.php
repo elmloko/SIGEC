@@ -80,8 +80,8 @@ class Controller_document extends Controller_DefaultTemplate {
         }
 
 
-        $oficina = $_GET['oficina'];
-        $tipodocumento = ORM::factory('tipos')->where('plural', '=', trim($_GET['tipo']))->find();
+        $oficina = Arr::get($_GET, 'oficina');
+        $tipodocumento = ORM::factory('tipos')->where('plural', '=', trim((string) Arr::get($_GET, 'tipo', '')))->find();
         if ($tipodocumento->loaded()) {
             $ofi = ORM::factory('oficinas', $oficina);
             $tipo = $tipodocumento->id;

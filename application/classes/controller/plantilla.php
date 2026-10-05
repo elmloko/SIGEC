@@ -10,8 +10,8 @@ class Controller_plantilla extends Controller {
     public function before() {
         $auth = Auth::instance();
         if ($auth->logged_in()) {
-            $session = Session::instance();
-            $this->user = $session->get('auth_user');
+            // el usuario se guarda en sesion con la clave de config/auth.php (session_native), no en 'auth_user'
+            $this->user = $auth->get_user();
             parent::before();
             // todas las acciones reciben el id de un documento: solo si el usuario puede verlo
             if (!$this->puede_ver(ORM::factory('documentos', (int) $this->request->param('id')))) {

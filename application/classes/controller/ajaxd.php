@@ -17,8 +17,8 @@ class Controller_Ajaxd extends Controller
                 $auth->logout(TRUE, TRUE);
                 $this->request->redirect('/login');
             }
-            $session = Session::instance();
-            $this->user = $session->get('auth_user');
+            // el usuario se guarda en sesion con la clave de config/auth.php (session_native), no en 'auth_user'
+            $this->user = $auth->get_user();
             parent::before();
         } else {
             $this->request->redirect('/login');
@@ -171,11 +171,9 @@ class Controller_Ajaxd extends Controller
                 // build the query.
                 $query = "SELECT * FROM ( " . $esql . ") as d " . $where;
                 $filterquery = $query;
-                $result = mysql_query($query) or die("SQL Error 1: " . mysql_error());
-                $sql = "SELECT FOUND_ROWS() AS found_rows;";
-                $rows = mysql_query($sql);
-                $rows = mysql_fetch_assoc($rows);
-                $new_total_rows = $rows['found_rows'];
+                // mysql_query() no existe en PHP 7+: el total filtrado se cuenta con la conexion de Kohana
+                $rows = $mDocumentos->ejecutarsql_array("SELECT COUNT(*) AS found_rows FROM ( " . $esql . ") as d " . $where);
+                $new_total_rows = $rows[0]['found_rows'];
                 $query = "SELECT * FROM (" . $esql . ") as d " . $where . $orden_defecto . " LIMIT $start, $pagesize";
                 $total_rows = $new_total_rows;
             }
@@ -206,8 +204,10 @@ class Controller_Ajaxd extends Controller
         //ejecucion de consulta
         $result = $mDocumentos->ejecutarsql_array($query);
 
-        $orders = null;
+        $orders = array();
         foreach ($result as $row) {
+            // en PHP 8 leer una variable/clave inexistente es un Warning que se imprime antes del JSON y vacia la grilla
+            $link = '';
             if ($row['estado'] == 1) {
                 $link = '<a href="/route/trace/?hr=' . $row['nur'] . '" title="Derivado: Ver seguimiento" class="text-xl text-success"><i class="md md- md-verified-user "></i></a>';
                 $link .= '<a href="/print/hr/?code=' . $row['nur'] . '" title="Imprimir hoja de ruta" class="text-xl text-primary"><i class="md md-print "></i></a>';
@@ -339,8 +339,8 @@ class Controller_Ajaxd extends Controller
                 'tipo' => $row['tipo'],
                 'nombre_destinatario' => HTML::chars($row['nombre_destinatario']),
                 'cargo_destinatario' => HTML::chars($row['cargo_destinatario']),
-                'institucion_destinatario' => HTML::chars($row['institucion_destinatario']),
-                'institucion_remitente' => HTML::chars($row['institucion_remitente']),
+                'institucion_destinatario' => HTML::chars(Arr::get($row, 'institucion_destinatario', '')),
+                'institucion_remitente' => HTML::chars(Arr::get($row, 'institucion_remitente', '')),
                 'nombre_remitente' => HTML::chars($row['nombre_remitente']),
                 'cargo_remitente' => HTML::chars($row['cargo_remitente']),
                 'referencia' => HTML::chars($row['referencia']),
