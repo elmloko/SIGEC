@@ -31,6 +31,10 @@ class Controller_plantilla extends Controller {
         if (!$documento->loaded()) {
             return FALSE;
         }
+        // como en document/detalle: solo se restringe cuando el documento ya fue derivado
+        if ($documento->estado != 1) {
+            return TRUE;
+        }
         $u = $this->user;
         if ((int) $documento->id_user === (int) $u->id || $u->prioridad == 1 || $u->super != 0 || (int) $u->nivel === 5) {
             return TRUE;
