@@ -982,7 +982,10 @@ $vacio = function ($v) {
                 $('#' + faltan[0]).focus();
                 return;
             }
-            $('#crear').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Recepcionando…');
+            // se deshabilita despues de armar el POST: un boton deshabilitado no viaja
+            setTimeout(function () {
+                $('#crear').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Recepcionando…');
+            }, 0);
         });
         $('#remitente, #descripcion, #destinatario').on('input', function () {
             if ($.trim($(this).val()) !== '') {

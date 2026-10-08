@@ -167,6 +167,57 @@ $tiene_hr = trim($documento->nur) !== '';
         font-family: Consolas, "Courier New", monospace;
         font-size: 13px;
     }
+    /* fecha de creacion: dia + hora en una sola caja */
+    .he-fecha {
+        display: flex;
+        height: 38px;
+        border: 1px solid #D5DCE6;
+        border-radius: 9px;
+        background: #fff;
+        overflow: hidden;
+    }
+    .he-fecha:focus-within {
+        border-color: #1A549A;
+        box-shadow: 0 0 0 3px rgba(26, 84, 154, .14);
+    }
+    .he-fecha-parte {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        padding-left: 11px;
+    }
+    .he-fecha-parte.dia {
+        flex: 1 1 58%;
+    }
+    .he-fecha-parte.hora {
+        flex: 1 1 42%;
+        border-left: 1px solid #EEF1F5;
+    }
+    .he-fecha-parte .fa {
+        color: #8a94a3;
+        font-size: 13px;
+    }
+    .he-campo .he-fecha input {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 100%;
+        padding: 0 8px 0 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+    .he-campo .he-fecha input:focus {
+        box-shadow: none;
+    }
+    #he-fecha-texto {
+        color: #1A549A;
+        font-weight: 600;
+    }
+    #he-fecha-texto.mal {
+        color: #B42318;
+    }
     .he-ayuda {
         margin-top: 4px;
         font-size: 11.5px;
@@ -442,6 +493,8 @@ $tiene_hr = trim($documento->nur) !== '';
 <?php endif; ?>
 
 <form action="" method="post" id="he-form" class="he-card" autocomplete="off">
+    <!-- el boton se deshabilita al enviar y un boton deshabilitado no viaja en el POST -->
+    <input type="hidden" name="editar" value="1">
     <div class="he-seccion">
         <h3><i class="fa fa-tag"></i> Identificación</h3>
         <div class="he-campos">
@@ -455,9 +508,21 @@ $tiene_hr = trim($documento->nur) !== '';
                 <div class="he-ayuda">Identificador interno: no se puede repetir.</div>
             </div>
             <div class="he-campo">
-                <label for="he-fecha">Fecha de creación</label>
-                <input type="text" name="fecha_creacion" id="he-fecha" class="mono" value="<?php echo $h($documento->fecha_creacion); ?>" placeholder="AAAA-MM-DD HH:MM:SS">
-                <div class="he-ayuda">Formato AAAA-MM-DD HH:MM:SS. Ordena el documento en el seguimiento.</div>
+                <label for="he-fecha-dia">Fecha de creación</label>
+                <!-- el servidor recibe AAAA-MM-DD HH:MM:SS; se arma desde los dos selectores -->
+                <input type="hidden" name="fecha_creacion" id="he-fecha" value="<?php echo $h($documento->fecha_creacion); ?>">
+                <div class="he-fecha">
+                    <span class="he-fecha-parte dia">
+                        <i class="fa fa-calendar"></i>
+                        <input type="date" id="he-fecha-dia" value="<?php echo $h(substr($documento->fecha_creacion, 0, 10)); ?>" max="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" min="2000-01-01" required>
+                    </span>
+                    <span class="he-fecha-parte hora">
+                        <i class="fa fa-clock-o"></i>
+                        <input type="time" id="he-fecha-hora" step="1" value="<?php echo $h(substr($documento->fecha_creacion, 11, 8)); ?>" required>
+                    </span>
+                </div>
+                <div class="he-ayuda" id="he-fecha-texto"></div>
+                <div class="he-ayuda">Ordena el documento en el seguimiento.</div>
             </div>
             <?php if ($tiene_hr): ?>
                 <div class="he-peligro" id="he-aviso-nur" style="display:none">
@@ -557,6 +622,7 @@ $tiene_hr = trim($documento->nur) !== '';
         <?php endif; ?>
 
         <form method="post" action="" enctype="multipart/form-data" class="he-subir" id="he-form-subir">
+            <input type="hidden" name="adjuntar" value="1"/>
             <label class="he-btn" for="he-archivo"><i class="fa fa-paperclip"></i> Elegir archivo PDF…</label>
             <input type="file" name="archivo" id="he-archivo" accept="application/pdf" style="display:none"/>
             <span class="he-elegido" id="he-elegido">Ningún archivo elegido</span>
@@ -619,6 +685,28 @@ $tiene_hr = trim($documento->nur) !== '';
     $(function () {
         var $form = $('#he-form');
         var nurOriginal = <?php echo json_encode((string) $documento->nur); ?>;
+
+        // fecha de creacion: arma AAAA-MM-DD HH:MM:SS desde los dos selectores y la muestra legible
+        var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        function armarFecha() {
+            var dia = $('#he-fecha-dia').val(), hora = $('#he-fecha-hora').val();
+            if (hora.length === 5) {
+                hora += ':00'; // el navegador omite los segundos cuando son 00
+            }
+            var $texto = $('#he-fecha-texto');
+            if (!dia || !hora) {
+                $('#he-fecha').val('');
+                $texto.addClass('mal').text('Elija el día y la hora.');
+                return;
+            }
+            $('#he-fecha').val(dia + ' ' + hora);
+            var p = dia.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+            $texto.removeClass('mal').text(DIAS[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()] + ' de ' + p[0] + ' · ' + hora.substr(0, 5) + ' h');
+        }
+        $('#he-fecha-dia, #he-fecha-hora').on('input change', armarFecha);
+        armarFecha();
+
         var original = $form.serialize(), enviando = false;
 
         function revisar() {

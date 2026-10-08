@@ -421,11 +421,17 @@ if (!$e->logo OR !file_exists(DOCROOT . $logo)) {
         });
         $('#fo-btn-logo').on('click', function () {
             enviando = true;
-            $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Subiendo…');
+            var $b = $(this);
+            setTimeout(function () {
+                $b.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Subiendo…');
+            }, 0);
         });
         $form.on('submit', function () {
             enviando = true;
-            $('#fo-guardar').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando…');
+            // se deshabilita despues de armar el POST: un boton deshabilitado no viaja
+            setTimeout(function () {
+                $('#fo-guardar').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Guardando…');
+            }, 0);
         });
         $(window).on('beforeunload', function () {
             if (!enviando && $form.serialize() !== original) {
