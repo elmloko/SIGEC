@@ -344,6 +344,134 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
     .dr-campo .select2-container {
         width: 100% !important;
     }
+    /* derivar a: campo de texto con sugerencias */
+    .dr-dest {
+        position: relative;
+    }
+    .dr-dest-caja {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 54px;
+        margin: 0;
+        padding: 0 12px 0 8px;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        border-radius: 10px;
+        background: #fff;
+        cursor: text;
+        font-weight: normal;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .dr-dest-caja:focus-within {
+        border-color: var(--correos-azul, #1A549A);
+        box-shadow: 0 0 0 3px rgba(26, 84, 154, .12);
+    }
+    .dr-dest-avatar {
+        flex: 0 0 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--correos-azul, #1A549A);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .5px;
+    }
+    .dr-dest-avatar.vacio {
+        background: #EEF2F7;
+        color: #9aa4b2;
+    }
+    .dr-dest-textos {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .dr-campo .dr-dest-textos input[type=text] {
+        height: auto;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--correos-azul-oscuro, #123E73);
+    }
+    .dr-campo .dr-dest-textos input[type=text]:focus {
+        box-shadow: none;
+    }
+    #destino-cargo {
+        display: block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .2px;
+        color: #7a8594;
+    }
+    #destino-cargo:empty {
+        display: none;
+    }
+    .dr-dest-lupa {
+        color: #9aa4b2;
+    }
+    .dr-dest-caja:focus-within .dr-dest-lupa {
+        color: var(--correos-azul, #1A549A);
+    }
+    /* accion con el mismo aspecto de caja */
+    .dr-campo .select2-container .select2-choice {
+        height: 38px;
+        line-height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: none;
+    }
+    #destino-sugerencias {
+        display: none;
+        position: absolute;
+        z-index: 2000;
+        top: 58px;
+        left: 0;
+        right: 0;
+        max-height: 320px;
+        overflow-y: auto;
+        margin: 0;
+        padding: 4px 0;
+        list-style: none;
+        background: #fff;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        border-radius: 8px;
+        box-shadow: 0 6px 18px rgba(18, 62, 115, .18);
+    }
+    #destino-sugerencias li {
+        padding: 6px 12px;
+        cursor: pointer;
+    }
+    #destino-sugerencias li b {
+        display: block;
+        font-size: 13px;
+        color: #2d3748;
+    }
+    #destino-sugerencias li small {
+        display: block;
+        font-size: 11px;
+        color: #7a8594;
+    }
+    #destino-sugerencias li[data-id]:hover,
+    #destino-sugerencias li.activo {
+        background: #EEF4FB;
+    }
+    #destino-sugerencias li.dr-dest-vacio {
+        color: #9aa4b2;
+        cursor: default;
+    }
     .dr-ayuda {
         display: flex;
         justify-content: space-between;
@@ -355,7 +483,7 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
         display: flex;
         align-items: center;
         gap: 10px;
-        height: 38px;
+        height: 54px;
         margin: 0;
         padding: 0 12px;
         border: 1px solid var(--correos-borde, #DCE3EC);
@@ -829,8 +957,20 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
             <div class="dr-form">
                 <div class="dr-grid">
                     <div class="dr-campo">
-                        <label class="dr-label" for="destino">Derivar a <span class="dr-req">*</span></label>
-                        <?php echo Form::select('destino', $destinatarios, Arr::get($_POST, 'destino', NULL), array('id' => 'destino', 'class' => 'required')); ?>
+                        <label class="dr-label" for="destino-buscar">Derivar a <span class="dr-req">*</span></label>
+                        <?php echo Form::select('destino', $destinatarios, Arr::get($_POST, 'destino', NULL), array('id' => 'destino', 'class' => 'required', 'style' => 'display:none')); ?>
+                        <!-- se escribe el nombre o cargo y se elige de las sugerencias; llena el select oculto -->
+                        <div class="dr-dest">
+                            <label class="dr-dest-caja" for="destino-buscar">
+                                <span class="dr-dest-avatar" id="destino-avatar"><i class="fa fa-user"></i></span>
+                                <span class="dr-dest-textos">
+                                    <input type="text" id="destino-buscar" autocomplete="off" placeholder="Escriba el nombre o el cargo..."/>
+                                    <small id="destino-cargo"></small>
+                                </span>
+                                <i class="fa fa-search dr-dest-lupa"></i>
+                            </label>
+                            <ul id="destino-sugerencias"></ul>
+                        </div>
                     </div>
                     <div class="dr-campo" <?php echo $es_ventanilla ? 'style="display:none"' : ''; ?>>
                         <label class="dr-label">Prioridad</label>
@@ -1070,6 +1210,11 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
         }
 
         var nur = $('#nur').val();
+        // la pestaña del PDF se abre ya (dentro del clic) para que el navegador no la bloquee; se llena al derivar
+        var ventanaHr = window.open('', '_blank');
+        if (ventanaHr) {
+            ventanaHr.document.write('<p style="font-family:Arial;padding:20px">Generando hoja de ruta...</p>');
+        }
         visible(oficial ? 'Derivando como oficial...' : 'Enviando copia...');
         $.ajax({
             type: "POST",
@@ -1109,11 +1254,21 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
                     // listo para el siguiente destinatario
                     $('#proveido').val('').trigger('input');
                     $('#checkbox_urgente').prop('checked', false).trigger('change');
+                    // PDF de la hoja de ruta con los proveidos, ya incluida esta derivacion
+                    if (ventanaHr) {
+                        ventanaHr.location.href = '/print/hr/?code=' + encodeURIComponent(nur) + '&p=1';
+                    }
                 } else {
+                    if (ventanaHr) {
+                        ventanaHr.close();
+                    }
                     mostrarErrores([item.error || 'No se pudo derivar.']);
                 }
             },
             error: function () {
+                if (ventanaHr) {
+                    ventanaHr.close();
+                }
                 ocultar();
                 mostrarErrores(['No se pudo comunicar con el servidor. Revise su conexión e intente nuevamente.']);
             }
@@ -1224,7 +1379,103 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
                 mostrarErrores([]);
             }
         }).trigger('input');
-        $('#destino, #accion').select2();
+        /*
+         * Derivar a: se escribe el nombre o el cargo y se elige de las sugerencias.
+         * Las opciones vienen como "CARGO - NOMBRE"; al elegir se llena el select oculto #destino.
+         */
+        var sinTildes = function (t) {
+            return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        };
+        var personas = $('#destino option').map(function () {
+            var texto = $(this).text(), i = texto.lastIndexOf(' - ');
+            var p = {id: $(this).val(), cargo: i > -1 ? texto.substring(0, i) : '', nombre: i > -1 ? texto.substring(i + 3) : texto};
+            p.busqueda = sinTildes(p.nombre + ' ' + p.cargo);
+            return p;
+        }).get();
+        var $buscar = $('#destino-buscar'), $sug = $('#destino-sugerencias'), sugActivo = -1;
+
+        function mostrarElegido() {
+            var id = $('#destino').val(), p = $.grep(personas, function (x) {
+                return x.id === id;
+            })[0];
+            $buscar.val(p ? p.nombre : '');
+            $('#destino-cargo').text(p ? p.cargo : '');
+            var ini = p ? $.map($.trim(p.nombre).split(/\s+/).slice(0, 2), function (x) {
+                return x.charAt(0).toUpperCase();
+            }).join('') : '';
+            $('#destino-avatar').toggleClass('vacio', !ini).html(ini ? escapar(ini) : '<i class="fa fa-user"></i>');
+        }
+        function cerrarSug() {
+            $sug.hide().empty();
+            sugActivo = -1;
+        }
+        function elegir(id) {
+            $('#destino').val(id).trigger('change');
+            mostrarElegido();
+            cerrarSug();
+        }
+        $buscar.on('input', function () {
+            // cada palabra escrita debe aparecer en el nombre o el cargo
+            var palabras = $.grep(sinTildes($.trim($buscar.val())).split(/\s+/), Boolean);
+            $sug.empty();
+            sugActivo = -1;
+            if (!palabras.length) {
+                cerrarSug();
+                return;
+            }
+            $.each(personas, function (k, p) {
+                if ($sug.children().length >= 10) {
+                    return false;
+                }
+                var ok = $.grep(palabras, function (w) {
+                    return p.busqueda.indexOf(w) > -1;
+                }).length === palabras.length;
+                if (ok) {
+                    $('<li><b>' + escapar(p.nombre) + '</b><small>' + escapar(p.cargo) + '</small></li>')
+                        .attr('data-id', p.id).appendTo($sug);
+                }
+            });
+            if (!$sug.children().length) {
+                $sug.append('<li class="dr-dest-vacio">Nadie coincide con la búsqueda.</li>');
+            }
+            $sug.show();
+        }).on('keydown', function (e) {
+            var $items = $sug.children('[data-id]');
+            if (!$sug.is(':visible') || !$items.length) {
+                if (e.which === 13) {
+                    return false;
+                }
+                return;
+            }
+            if (e.which === 40 || e.which === 38) { // flechas abajo / arriba
+                sugActivo = (sugActivo + (e.which === 40 ? 1 : -1) + $items.length) % $items.length;
+                $items.removeClass('activo').eq(sugActivo).addClass('activo');
+                return false;
+            }
+            if (e.which === 13 || (e.which === 9 && sugActivo > -1)) { // enter / tab: elige el marcado o el primero
+                elegir($items.eq(Math.max(sugActivo, 0)).attr('data-id'));
+                return e.which === 9;
+            }
+            if (e.which === 27) {
+                cerrarSug();
+                mostrarElegido();
+            }
+        }).on('focus', function () {
+            this.select();
+        }).on('blur', function () {
+            // si no eligio a nadie, vuelve a mostrar al que estaba elegido
+            setTimeout(function () {
+                cerrarSug();
+                mostrarElegido();
+            }, 150);
+        });
+        $sug.on('mousedown', 'li[data-id]', function () {
+            elegir($(this).attr('data-id'));
+            return false;
+        });
+        mostrarElegido();
+
+        $('#accion').select2();
         actualizarFlujo();
 
         // ¿el destinatario elegido admite fecha de plazo?

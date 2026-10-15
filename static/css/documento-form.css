@@ -413,3 +413,36 @@ div#vias ul li.oficinas {
     background: #E6F4EC;
     transition: background 1s;
 }
+
+/* sugerencias al escribir en A / VIA */
+.gd-sugerencias {
+    position: absolute;
+    z-index: 2000;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid var(--correos-borde, #DCE3EC);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(18, 62, 115, .18);
+}
+.gd-sugerencias li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+.gd-sugerencias li b {
+    display: block;
+    font-size: 13px;
+    color: #2d3748;
+}
+.gd-sugerencias li small {
+    display: block;
+    font-size: 11px;
+    color: #7a8594;
+}
+.gd-sugerencias li:hover,
+.gd-sugerencias li.activo {
+    background: #EEF4FB;
+}

@@ -297,8 +297,10 @@ class Controller_Documento extends Controller_DefaultTemplate {
                             break;
 
                         default:
+                            // con hoja de ruta: al abrir la edicion se descarga tambien la plantilla Word
+                            $descargar_word = $documento->nur != '' ? '?word=1' : '';
                             $_POST = array();
-                            $this->request->redirect('documento/edit/' . $documento->id);
+                            $this->request->redirect('documento/edit/' . $documento->id . $descargar_word);
                             break;
                     }
                 }

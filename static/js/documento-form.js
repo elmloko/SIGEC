@@ -88,6 +88,102 @@ $(function () {
         return false;
     });
 
+    /*
+     * Autocompletado al escribir en A o VIA: sugiere personas de la libreta (por nombre o cargo)
+     * y al elegir una completa el nombre y el cargo de esa fila.
+     */
+    var sinTildes = function (t) {
+        return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    };
+    var escHtml = function (t) {
+        return $('<div>').text(t == null ? '' : String(t)).html();
+    };
+    var $sug = $('<ul class="gd-sugerencias"></ul>').hide().appendTo('body');
+    var $sugCampo = null, $sugCargo = null, sugActivo = -1;
+
+    function cerrarSugerencias() {
+        $sug.hide().empty();
+        sugActivo = -1;
+    }
+
+    function elegirSugerencia($li) {
+        $sugCampo.val($li.data('nombre')).trigger('change');
+        $sugCargo.val($li.data('cargo')).trigger('change');
+        var $fila = $sugCampo.closest('.gd-fila').addClass('gd-completado');
+        setTimeout(function () {
+            $fila.removeClass('gd-completado');
+        }, 900);
+        cerrarSugerencias();
+    }
+
+    function mostrarSugerencias($campo, $campoCargo) {
+        var t = sinTildes($.trim($campo.val()));
+        $sugCampo = $campo;
+        $sugCargo = $campoCargo;
+        $sug.empty();
+        sugActivo = -1;
+        if (t === '') {
+            cerrarSugerencias();
+            return;
+        }
+        var vistos = {};
+        $('#vias a.destino1').each(function () {
+            var nombre = $(this).attr('nombre') || '', cargo = $(this).attr('cargo') || '';
+            if (vistos[nombre + '|' + cargo] || $sug.children().length >= 8) {
+                return;
+            }
+            if ((sinTildes(nombre) + ' ' + sinTildes(cargo)).indexOf(t) > -1) {
+                vistos[nombre + '|' + cargo] = 1;
+                $('<li><b>' + escHtml(nombre) + '</b><small>' + escHtml(cargo) + '</small></li>')
+                    .data({nombre: nombre, cargo: cargo}).appendTo($sug);
+            }
+        });
+        if (!$sug.children().length) {
+            cerrarSugerencias();
+            return;
+        }
+        var o = $campo.offset();
+        $sug.css({top: o.top + $campo.outerHeight() + 2, left: o.left, width: Math.max($campo.outerWidth() * 2, 280)}).show();
+    }
+
+    $.each([['#destinatario', '#cargo_des'], ['#via', '#cargovia'], ['#via2', '#cargovia2']], function (i, par) {
+        var $campo = $(par[0]), $campoCargo = $(par[1]);
+        if (!$campo.length) {
+            return;
+        }
+        $campo.on('input', function () {
+            mostrarSugerencias($campo, $campoCargo);
+        }).on('keydown', function (e) {
+            if (!$sug.is(':visible')) {
+                return;
+            }
+            var $items = $sug.children();
+            if (e.which === 40 || e.which === 38) { // flechas abajo / arriba
+                sugActivo = (sugActivo + (e.which === 40 ? 1 : -1) + $items.length) % $items.length;
+                $items.removeClass('activo').eq(sugActivo).addClass('activo');
+                return false;
+            }
+            if ((e.which === 13 || e.which === 9) && sugActivo > -1) { // enter / tab
+                elegirSugerencia($items.eq(sugActivo));
+                return e.which === 9;
+            }
+            if (e.which === 13) {
+                return false; // no enviar el formulario con la lista abierta
+            }
+            if (e.which === 27) {
+                cerrarSugerencias();
+            }
+        }).on('blur', function () {
+            setTimeout(cerrarSugerencias, 150);
+        });
+    });
+    // mousedown para elegir antes de que el blur cierre la lista
+    $sug.on('mousedown', 'li', function () {
+        elegirSugerencia($(this));
+        return false;
+    });
+    $(window).on('resize scroll', cerrarSugerencias);
+
     // limpiar una fila (destinatario o via)
     $('.gd-limpiar').click(function () {
         $(this).closest('.gd-fila').find('input[type=text]').val('');

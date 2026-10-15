@@ -17,10 +17,19 @@ $bloqueado = $envio['recibido'];
 // para derivar se exige al menos un archivo digital (salvo el usuario de despacho)
 $puede_derivar = $num_archivos > 0 || $user == '95';
 ?>
-<link rel="stylesheet" href="/static/css/documento-form.css?v=2"/>
-<script type="text/javascript" src="/static/js/documento-form.js?v=2"></script>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=3"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=3"></script>
 <script type="text/javascript">
     $(function () {
+        // recien generado con hoja de ruta: descarga la plantilla Word sin salir de la pagina
+        if (/[?&]word=1(&|$)/.test(window.location.search)) {
+            $('<iframe style="display:none"></iframe>').attr('src', '/plantilla/word/<?php echo (int) $documento->id; ?>').appendTo('body');
+            if (window.history.replaceState) {
+                // quitar el parametro para que al recargar no se descargue otra vez
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
         // el plugin redactor ya no se carga en esta pagina; sin esta verificacion el error detenia el resto de los scripts
         if ($.fn.redactor) {
             $('#descripcion').redactor({lang: 'es', css: 'docstyle.css'});
