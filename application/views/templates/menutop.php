@@ -80,6 +80,14 @@ $principales = array_slice($principales, 0, $posicion, TRUE) + array('mis-indica
 $menu['mis-indicadores'] = array(0 => array('submenu' => 'Mis indicadores', 'accion' => ''));
 endif;
 
+// "Seguimientos": hojas de ruta creadas por el usuario y donde estan ahora (no esta en la base);
+// va al final de la carpeta Documentos
+foreach ($principales as $mid => $m) {
+    if (trim($m->controlador, '/') === 'document') {
+        $menu[$mid][1000000] = array('submenu' => 'Seguimientos', 'accion' => 'seguimientos');
+    }
+}
+
 // textos con tildes y nombres mas claros (los de la base se mantienen)
 $etiquetas = array(
     'Busqueda' => 'Búsqueda',

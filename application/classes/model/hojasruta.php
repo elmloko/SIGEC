@@ -218,6 +218,101 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
         return $this->_db->query(Database::SELECT, $sql, TRUE);
     }
 
+    /**
+     * Hojas de ruta creadas por el usuario (documento original) con su situacion actual:
+     * curso (alguien la tiene sin recibir o pendiente), sin_derivar, archivada, agrupada o concluida.
+     * El paso "oficial = 1" es la rama vigente de la hoja de ruta (los pasos ya derivados quedan en 2).
+     */
+    protected function sqlSeguimientosUsuario($q, &$params) {
+        $where = "d.id_user = :id AND d.original = 1 AND d.nur <> ''";
+        if ($q !== '') {
+            $where .= " AND (d.nur LIKE :q OR d.codigo LIKE :q OR d.cite_original LIKE :q OR d.referencia LIKE :q)";
+            $params[':q'] = '%' . $q . '%';
+        }
+        return "SELECT d.id AS id_documento, d.nur, d.codigo, d.cite_original, d.referencia, d.fecha_creacion,
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur AND s.oficial = 1 AND s.estado IN (1, 2)) THEN 'curso'
+                        WHEN NOT EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur) THEN 'sin_derivar'
+                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur AND s.oficial = 1 AND s.estado = 10) THEN 'archivada'
+                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur AND s.oficial = 1 AND s.estado = 6) THEN 'agrupada'
+                        ELSE 'concluida'
+                    END AS situacion
+                FROM documentos d USE INDEX (INDEX_ID_USER__FECHA_CREACION)
+                WHERE $where";
+    }
+
+    /** Cantidad de hojas de ruta del usuario por situacion: array('curso' => n, ...). */
+    public function resumenSeguimientosUsuario($id_user, $q = '') {
+        $params = array(':id' => (int) $id_user);
+        $sql = "SELECT x.situacion, COUNT(*) AS n FROM (" . $this->sqlSeguimientosUsuario($q, $params) . ") x GROUP BY x.situacion";
+        $query = db::query(Database::SELECT, $sql);
+        foreach ($params as $k => $v) {
+            $query->param($k, $v);
+        }
+        $resumen = array();
+        foreach ($query->execute() as $r) {
+            $resumen[$r['situacion']] = (int) $r['n'];
+        }
+        return $resumen;
+    }
+
+    /** Una pagina de hojas de ruta del usuario (las mas recientes primero), opcionalmente de una situacion. */
+    public function seguimientosUsuario($id_user, $situacion, $q, $offset, $limite) {
+        $params = array(':id' => (int) $id_user);
+        $sql = "SELECT x.* FROM (" . $this->sqlSeguimientosUsuario($q, $params) . ") x";
+        if ($situacion !== '') {
+            $sql .= " WHERE x.situacion = :situacion";
+            $params[':situacion'] = $situacion;
+        }
+        $sql .= " ORDER BY x.fecha_creacion DESC LIMIT " . (int) $offset . ", " . (int) $limite;
+        $query = db::query(Database::SELECT, $sql);
+        foreach ($params as $k => $v) {
+            $query->param($k, $v);
+        }
+        return $query->execute()->as_array();
+    }
+
+    /**
+     * Quien tiene ahora cada hoja de ruta: los pasos oficiales abiertos (sin recibir o pendientes);
+     * si no hay ninguno, el ultimo paso registrado (quien la archivo, agrupo o el ultimo receptor).
+     * Devuelve array(nur => array(paso, ...)).
+     */
+    public function poseedoresActuales(array $nurs) {
+        if (!$nurs) {
+            return array();
+        }
+        $lista = implode(',', array_map(array(Database::instance(), 'escape'), array_unique($nurs)));
+        $sql = "SELECT s.id, s.nur, s.oficial, s.estado, s.derivado_a, s.nombre_receptor, s.cargo_receptor, s.a_oficina,
+                    s.nombre_emisor, s.fecha_emision, s.fecha_recepcion
+                FROM seguimiento s
+                WHERE s.nur IN ($lista)
+                ORDER BY s.id ASC";
+        $pasos = array();
+        foreach (db::query(Database::SELECT, $sql)->execute() as $s) {
+            $pasos[$s['nur']][] = $s;
+        }
+        $poseedores = array();
+        foreach ($pasos as $nur => $lista_pasos) {
+            $abiertos = array();
+            foreach ($lista_pasos as $s) {
+                if ((int) $s['oficial'] === 1 && in_array((int) $s['estado'], array(1, 2), TRUE)) {
+                    $abiertos[] = $s;
+                }
+            }
+            if (!$abiertos) {
+                $ultimo = NULL;
+                foreach ($lista_pasos as $s) {
+                    if ((int) $s['oficial'] === 1) {
+                        $ultimo = $s;
+                    }
+                }
+                $abiertos[] = $ultimo ? $ultimo : end($lista_pasos);
+            }
+            $poseedores[$nur] = $abiertos;
+        }
+        return $poseedores;
+    }
+
 }
 
 ?>

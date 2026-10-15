@@ -108,6 +108,45 @@ class Controller_document extends Controller_DefaultTemplate {
                 ->bind('recientes', $recientes);
     }
 
+    // Seguimientos: todas las hojas de ruta que creo el usuario, quien la tiene ahora y desde cuando
+    public function action_seguimientos() {
+        $situaciones = array('curso', 'sin_derivar', 'archivada', 'agrupada', 'concluida');
+        $situacion = (string) Arr::get($_GET, 'situacion', '');
+        if (!in_array($situacion, $situaciones, TRUE)) {
+            $situacion = '';
+        }
+        $q = trim((string) Arr::get($_GET, 'q', ''));
+        $por_pagina = 25;
+        $pagina = max(1, (int) Arr::get($_GET, 'pagina', 1));
+
+        $oHr = New Model_Hojasruta();
+        $resumen = $oHr->resumenSeguimientosUsuario($this->user->id, $q);
+        $total = $situacion !== '' ? (isset($resumen[$situacion]) ? $resumen[$situacion] : 0) : array_sum($resumen);
+        $paginas = max(1, (int) ceil($total / $por_pagina));
+        $pagina = min($pagina, $paginas);
+
+        $hojas = $oHr->seguimientosUsuario($this->user->id, $situacion, $q, ($pagina - 1) * $por_pagina, $por_pagina);
+        $nurs = array();
+        foreach ($hojas as $h) {
+            $nurs[] = $h['nur'];
+        }
+        $poseedores = $oHr->poseedoresActuales($nurs);
+
+        $this->template->title .= ' / Seguimientos';
+        $this->template->titulo .= 'Seguimientos';
+        $this->template->descripcion = 'Hojas de ruta creadas: quién la tiene y desde cuándo';
+        $this->template->content = View::factory('documentos/seguimientos')
+                ->bind('hojas', $hojas)
+                ->bind('poseedores', $poseedores)
+                ->bind('resumen', $resumen)
+                ->bind('situacion', $situacion)
+                ->bind('q', $q)
+                ->bind('pagina', $pagina)
+                ->bind('paginas', $paginas)
+                ->bind('total', $total)
+                ->bind('user', $this->user);
+    }
+
     public function action_vista() {
         $codigo = $_GET['doc'];
         $mensajes = array();
