@@ -2,6 +2,11 @@
 $es_ventanilla = ($user->id == '255');
 $editando = isset($editando) && $editando;
 
+// el PDF de la hoja de ruta solo se abre en su primera derivacion (aun no tiene ningun paso de seguimiento)
+$primera_derivacion = !$editando && (int) DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento WHERE nur = :nur')
+        ->param(':nur', (string) $documento->nur)
+        ->execute()->get('n') === 0;
+
 // preseleccionar al destinatario del documento (si esta en la lista)
 $nombre_usuario_destinatario = $documento->nombre_destinatario;
 $posicion_usuario_destinatario = 0;
@@ -1053,6 +1058,8 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
 <?php echo View::factory('documentos/visor_pdf'); ?>
 
 <script type="text/javascript">
+    // la hoja de ruta aun no se derivo nunca: su primera derivacion abre el PDF
+    var hrPrimeraDerivacion = <?php echo $primera_derivacion ? 'true' : 'false'; ?>;
     // posicion inicial del destinatario (antes de aplicar select2)
     document.getElementById('destino').selectedIndex = <?php echo (int) $posicion_usuario_destinatario; ?>;
     <?php if ($es_ventanilla): ?>
@@ -1210,8 +1217,9 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
         }
 
         var nur = $('#nur').val();
-        // la pestaña del PDF se abre ya (dentro del clic) para que el navegador no la bloquee; se llena al derivar
-        var ventanaHr = window.open('', '_blank');
+        // la pestaña del PDF se abre ya (dentro del clic) para que el navegador no la bloquee; se llena al derivar.
+        // Solo en la primera derivacion de la hoja de ruta; las siguientes ya no abren el PDF
+        var ventanaHr = hrPrimeraDerivacion ? window.open('', '_blank') : null;
         if (ventanaHr) {
             ventanaHr.document.write('<p style="font-family:Arial;padding:20px">Generando hoja de ruta...</p>');
         }
@@ -1254,7 +1262,8 @@ $ya_oficial = DB::query(Database::SELECT, 'SELECT COUNT(*) AS n FROM seguimiento
                     // listo para el siguiente destinatario
                     $('#proveido').val('').trigger('input');
                     $('#checkbox_urgente').prop('checked', false).trigger('change');
-                    // PDF de la hoja de ruta con los proveidos, ya incluida esta derivacion
+                    // PDF de la hoja de ruta con los proveidos, ya incluida esta derivacion (solo la primera vez)
+                    hrPrimeraDerivacion = false;
                     if (ventanaHr) {
                         ventanaHr.location.href = '/print/hr/?code=' + encodeURIComponent(nur) + '&p=1';
                     }
