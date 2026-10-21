@@ -218,12 +218,10 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->adjuntos = $_POST['adjuntos'];
                 $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
                 $documento->copias = $_POST['copias'];
-                $documento->nombre_via = $_POST['via'];
-                $documento->cargo_via = $_POST['cargovia'];
                 $documento->titulo = $_POST['titulo'];
                 $documento->id_entidad = $this->user->id_entidad;
                 $documento->nur = ''; // evita error "Field 'nur' doesn't have a default value"; se sobreescribe abajo si se asigna hoja de ruta
-                $documento->save();
+                Vias::guardar($documento, Vias::del_post($_POST)); // guarda el documento con sus VIA
                 //si se creo el documento entonces
                 //guardamos en vitacora
                 $accion = $this->user->nombre.' generó el documento : <b>' . $documento->cite_original . '</b>';
@@ -423,10 +421,8 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->adjuntos = $_POST['adjuntos'];
                 $documento->copias = $_POST['copias'];
                 $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
-                $documento->nombre_via = $_POST['via'];
-                $documento->cargo_via = $_POST['cargovia'];
                 $documento->id_proceso = $_POST['proceso'];
-                $documento->save();
+                Vias::guardar($documento, Vias::del_post($_POST)); // guarda el documento con sus VIA
                 $mensajes['Modificado!'] = 'El documento se modifico correctamente.';
                 $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre.', modificó el documento: <b>' . $documento->cite_original . '</b>');
             }

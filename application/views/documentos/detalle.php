@@ -310,12 +310,12 @@ foreach ($archivo as $a) {
                         <?php if (trim($d->institucion_destinatario) != ''): ?><span class="text-muted"><?php echo HTML::chars($d->institucion_destinatario); ?></span><?php endif; ?>
                     </td>
                 </tr>
-                <?php if (trim($d->nombre_via) != ''): ?>
+                <?php foreach (Vias::de($d) as $v): ?>
                     <tr>
                         <th>Vía</th>
-                        <td><?php echo HTML::chars($d->nombre_via); ?><b><?php echo HTML::chars($d->cargo_via); ?></b></td>
+                        <td><?php echo HTML::chars($v['nombre']); ?><b><?php echo HTML::chars($v['cargo']); ?></b></td>
                     </tr>
-                <?php endif; ?>
+                <?php endforeach; ?>
                 <tr>
                     <th>De</th>
                     <td><?php echo HTML::chars($d->nombre_remitente); ?><b><?php echo HTML::chars($d->cargo_remitente); ?></b>

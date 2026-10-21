@@ -53,7 +53,7 @@ $(function () {
     if (!$('#destinatario').length) {
         return;
     }
-    var nombres = {destinatario: 'A (destinatario)', via: 'VÍA', via2: 'VÍA'};
+    var nombres = {destinatario: 'A (destinatario)', via: 'VÍA', via2: 'VÍA 2', via3: 'VÍA 3'};
 
     function marcarDestino($campo, $campoCargo) {
         $this = $campo;
@@ -66,13 +66,35 @@ $(function () {
     $('#destinatario, #cargo_des').focus(function () {
         marcarDestino($('#destinatario'), $('#cargo_des'));
     });
-    $('#via, #cargovia').focus(function () {
-        marcarDestino($('#via'), $('#cargovia'));
-    });
-    $('#via2').focus(function () {
-        marcarDestino($(this), $('#cargovia2'));
+    // cada fila VIA (via / cargovia, via2 / cargovia2, ...)
+    $('.gd-fila-via').each(function () {
+        var $via = $(this).find('.gd-via'), $cargoVia = $(this).find('.gd-cargovia');
+        $via.add($cargoVia).focus(function () {
+            marcarDestino($via, $cargoVia);
+        });
     });
     marcarDestino($('#destinatario'), $('#cargo_des'));
+
+    // "Agregar otro VIA": muestra la siguiente fila oculta; el enlace solo queda en la ultima fila visible
+    function filasVia(mostradas) {
+        return $('.gd-fila-via').filter(function () {
+            return (this.style.display !== 'none') === mostradas;
+        });
+    }
+    function enlacesOtroVia() {
+        var $mostradas = filasVia(true);
+        $('.gd-otro-via').hide();
+        if ($mostradas.length < $('.gd-fila-via').length) {
+            $mostradas.last().find('.gd-otro-via').show();
+        }
+    }
+    $('.gd-otro-via').click(function () {
+        var $fila = filasVia(false).first().show();
+        enlacesOtroVia();
+        $fila.find('.gd-via').focus();
+        return false;
+    });
+    enlacesOtroVia();
 
     $(document).on('click', 'a.destino1', function () {
         $this.val($(this).attr('nombre')).trigger('change');
@@ -146,7 +168,7 @@ $(function () {
         $sug.css({top: o.top + $campo.outerHeight() + 2, left: o.left, width: Math.max($campo.outerWidth() * 2, 280)}).show();
     }
 
-    $.each([['#destinatario', '#cargo_des'], ['#via', '#cargovia'], ['#via2', '#cargovia2']], function (i, par) {
+    $.each([['#destinatario', '#cargo_des'], ['#via', '#cargovia'], ['#via2', '#cargovia2'], ['#via3', '#cargovia3']], function (i, par) {
         var $campo = $(par[0]), $campoCargo = $(par[1]);
         if (!$campo.length) {
             return;

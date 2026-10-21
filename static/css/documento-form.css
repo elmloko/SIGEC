@@ -3,6 +3,10 @@
 .gd-fila.via2 {
     display: none;
 }
+.gd-otro-via {
+    margin-left: 10px;
+    white-space: nowrap;
+}
 .gd-card {
     background: #fff;
     border-radius: 12px;

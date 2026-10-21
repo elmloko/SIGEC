@@ -124,6 +124,14 @@ class Controller_plantilla extends Controller {
             }
 
             $TBS->MergeBlock('a', $data);
+            // plantillas con VIA: el bloque [v.nombre] / [v.cargo] se repite por cada VIA
+            if ($documento->nombre_via != '') {
+                $vias = array();
+                foreach (Vias::de($documento) as $v) {
+                    $vias[] = array('nombre' => utf8_decode($v['nombre']), 'cargo' => utf8_decode($v['cargo']));
+                }
+                $TBS->MergeBlock('v', $vias);
+            }
 // Define the name of the output file
 // delete comments
             //header('Content-Length: ' . filesize($h2d_file_uri));

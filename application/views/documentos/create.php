@@ -19,8 +19,8 @@ $iniciales = function ($nombre) {
     return $ini !== '' ? $ini : '?';
 };
 ?>
-<link rel="stylesheet" href="/static/css/documento-form.css?v=3"/>
-<script type="text/javascript" src="/static/js/documento-form.js?v=3"></script>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=4"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=4"></script>
 <script type="text/javascript">
     var stat = 0;
     $(function () {
@@ -34,10 +34,6 @@ $iniciales = function ($nombre) {
             $('#hojaruta').val(0);
             stat = 1;
             return true;
-        });
-        $('#otrovia').click(function () {
-            $('.via2').toggle();
-            return false;
         });
 
         // evita generar dos documentos por doble clic
@@ -129,23 +125,7 @@ $iniciales = function ($nombre) {
             <?php if ($con_via): ?>
                 <input type="hidden" name="institucion_des"/>
                 <!-- VIA: -->
-                <div class="gd-fila">
-                    <div class="gd-etiqueta">VÍA:<small>opcional</small></div>
-                    <div>
-                        <div class="gd-par">
-                            <?php echo Form::input('via', '', array('id' => 'via', 'autocomplete' => 'off', 'placeholder' => 'Nombre')); ?>
-                            <?php echo Form::input('cargovia', '', array('id' => 'cargovia', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
-                        </div>
-                        <div class="gd-ayuda"><span>Déjelo vacío si el documento va directo</span><a href="#" class="gd-limpiar"><i class="fa fa-times"></i> limpiar</a></div>
-                    </div>
-                </div>
-                <div class="gd-fila via2">
-                    <div class="gd-etiqueta">VÍA:</div>
-                    <div class="gd-par">
-                        <?php echo Form::input('via2', '', array('id' => 'via2', 'autocomplete' => 'off', 'placeholder' => 'Nombre')); ?>
-                        <?php echo Form::input('cargovia2', '', array('id' => 'cargovia2', 'class' => 'required', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
-                    </div>
-                </div>
+                <?php echo View::factory('documentos/vias_form'); ?>
             <?php else: ?>
                 <input type="hidden" name="via"/>
                 <input type="hidden" name="cargovia"/>

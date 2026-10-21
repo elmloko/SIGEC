@@ -17,8 +17,8 @@ $bloqueado = $envio['recibido'];
 // para derivar se exige al menos un archivo digital (salvo el usuario de despacho)
 $puede_derivar = $num_archivos > 0 || $user == '95';
 ?>
-<link rel="stylesheet" href="/static/css/documento-form.css?v=3"/>
-<script type="text/javascript" src="/static/js/documento-form.js?v=3"></script>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=4"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=4"></script>
 <script type="text/javascript">
     $(function () {
         // recien generado con hoja de ruta: descarga la plantilla Word sin salir de la pagina
@@ -712,16 +712,7 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                 <?php if ($con_via): ?>
                     <input type="hidden" name="institucion_des"/>
                     <!-- VIA: -->
-                    <div class="gd-fila">
-                        <div class="gd-etiqueta">VÍA:<small>opcional</small></div>
-                        <div>
-                            <div class="gd-par">
-                                <?php echo Form::input('via', $documento->nombre_via, array('id' => 'via', 'autocomplete' => 'off', 'placeholder' => 'Nombre')); ?>
-                                <?php echo Form::input('cargovia', $documento->cargo_via, array('id' => 'cargovia', 'autocomplete' => 'off', 'placeholder' => 'Cargo')); ?>
-                            </div>
-                            <div class="gd-ayuda"><span>Déjelo vacío si el documento va directo</span><a href="#" class="gd-limpiar"><i class="fa fa-times"></i> limpiar</a></div>
-                        </div>
-                    </div>
+                    <?php echo View::factory('documentos/vias_form')->set('vias', Vias::de($documento)); ?>
                 <?php else: ?>
                     <input type="hidden" name="via"/>
                     <input type="hidden" name="cargovia"/>
