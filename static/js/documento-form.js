@@ -208,9 +208,37 @@ $(function () {
 
     // limpiar una fila (destinatario o via)
     $('.gd-limpiar').click(function () {
-        $(this).closest('.gd-fila').find('input[type=text]').val('');
+        var $fila = $(this).closest('.gd-fila');
+        if ($fila.hasClass('gd-fila-via')) {
+            quitarVia($fila);
+        } else {
+            $fila.find('input[type=text]').val('').trigger('change');
+        }
         return false;
     });
+
+    // quita un VIA: los siguientes suben una fila y las filas que quedan vacias (salvo la primera) se ocultan
+    function quitarVia($quitar) {
+        var $filas = $('.gd-fila-via'), restantes = [];
+        $filas.not($quitar).each(function () {
+            var nombre = $(this).find('.gd-via').val(), cargo = $(this).find('.gd-cargovia').val();
+            if ($.trim(nombre) !== '' || $.trim(cargo) !== '') {
+                restantes.push([nombre, cargo]);
+            }
+        });
+        $filas.each(function (i) {
+            var v = restantes[i] || ['', ''];
+            $(this).find('.gd-via').val(v[0]);
+            $(this).find('.gd-cargovia').val(v[1]).trigger('change');
+            $(this).toggle(i === 0 || i < restantes.length);
+        });
+        enlacesOtroVia();
+        // la libreta completa la primera fila VIA que quedo vacia
+        var $vacia = $filas.eq(Math.min(restantes.length, $filas.length - 1));
+        if ($vacia.find('.gd-via').val() === '') {
+            marcarDestino($vacia.find('.gd-via'), $vacia.find('.gd-cargovia'));
+        }
+    }
 
     // buscador de la libreta
     $('#gd-buscar').on('keyup search', function () {

@@ -19,8 +19,8 @@ $iniciales = function ($nombre) {
     return $ini !== '' ? $ini : '?';
 };
 ?>
-<link rel="stylesheet" href="/static/css/documento-form.css?v=4"/>
-<script type="text/javascript" src="/static/js/documento-form.js?v=4"></script>
+<link rel="stylesheet" href="/static/css/documento-form.css?v=5"/>
+<script type="text/javascript" src="/static/js/documento-form.js?v=5"></script>
 <script type="text/javascript">
     var stat = 0;
     $(function () {
