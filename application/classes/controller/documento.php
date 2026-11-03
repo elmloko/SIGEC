@@ -91,6 +91,19 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 ->execute()->as_array('id', 'tipo');
     }
 
+    // documentos.referencia es varchar(255)
+    const MAX_REFERENCIA = 255;
+
+    /**
+     * Quita espacios y saltos de linea sobrantes de la referencia (al pegar texto suelen venir muchos \n).
+     */
+    private function limpiar_referencia($texto) {
+        $texto = str_replace(array("\r\n", "\r"), "\n", (string) $texto);
+        $texto = preg_replace('/[ \t]+/u', ' ', $texto);
+        $texto = preg_replace('/ *\n[\s]*/u', "\n", $texto);
+        return trim($texto);
+    }
+
     /**
      * Solo se cambia el tipo mientras el documento no tenga hoja de ruta, y si su tipo actual
      * no lleva datos propios (pasajes/viajes) que se perderian al cambiarlo.
@@ -212,7 +225,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->nombre_remitente = $_POST['remitente'];
                 $documento->cargo_remitente = $_POST['cargo_rem'];
                 $documento->mosca_remitente = $_POST['mosca'];
-                $documento->referencia = $_POST['referencia'];
+                $documento->referencia = mb_substr($this->limpiar_referencia($_POST['referencia']), 0, self::MAX_REFERENCIA, 'UTF-8');
                 $documento->contenido = $_POST['descripcion'];
                 $documento->fecha_creacion = date('Y-m-d H:i:s');
                 $documento->adjuntos = $_POST['adjuntos'];
@@ -414,7 +427,7 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->nombre_remitente = $_POST['remitente'];
                 $documento->cargo_remitente = $_POST['cargo_rem'];
                 $documento->mosca_remitente = $_POST['mosca'];
-                $documento->referencia = $_POST['referencia'];
+                $documento->referencia = $this->limpiar_referencia($_POST['referencia']);
                 $documento->contenido = $_POST['descripcion'];
                 $documento->titulo = $_POST['titulo'];
 //                   $documento->fecha_creacion=  time(); //fecha y hora en formato int
@@ -422,9 +435,14 @@ class Controller_Documento extends Controller_DefaultTemplate {
                 $documento->copias = $_POST['copias'];
                 $documento->hojas = (int) Arr::get($_POST, 'hojas', 0);
                 $documento->id_proceso = $_POST['proceso'];
-                Vias::guardar($documento, Vias::del_post($_POST)); // guarda el documento con sus VIA
-                $mensajes['Modificado!'] = 'El documento se modifico correctamente.';
-                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre.', modificó el documento: <b>' . $documento->cite_original . '</b>');
+                if (mb_strlen($documento->referencia, 'UTF-8') > self::MAX_REFERENCIA) {
+                    // no se guarda; el formulario se vuelve a mostrar con lo escrito para que lo acorten
+                    $error_tipo = 'La referencia tiene ' . mb_strlen($documento->referencia, 'UTF-8') . ' caracteres; el máximo es ' . self::MAX_REFERENCIA . '. Acórtela y vuelva a guardar.';
+                } else {
+                    Vias::guardar($documento, Vias::del_post($_POST)); // guarda el documento con sus VIA
+                    $mensajes['Modificado!'] = 'El documento se modifico correctamente.';
+                    $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre.', modificó el documento: <b>' . $documento->cite_original . '</b>');
+                }
             }
             if (isset($_POST['adjuntar'])) {
 

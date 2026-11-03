@@ -738,7 +738,7 @@ $puede_derivar = $num_archivos > 0 || $user == '95';
                 <div class="gd-fila">
                     <div class="gd-etiqueta">REF.: <span class="gd-req">*</span></div>
                     <div>
-                        <textarea name="referencia" id="referencia" class="required" title="Escriba la referencia del documento"
+                        <textarea name="referencia" id="referencia" class="required" maxlength="255" title="Escriba la referencia del documento"
                                   placeholder="Asunto del documento"><?php echo HTML::chars($documento->referencia); ?></textarea>
                         <div class="gd-ayuda"><span>Asunto que se verá en la bandeja y en la hoja de ruta</span><span><span id="gd-ref-contador">0</span> caracteres</span></div>
                     </div>
