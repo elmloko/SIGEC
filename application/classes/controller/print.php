@@ -562,6 +562,54 @@ class Controller_Print extends Controller
         }
     }
 
+    // reporte PDF de documentos generados por tipo y rango de fechas (desde document/index)
+    public function action_documentos()
+    {
+        $auth = Auth::instance();
+        if (!$auth->logged_in()) {
+            $this->request->redirect('error404');
+            return;
+        }
+        $user = $auth->get_user();
+
+        $valida = function ($f) {
+            $d = DateTime::createFromFormat('Y-m-d', (string) $f);
+            return ($d && $d->format('Y-m-d') === $f) ? $f : NULL;
+        };
+        $desde = $valida(Arr::get($_GET, 'desde'));
+        $hasta = $valida(Arr::get($_GET, 'hasta'));
+        if ($desde === NULL) {
+            $desde = date('Y-m-01');
+        }
+        if ($hasta === NULL) {
+            $hasta = date('Y-m-d');
+        }
+        if ($desde > $hasta) {
+            list($desde, $hasta) = array($hasta, $desde);
+        }
+
+        $id_tipo = (int) Arr::get($_GET, 'tipo', 0);
+        $nombre_tipo = 'Todos los tipos';
+        if ($id_tipo > 0) {
+            $tipo = ORM::factory('tipos', $id_tipo);
+            if ($tipo->loaded()) {
+                $nombre_tipo = $tipo->plural;
+            } else {
+                $id_tipo = 0;
+            }
+        }
+
+        $mDoc = new Model_Documentos();
+        $filas = $mDoc->reporte_tipo($user->id, $id_tipo, $desde, $hasta);
+
+        require Kohana::find_file('vendor/fpdf17', 'fpdf');
+        require Kohana::find_file('vendor/fpdf17', 'code39');
+        $pdf = new Pdf_Documentos('L', 'mm', 'Letter');
+        $pdf->logo = DOCROOT . 'media/LOGO 19-2-26.png';
+        $pdf->generar($user, $nombre_tipo, $desde, $hasta, $filas);
+        $pdf->Output('documentos_' . str_replace('-', '', $desde) . '_' . str_replace('-', '', $hasta) . '.pdf', 'I');
+    }
+
     public function action_enviados()
     {
         $auth = Auth::instance();

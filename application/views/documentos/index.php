@@ -187,6 +187,24 @@ foreach ($mistipos as $t) {
             $("#jqxgrid").jqxGrid('clearfilters');
         });
 
+        // reporte PDF por tipo y fechas: preselecciona el tipo de la tarjeta activa
+        $('#abrirReporte').click(function () {
+            var activa = $('.doc-tipo-card.activa');
+            var id = activa.length ? activa.attr('data-id') : '0';
+            $('#rep-tipo').val(id);
+            $('#rep-error').hide();
+            $('#doc-reporte-modal').appendTo('body').modal('show');
+        });
+        $('#doc-reporte-form').on('submit', function (e) {
+            var desde = $('#rep-desde').val(), hasta = $('#rep-hasta').val();
+            if (desde && hasta && desde > hasta) {
+                e.preventDefault();
+                $('#rep-error').show();
+                return;
+            }
+            $('#doc-reporte-modal').modal('hide');
+        });
+
         // justificacion del rechazo: cada icono trae su propio texto
         $(document).on('click', '.doc-ver-rechazo', function (e) {
             e.preventDefault();
@@ -409,6 +427,7 @@ foreach ($mistipos as $t) {
     </h2>
     <div class="doc-botones">
         <a class="btn btn-sm btn-default-bright" href="javascript:;" id="quitarFiltro"><i class="fa fa-filter"></i> Quitar filtros</a>
+        <a class="btn btn-sm btn-primary" href="javascript:;" id="abrirReporte"><i class="fa fa-file-pdf-o"></i> Reporte PDF</a>
         <div class="btn-group">
             <button data-toggle="dropdown" class="btn ink-reaction btn-sm btn-accent dropdown-toggle" type="button" aria-expanded="false">
                 <i class="fa fa-plus"></i> Generar documento <i class="fa fa-caret-down"></i>
@@ -425,7 +444,7 @@ foreach ($mistipos as $t) {
 
 <div class="doc-tipos">
     <?php foreach ($mistipos as $t): ?>
-        <div class="doc-tipo-card" tabindex="0" role="button" data-tipo="<?php echo HTML::chars($t['tipo']); ?>"
+        <div class="doc-tipo-card" tabindex="0" role="button" data-tipo="<?php echo HTML::chars($t['tipo']); ?>" data-id="<?php echo (int) $t['id']; ?>"
              title="Ver solo <?php echo HTML::chars($t['plural']); ?>">
             <div class="doc-tipo-icono"><i class="fa <?php echo $icono_de($t['tipo']); ?>"></i></div>
             <div class="doc-tipo-texto">
@@ -459,6 +478,45 @@ foreach ($mistipos as $t) {
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="modal fade" id="doc-reporte-modal" tabindex="-1" role="dialog" aria-labelledby="doc-reporte-titulo">
+    <div class="modal-dialog" role="document">
+        <form class="modal-content" method="get" action="/print/documentos" target="_blank" id="doc-reporte-form">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="doc-reporte-titulo"><i class="fa fa-file-pdf-o"></i> Reporte de documentos generados</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rep-tipo">Tipo de documento</label>
+                    <select class="form-control" name="tipo" id="rep-tipo">
+                        <option value="0">Todos los tipos</option>
+                        <?php foreach ($mistipos as $t): ?>
+                            <option value="<?php echo (int) $t['id']; ?>"><?php echo HTML::chars($t['plural']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label for="rep-desde">Desde</label>
+                        <input type="date" class="form-control" name="desde" id="rep-desde" required
+                               value="<?php echo date('Y-m-01'); ?>" max="<?php echo date('Y-m-d'); ?>">
+                    </div>
+                    <div class="col-sm-6 form-group">
+                        <label for="rep-hasta">Hasta</label>
+                        <input type="date" class="form-control" name="hasta" id="rep-hasta" required
+                               value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>">
+                    </div>
+                </div>
+                <p class="text-danger" id="rep-error" style="display:none; margin:0;">La fecha "Desde" no puede ser posterior a "Hasta".</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="fa fa-download"></i> Generar PDF</button>
+            </div>
+        </form>
     </div>
 </div>
 

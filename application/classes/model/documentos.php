@@ -147,6 +147,28 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
         return DB::query(Database::SELECT, $sql)->execute()->as_array();
     }
 
+    /**
+     * Documentos generados por un usuario entre dos fechas (Y-m-d, ambas incluidas),
+     * de un tipo ($id_tipo > 0) o de todos ($id_tipo = 0). Ordenados por tipo y fecha.
+     */
+    public function reporte_tipo($id_user, $id_tipo, $desde, $hasta) {
+        $sql = "SELECT d.id, d.cite_original, d.nur, d.nombre_destinatario, d.cargo_destinatario,
+                       d.referencia, d.fecha_creacion, t.plural
+                FROM documentos d
+                INNER JOIN tipos t ON t.id = d.id_tipo
+                WHERE d.id_user = :user
+                AND d.fecha_creacion >= :desde
+                AND d.fecha_creacion < DATE_ADD(:hasta, INTERVAL 1 DAY)"
+                . ($id_tipo > 0 ? " AND d.id_tipo = :tipo" : "") . "
+                ORDER BY t.plural, d.fecha_creacion, d.id";
+        return DB::query(Database::SELECT, $sql)
+                ->param(':user', (int) $id_user)
+                ->param(':tipo', (int) $id_tipo)
+                ->param(':desde', $desde . ' 00:00:00')
+                ->param(':hasta', $hasta)
+                ->execute()->as_array();
+    }
+
     public function agrupados($id) {
         $id = SqlSafe::value($id); // se pega en el SQL entre comillas
         $sql = "SELECT id_tipo, COUNT(*) as n FROM documentos WHERE id_user='$id' GROUP BY id_tipo";
