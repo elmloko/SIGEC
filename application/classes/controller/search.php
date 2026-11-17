@@ -38,6 +38,8 @@ class Controller_Search extends Controller_DefaultTemplate {
 
     //listar nuris generados por el usuario logeado
     public function action_index() {
+        // la busqueda antigua listaba hojas de ruta de todos los usuarios: se usa la rapida, que respeta el acceso
+        $this->request->redirect('search/rapida?q=' . urlencode((string) Arr::get($_GET, 'q', '')));
         if (isset($_GET['q'])) {
             $text = strtoupper(trim(Arr::get($_GET, 'q', '')));
             if ($text != '') {
@@ -210,7 +212,11 @@ class Controller_Search extends Controller_DefaultTemplate {
             if (empty($conditions)) {
                 $mensajes['criterio'] = 'Ingrese al menos un criterio de búsqueda (hoja de ruta, cite, referencia, destinatario, remitente, entidad o un rango de fechas).';
             } else {
-                $where = ' WHERE ' . implode(' AND ', $conditions);
+                $criterios = ' WHERE ' . implode(' AND ', $conditions);
+                // por transparencia se listan todos los documentos; solo se pueden abrir (detalle, seguimiento,
+                // impresion) los de hojas de ruta en las que el usuario interviene: cada fila trae "puede_ver"
+                $solo_suyos = Acceso::condicion_sql($this->user, 'd');
+                $where = $criterios;
                 $oDocumento = New Model_Documentos();
                 $count = $oDocumento->contar2($where);
                 $count = (int) $count[0]['count'];
@@ -221,10 +227,10 @@ class Controller_Search extends Controller_DefaultTemplate {
                                 'items_per_page' => 15,
                                 'view' => 'pagination/floating',
                     ));
-                    $result = $oDocumento->search($where, $pagination->offset, $pagination->items_per_page);
+                    $result = $oDocumento->search($where, $pagination->offset, $pagination->items_per_page, $solo_suyos);
                     $page_links = $pagination->render();
                 }
-                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ', realizó una busqueda encontrando <b>' . $count . '</b> resultados para <b>' . HTML::chars($where) . '</b>');
+                $this->save($this->user->id_entidad, $this->user->id, $this->user->nombre . ', realizó una busqueda encontrando <b>' . $count . '</b> resultados para <b>' . HTML::chars($criterios) . '</b>');
             }
         }
 

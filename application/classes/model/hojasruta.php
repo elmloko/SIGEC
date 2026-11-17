@@ -21,11 +21,14 @@ class Model_Hojasruta extends ORM {
     }
 
     //ajsx hoja ruta imprimir
-    public function hojaruta($like) {
+    public function hojaruta($like, $user = NULL) {
         // el texto llega del usuario (autocompletado): se enlaza como parametro, nunca concatenado
-        $sql = "SELECT id_user,nur FROM nurs where nur like :like
-                order by fecha_creacion DESC
-                limit 10"; //important
+        // con $user solo se sugieren hojas de ruta en las que interviene (ver classes/acceso.php)
+        $solo_suyas = $user ? Acceso::condicion_sql($user, 'n') : '';
+        $sql = "SELECT n.id_user, n.nur FROM nurs n WHERE n.nur LIKE :like"
+                . ($solo_suyas !== '' ? ' AND ' . $solo_suyas : '') . "
+                ORDER BY n.fecha_creacion DESC
+                LIMIT 10"; //important
         return db::query(Database::SELECT, $sql)->param(':like', '%' . $like . '%')->execute();
     }
 

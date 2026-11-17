@@ -28,26 +28,8 @@ class Controller_plantilla extends Controller {
      * y los usuarios con prioridad, super o administrador (nivel 5), como en document/detalle.
      */
     private function puede_ver($documento) {
-        if (!$documento->loaded()) {
-            return FALSE;
-        }
-        // como en document/detalle: solo se restringe cuando el documento ya fue derivado
-        if ($documento->estado != 1) {
-            return TRUE;
-        }
-        $u = $this->user;
-        if ((int) $documento->id_user === (int) $u->id || $u->prioridad == 1 || $u->super != 0 || (int) $u->nivel === 5) {
-            return TRUE;
-        }
-        if ($documento->nur == '') {
-            return FALSE;
-        }
-        $interviene = DB::query(Database::SELECT, 'SELECT 1 FROM seguimiento
-                WHERE nur = :nur AND (derivado_a = :u OR derivado_por = :u) LIMIT 1')
-                ->param(':nur', (string) $documento->nur)
-                ->param(':u', (int) $u->id)
-                ->execute()->count();
-        return $interviene > 0;
+        // misma regla que document/detalle (ver classes/acceso.php)
+        return Acceso::documento($this->user, $documento);
     }
 
 //documento a excel para impresion

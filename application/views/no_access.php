@@ -113,7 +113,7 @@ $inexistente = $motivo === 'inexistente';
         <?php if ($codigo != ''): ?>
             <div class="na-cite"><?php echo HTML::chars($codigo); ?></div>
         <?php endif; ?>
-        <p>Este documento ya fue derivado y solo pueden verlo las personas que intervienen en su hoja de ruta.</p>
+        <p>Solo pueden verlo las personas que intervienen en su hoja de ruta: quien lo generó, quien lo derivó y quienes lo recibieron.</p>
         <div class="na-motivos">
             <b><i class="fa fa-info-circle"></i> ¿Necesita verlo?</b>
             <ul>

@@ -352,8 +352,10 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
 
     //
     // $where lo arma Controller_Search::action_advanced con valores ya escapados
-    public function search($where, $o, $i)
+    // $acceso: condicion SQL de Acceso::condicion_sql(); se devuelve como columna puede_ver (vacia = ve todo)
+    public function search($where, $o, $i, $acceso = '')
     {
+        $puede_ver = $acceso !== '' ? "IF($acceso, 1, 0)" : '1';
         $o = (int) $o;
         $i = (int) $i;
         $o = (int) $o;
@@ -371,7 +373,8 @@ group by id_tipo ) as d INNER JOIN tipos t ON d.id_tipo=t.id";
                     d.fecha_creacion,
                     d.estado,
                     d.original,
-                    t.tipo
+                    t.tipo,
+                    $puede_ver AS puede_ver
                 FROM
                     documentos d
                         INNER JOIN

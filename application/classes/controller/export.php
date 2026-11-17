@@ -7,18 +7,18 @@ class Controller_Export extends Controller {
     if($auth->logged_in())
     {    
     
-    $id_segs=array_values($_POST['id_seg']);
-    
-    $sql="SELECT s.nur, s.a_oficina,s.nombre_receptor,cargo_receptor,s.fecha_emision,s.oficial,d.cite_original, d.referencia,s.proveido FROM seguimiento s 
+    // ids enteros (antes se concatenaba lo recibido: inyeccion SQL) y solo pasos que el usuario derivo o recibio
+    $id_segs = array_filter(array_map('intval', array_values((array) Arr::get($_POST, 'id_seg', array()))));
+    if (!$id_segs) {
+        $id_segs = array(0);
+    }
+    $u = (int) $auth->get_user()->id;
+    $sql="SELECT s.nur, s.a_oficina,s.nombre_receptor,cargo_receptor,s.fecha_emision,s.oficial,d.cite_original, d.referencia,s.proveido FROM seguimiento s
     INNER JOIN nurs_documentos n ON s.nur=n.nur
     INNER JOIN documentos d ON n.id_documento=d.id
     WHERE d.original='1'
-    AND  s.id IN (";
-    foreach ($_POST['id_seg'] as $k=>$v):
-        $sql.=$v.", ";
-    endforeach;
-    $sql=substr($sql,0, -2);
-    $sql.=")";
+    AND (s.derivado_a = $u OR s.derivado_por = $u)
+    AND  s.id IN (" . implode(', ', $id_segs) . ")";
 
     $modelo=New Model_Hojasruta();
     $report=$modelo->select($sql);

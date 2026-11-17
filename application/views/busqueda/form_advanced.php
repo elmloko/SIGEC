@@ -278,6 +278,20 @@ $hoy = date('Y-m-d');
     }
     .ba-estado-no { background: #FFF3DC; color: #B26B00; }
     .ba-estado-si { background: #E6F4EC; color: #227547; }
+    .ba-estado-lock { background: #ECEFF3; color: #5b6573; }
+    .ba-titulo-lock { color: #4a5568; font-weight: 600; }
+    .ba-sin-acceso {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: #F3F5F8;
+        color: #5b6573;
+        font-size: 12px;
+        line-height: 1.3;
+        max-width: 190px;
+    }
     .ba-estado .fa {
         margin-right: 3px;
     }
@@ -572,6 +586,8 @@ $hoy = date('Y-m-d');
             $derivado = !((int) $d['estado'] === 0 && (int) $d['original'] === 1);
             $tiene_hr = trim($d['nur']) != '';
             $ts = $d['fecha_creacion'] ? strtotime($d['fecha_creacion']) : 0;
+            // solo se abre lo de hojas de ruta en las que el usuario interviene; el resto se lista por transparencia
+            $puede = (int) $d['puede_ver'] === 1;
             ?>
             <div class="ba-item <?php echo $derivado ? '' : 'ba-item-no'; ?>">
                 <div class="ba-item-icono"><i class="fa <?php echo $icono_tipo($d['tipo']); ?>"></i></div>
@@ -581,17 +597,26 @@ $hoy = date('Y-m-d');
                         <span class="ba-tipo"><?php echo HTML::chars($d['tipo']); ?></span>
                         <span class="ba-estado <?php echo $derivado ? 'ba-estado-si' : 'ba-estado-no'; ?>">
                             <i class="fa <?php echo $derivado ? 'fa-check' : 'fa-clock-o'; ?>"></i><?php echo $derivado ? 'Derivado' : 'No derivado'; ?></span>
+                        <?php if (!$puede): ?>
+                            <span class="ba-estado ba-estado-lock" title="Usted no interviene en esta hoja de ruta"><i class="fa fa-lock"></i>Sin acceso</span>
+                        <?php endif; ?>
                         <?php if ($ts): ?>
                             <span class="ba-fecha"><i class="fa fa-calendar-o"></i> <b><?php echo date('d/m/Y', $ts); ?></b> &middot; <?php echo date('H:i', $ts); ?></span>
                         <?php endif; ?>
                     </div>
 
-                    <a class="ba-titulo" href="/document/detalle/<?php echo (int) $d['id']; ?>" title="Ver documento">
-                        <?php echo trim($d['referencia']) != '' ? $resaltar($d['referencia'], $filtros['referencia']) : 'Sin referencia'; ?></a>
+                    <?php $referencia = trim($d['referencia']) != '' ? $resaltar($d['referencia'], $filtros['referencia']) : 'Sin referencia'; ?>
+                    <?php if ($puede): ?>
+                        <a class="ba-titulo" href="/document/detalle/<?php echo (int) $d['id']; ?>" title="Ver documento"><?php echo $referencia; ?></a>
+                    <?php else: ?>
+                        <div class="ba-titulo-lock"><?php echo $referencia; ?></div>
+                    <?php endif; ?>
 
                     <div class="ba-ids">
                         <span class="ba-id" title="Cite del documento"><i class="fa fa-file-text-o"></i> <?php echo $resaltar($d['cite_original'], $filtros['cite_original']); ?></span>
-                        <?php if ($tiene_hr): ?>
+                        <?php if ($tiene_hr && !$puede): ?>
+                            <span class="ba-id" title="Hoja de ruta"><i class="md md-label"></i> <?php echo $resaltar($d['nur'], $filtros['nur']); ?></span>
+                        <?php elseif ($tiene_hr): ?>
                             <a class="ba-id ba-id-hr" href="/route/trace/?hr=<?php echo urlencode($d['nur']); ?>" title="Ver seguimiento de la hoja de ruta">
                                 <i class="md md-label"></i> <?php echo $resaltar($d['nur'], $filtros['nur']); ?></a>
                         <?php endif; ?>
@@ -620,12 +645,16 @@ $hoy = date('Y-m-d');
                 </div>
 
                 <div class="ba-item-acciones">
+                    <?php if (!$puede): ?>
+                        <span class="ba-sin-acceso"><i class="fa fa-lock"></i> Solo quienes intervienen en esta hoja de ruta pueden ver su contenido y seguimiento</span>
+                    <?php else: ?>
                     <a href="/document/detalle/<?php echo (int) $d['id']; ?>" class="btn btn-sm btn-primary"><i class="fa fa-file-text-o"></i> Ver documento</a>
                     <?php if ($tiene_hr && $derivado): ?>
                         <a href="/route/trace/?hr=<?php echo urlencode($d['nur']); ?>" class="btn btn-sm btn-default-bright"><i class="md md-verified-user"></i> Seguimiento</a>
                     <?php endif; ?>
                     <?php if ($tiene_hr): ?>
                         <a href="/route/print?hr=<?php echo urlencode($d['nur']); ?>" class="btn btn-sm btn-default-bright"><i class="fa fa-print"></i> Imprimir HR</a>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>

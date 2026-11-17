@@ -52,6 +52,8 @@ class Controller_Download extends Controller
     {
         $this->autoRender = false;
         http_response_code($codigo);
+        // Kohana envia luego su propio estado (200): se fija tambien en la respuesta
+        $this->response->status($codigo);
         header('Content-Type: text/html; charset=utf-8');
         echo '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>' . HTML::chars($titulo) . '</title></head>'
             . '<body style="margin:0;font-family:Arial,sans-serif;background:#F3F5F8;color:#123E73;">'
@@ -71,7 +73,10 @@ class Controller_Download extends Controller
             $user = $session->get('auth_user');
             $this->autoRender = false;
             $archivo = ORM::factory('archivos', $id);
-            if ($archivo->loaded()) {
+            if ($archivo->loaded() && !Acceso::archivo($auth->get_user(), $archivo)) {
+                // solo quien interviene en la hoja de ruta del documento (o quien subio el archivo)
+                $this->aviso(403, 'Acceso restringido', 'Este archivo pertenece a una hoja de ruta en la que usted no interviene.');
+            } elseif ($archivo->loaded()) {
                 //ahora vemos que solo el que estee autorizado pueda descargar
                 $file = RemoteArchivo::is_enabled()
                     ? $archivo->sub_directorio . '/' . $archivo->nombre_archivo
@@ -102,7 +107,10 @@ class Controller_Download extends Controller
             $user = $session->get('auth_user');
             $this->autoRender = false;
             $archivo = ORM::factory('archivos', $id);
-            if ($archivo->loaded()) {
+            if ($archivo->loaded() && !Acceso::archivo($auth->get_user(), $archivo)) {
+                // solo quien interviene en la hoja de ruta del documento (o quien subio el archivo)
+                $this->aviso(403, 'Acceso restringido', 'Este archivo pertenece a una hoja de ruta en la que usted no interviene.');
+            } elseif ($archivo->loaded()) {
                 //ahora vemos que solo el que estee autorizado pueda descargar
                 $file = RemoteArchivo::is_enabled()
                     ? $archivo->sub_directorio . '/' . $archivo->nombre_archivo

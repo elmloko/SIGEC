@@ -155,7 +155,9 @@ class Controller_document extends Controller_DefaultTemplate {
                 ->where('codigo', '=', $codigo)
 //->and_where('id_user','=',$this->user->id)
                 ->find();
-        if ($documento->loaded()) {
+        if ($documento->loaded() && !Acceso::documento($this->user, $documento)) {
+            $this->template->content = Acceso::vista_denegado($this->response, $documento->codigo);
+        } elseif ($documento->loaded()) {
             $tipo = $documento->tipos->tipo;
 //archivo
 // $archivo=ORM::factory('archivos')
@@ -180,27 +182,11 @@ class Controller_document extends Controller_DefaultTemplate {
         $errors = array();
         $documento = ORM::factory('documentos')->where('id', '=', $id)->find();
         if ($documento->loaded()) {
-            $ok = true;
-            $como_admin = FALSE;
-            if ($documento->estado == 1) { //si esta derivado entonces el documento solo pueden ver aquellos quienes intevienen en el seguimiento
-                $ok = false;
-                $seguimiento = ORM::factory('seguimiento')
-                        ->where('nur', '=', $documento->nur)
-                        ->find_all();
-                foreach ($seguimiento as $s) {
-                    if (($s->derivado_a == $this->user->id) || ($s->derivado_por == $this->user->id) || $this->user->prioridad == 1)
-                        $ok = true;
-                }
-                if ($this->user->super != 0)
-                    $ok = true;
-                // el administrador puede abrir cualquier documento, pero queda registrado en la bitacora
-                if (!$ok AND (int) $this->user->nivel === 5) {
-                    $ok = TRUE;
-                    $como_admin = TRUE;
-                    $this->save($this->user->id_entidad, $this->user->id,
-                            'Abrió como administrador el documento <b>' . $documento->codigo . '</b> (hoja de ruta ' . $documento->nur . '), en el que no interviene');
-                }
-            }
+            // solo quien interviene en su hoja de ruta (o el autor); administrador y jefe entran, pero queda en la bitacora
+            $ok = Acceso::documento($this->user, $documento);
+            $como_admin = $ok && Acceso::ve_todo_por_rol($this->user)
+                    && (int) $documento->id_user !== (int) $this->user->id
+                    && !Acceso::participa($this->user, $documento->nur);
             $this->template->title .= ' / ' . $documento->codigo;
             $this->template->titulo .=$documento->codigo;
             $this->template->descripcion .= ' Descripcion del documento - ' . $documento->codigo;
@@ -222,8 +208,7 @@ class Controller_document extends Controller_DefaultTemplate {
                         ->bind('errors', $errors)
                         ->bind('mensajes', $mensajes);
             } else {
-
-                $this->template->content = View::factory('no_access')->set('codigo', $documento->codigo);
+                $this->template->content = Acceso::vista_denegado($this->response, $documento->codigo);
             }
         } else {
             $this->template->content = View::factory('no_access')->set('motivo', 'inexistente');

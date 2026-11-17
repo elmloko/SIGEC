@@ -40,8 +40,8 @@ class Controller_Vista extends Controller_MinimoTemplate{
                     ->where('cite_original','=',$cod)                    
                     ->find();
         if($documento->loaded()){
-            $seguimiento=ORM::factory('seguimiento')->where('id','=',$id_seg)->find();
-            if($seguimiento->derivado_a==$this->user->id||$seguimiento->derivado_por==$this->user->id||$this->user->prioridad==0)
+            // antes la condicion terminaba en prioridad==0 y dejaba ver cualquier documento a casi todos
+            if (Acceso::documento($this->user, $documento))
             {
             $archivo=ORM::factory('archivos')->where('id_documento','=',$documento->id)->find();
 

@@ -20,6 +20,18 @@ class Controller_Ajaxd extends Controller
             // el usuario se guarda en sesion con la clave de config/auth.php (session_native), no en 'auth_user'
             $this->user = $auth->get_user();
             parent::before();
+            // mismas acciones de reportes que en Controller_Ajax: solo el administrador
+            $accion = strtolower($this->request->action());
+            if (in_array($accion, Controller_Ajax::$solo_admin, TRUE) && !Acceso::es_admin($this->user)) {
+                http_response_code(403);
+                echo json_encode(array('error' => 'Solo el administrador puede consultar estos datos.'));
+                exit;
+            }
+            if ($accion === 'seguimiento' && !Acceso::hoja_ruta($this->user, (string) $this->request->param('id'))) {
+                http_response_code(403);
+                echo json_encode(array('error' => 'No interviene en esta hoja de ruta.'));
+                exit;
+            }
         } else {
             $this->request->redirect('/login');
         }

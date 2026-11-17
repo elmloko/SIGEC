@@ -54,6 +54,11 @@ class Controller_route extends Controller_DefaultTemplate {
 
     public function action_seguimiento() {
         $id = Arr::get($_GET, 'hr', '');
+        if ($id != '' && !Acceso::hoja_ruta($this->user, $id)) {
+            $this->template->title .= ' / Acceso restringido';
+            $this->template->content = Acceso::vista_denegado($this->response, $id);
+            return;
+        }
         if ($id != '') {
             //obtenemos el documento ligado al nur                                     
             $documento = ORM::factory('documentos')->where('nur', '=', $id)->and_where('original', '=', 1)->find();
@@ -101,6 +106,13 @@ class Controller_route extends Controller_DefaultTemplate {
 
     public function action_trace() {
         $id = Arr::get($_GET, 'hr', '');
+        // solo quien interviene en la hoja de ruta (o su grupo) puede ver su seguimiento
+        if ($id != '' && !Acceso::hoja_ruta($this->user, $id)) {
+            $this->template->title .= ' / Acceso restringido';
+            $this->template->titulo .= 'Acceso restringido';
+            $this->template->content = Acceso::vista_denegado($this->response, $id);
+            return;
+        }
         if ($id != '') {
             //obtenemos el documento ligado al nur                                     
             $documento = ORM::factory('documentos')->where('nur', '=', $id)->and_where('original', '=', 1)->find();
@@ -252,6 +264,11 @@ class Controller_route extends Controller_DefaultTemplate {
             $nur = Arr::get($_GET, 'n');
             $id_tipo = Arr::get($_GET, 'd');
             $seguimiento = ORM::factory('seguimiento', $id_seg);
+            // solo se responde una hoja de ruta que esta en la bandeja del usuario
+            if ($seguimiento->loaded() && (int) $seguimiento->derivado_a !== (int) $this->user->id) {
+                $this->template->content = Acceso::vista_denegado($this->response, $seguimiento->nur);
+                return;
+            }
             if ($seguimiento->loaded()) {
                 $tipo = ORM::factory('tipos', $id_tipo);
                 $oOficina = New Model_Oficinas();

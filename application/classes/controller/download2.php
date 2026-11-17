@@ -57,6 +57,10 @@ class Controller_Download2 extends Controller
         $user = $session->get('auth_user');
         $this->autoRender = false;
         $archivo = ORM::factory('archivos', $id);
+        if ($archivo->loaded() && !Acceso::archivo($auth->get_user(), $archivo)) {
+            // solo quien interviene en la hoja de ruta del documento (o quien subio el archivo)
+            throw new HTTP_Exception_403('Este archivo pertenece a una hoja de ruta en la que usted no interviene.');
+        }
         if ($archivo->loaded()) {
             //ahora vemos que solo el que estee autorizado pueda descargar
             $file = RemoteArchivo::is_enabled()

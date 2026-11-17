@@ -535,6 +535,11 @@ class Controller_Bandeja extends Controller_DefaultTemplate
     public function action_agrupado()
     {
         $nur = trim(Arr::get($_GET, 'hr', ''));
+        if ($nur !== '' && !Acceso::hoja_ruta($this->user, $nur)) {
+            $this->template->title .= ' / Acceso restringido';
+            $this->template->content = Acceso::vista_denegado($this->response, $nur);
+            return;
+        }
         // hojas unidas a la principal, con su documento original y quien/cuando las agrupo
         $hijos = DB::query(Database::SELECT, 'SELECT a.id AS id_agrupacion, a.hijo AS nur, a.id_seguimiento, a.nombre AS agrupado_por,
                     a.cargo AS agrupado_cargo, a.fecha AS fecha_agrupado,

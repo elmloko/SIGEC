@@ -6,6 +6,17 @@ class Controller_Ajax extends Controller
 
     protected $user;
 
+    // acciones que solo usan las pantallas de reportes (controlador reports, exclusivo del administrador)
+    public static $solo_admin = array(
+        'jsonpendientes', 'jsonpendientesporusuarioid', 'jsonpusers', 'jsonpusersid', 'jsonpusers_old',
+        'jsondocumentos', 'jqwdocumentos', 'vitacora', 'explosion', 'jreporte', 'tdocumentos', 'jdocumentos',
+        'gauges', 'jsonpendientesdespachouser', 'jsonpendientesconretrasouserid', 'jsonpendientesconretraso',
+        'jsonfueradeplazoporoficinaid', 'jsonpendientesdeusuariosagrupadoporoficinaid',
+        'jsontodoslospendientesfueradeplazo', 'jsontotalpendientesfueradeplazo', 'jsontotalpendientesdespacho',
+        'jsontotalpendientesagrupadoporoficina', 'jsontotalfueradeplazoporoficina', 'historial',
+        'poficina', 'poficinas', 'documentostipo', 'grafica', 'pendientes',
+    );
+
     public function before()
     {
         $auth = Auth::instance();
@@ -20,6 +31,13 @@ class Controller_Ajax extends Controller
             //$this->user = $session->get('auth_user');
             $this->user = $auth->get_user();
             parent::before();
+            // datos de los reportes (pendientes y documentos de cualquier usuario u oficina, bitacora):
+            // solo para el administrador, igual que las pantallas de reportes que los usan
+            if (in_array(strtolower($this->request->action()), self::$solo_admin, TRUE) && !Acceso::es_admin($this->user)) {
+                http_response_code(403);
+                echo json_encode(array('error' => 'Solo el administrador puede consultar estos datos.'));
+                exit;
+            }
         } else {
             $this->request->redirect('/login');
         }
@@ -72,9 +90,10 @@ class Controller_Ajax extends Controller
     //hojas de ruta
     public function action_hojaruta()
     {
-        $like = $_GET['q'];
+        $like = (string) Arr::get($_GET, 'q', '');
         $mHojaruta = new Model_Hojasruta();
-        $hrs = $mHojaruta->hojaruta($like);
+        // solo sugiere hojas de ruta en las que interviene el usuario
+        $hrs = $mHojaruta->hojaruta($like, $this->user);
         $result = array();
         foreach ($hrs as $h) {
             $result[] = array(
@@ -1451,6 +1470,11 @@ class Controller_Ajax extends Controller
 
     public function action_seguimiento($nur)
     {
+        if (!Acceso::hoja_ruta($this->user, $nur)) {
+            $this->response->status(403);
+            echo json_encode(array('error' => 'No interviene en esta hoja de ruta.'));
+            return;
+        }
         $mDocumentos = new Model_Documentos();
         $seguimiento = $mDocumentos->seguimiento($nur);
         echo json_encode($seguimiento);

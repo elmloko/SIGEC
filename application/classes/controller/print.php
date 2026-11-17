@@ -5,6 +5,14 @@ defined('SYSPATH') or die('No direct script access.');
 class Controller_Print extends Controller
 {
 
+    // solo imprime quien interviene en la hoja de ruta; si no, se le lleva al seguimiento, que muestra "acceso restringido"
+    private function exigir_acceso($nur)
+    {
+        if (!Acceso::hoja_ruta(Auth::instance()->get_user(), $nur)) {
+            $this->request->redirect('route/trace/?hr=' . urlencode($nur));
+        }
+    }
+
     public function action_hr()
     {
         $auth = Auth::instance();
@@ -16,6 +24,7 @@ class Controller_Print extends Controller
 
             //echo 'hola';
             $nur = $_GET['code'];
+            $this->exigir_acceso($nur);
             require Kohana::find_file('vendor/fpdf17', 'fpdf');
             require Kohana::find_file('vendor/fpdf17', 'code39');
             $modelo = New Model_Hojasruta();
@@ -464,6 +473,7 @@ class Controller_Print extends Controller
         if ($auth->logged_in() && isset($_GET['code'])) {
             //echo 'hola';
             $nur = $_GET['code'];
+            $this->exigir_acceso($nur);
             require Kohana::find_file('vendor/fpdf17', 'fpdf');
             require Kohana::find_file('vendor/fpdf17', 'code39');
             //verificamos de que la hoja de ruta es el padre de hojas de ruta hijos
@@ -691,6 +701,7 @@ class Controller_Print extends Controller
         require Kohana::find_file('vendor/fpdf17', 'code39');
         $user = $auth->get_user();
         $hr = trim(Arr::get($_GET, 'hr', ''));
+        $this->exigir_acceso($hr);
 
         $documento = ORM::factory('documentos')->where('nur', '=', $hr)->and_where('original', '=', 1)->find();
         $tipo = ORM::factory('tipos', $documento->id_tipo);
