@@ -347,13 +347,13 @@ class Controller_document extends Controller_DefaultTemplate {
     }
 
     public function action_files() {
+        // paginado en el servidor, con busqueda, rango de fechas y orden (antes cargaba todos los archivos)
         $oArchivo = New Model_archivos();
-        $archivo = $oArchivo->listar($this->user->id);
         $this->template->title .= ' / Archivos Digitales';
         $this->template->titulo .= 'Archivos Digitales';
         $this->template->descripcion = 'lista de archivos subidos al sistema';
-        $this->template->content = View::factory('documentos/archivos')
-                ->bind('results', $archivo);
+        $this->template->content = View::factory('documentos/archivos', $oArchivo->pagina_vista($this->user->id, $_GET))
+                ->set('accion', '/document/files');
     }
 
 //asignar hoja de ruta pendiente

@@ -290,15 +290,13 @@ class Controller_Admin_Document extends Controller_AdminTemplate {
     }
 
     public function action_files() {
+        // misma vista paginada que document/files
         $oArchivo = New Model_archivos();
-        $archivo = $oArchivo->listar($this->user->id);
-        $this->template->styles = array('media/css/tablas.css' => 'all');
-        $this->template->scripts = array('media/js/jquery.tablesorter.min.js');
         $this->template->title .= ' / Archivos Digitales';
         $this->template->titulo .= 'Archivos Digitales';
         $this->template->descripcion = 'lista de archivos subidos al sistema';
-        $this->template->content = View::factory('documentos/archivos')
-                ->bind('results', $archivo);
+        $this->template->content = View::factory('documentos/archivos', $oArchivo->pagina_vista($this->user->id, $_GET))
+                ->set('accion', '/admin/document/files');
     }
 
 //asignar hoja de ruta pendiente

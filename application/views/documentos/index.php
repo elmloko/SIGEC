@@ -158,15 +158,25 @@ foreach ($mistipos as $t) {
         });
 
         // tarjetas de tipo: filtran la tabla; un segundo clic quita el filtro
-        function filtrarPorTipo(tipo) {
+        // "Todos" queda marcada cuando no hay tipo elegido; el chip de la barra dice que tipo se esta viendo
+        function marcarTipo(tipo) {
             $('.doc-tipo-card').removeClass('activa');
+            if (tipo) {
+                var $card = $('.doc-tipo-card[data-tipo="' + tipo.replace(/"/g, '\\"') + '"]').addClass('activa');
+                $('#doc-filtro-activo').css('display', 'inline-flex').children('span').text('Solo ' + $card.find('.doc-tipo-nombre').text());
+            } else {
+                $('.doc-tipo-todos').addClass('activa');
+                $('#doc-filtro-activo').hide();
+            }
+        }
+        function filtrarPorTipo(tipo) {
             $('#jqxgrid').jqxGrid('removefilter', 'tipo', false);
             if (tipo) {
                 var grupo = new $.jqx.filter();
                 grupo.addfilter(1, grupo.createfilter('stringfilter', tipo, 'EQUAL'));
                 $('#jqxgrid').jqxGrid('addfilter', 'tipo', grupo);
-                $('.doc-tipo-card[data-tipo="' + tipo.replace(/"/g, '\\"') + '"]').addClass('activa');
             }
+            marcarTipo(tipo);
             $('#jqxgrid').jqxGrid('applyfilters');
         }
         $('.doc-tipo-card').on('click', function (e) {
@@ -183,13 +193,13 @@ foreach ($mistipos as $t) {
         });
 
         $('#quitarFiltro').click(function () {
-            $('.doc-tipo-card').removeClass('activa');
+            marcarTipo('');
             $("#jqxgrid").jqxGrid('clearfilters');
         });
 
         // reporte PDF por tipo y fechas: preselecciona el tipo de la tarjeta activa
         $('#abrirReporte').click(function () {
-            var activa = $('.doc-tipo-card.activa');
+            var activa = $('.doc-tipo-card.activa').not('.doc-tipo-todos');
             var id = activa.length ? activa.attr('data-id') : '0';
             $('#rep-tipo').val(id);
             $('#rep-error').hide();
@@ -215,86 +225,88 @@ foreach ($mistipos as $t) {
     });
 </script>
 <style>
-    /* ===== encabezado ===== */
-    .doc-encabezado {
+    /* ===== cabecera (mismo estilo que Mis seguimientos) ===== */
+    .doc-cab {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 14px 20px;
+        padding: 18px 22px;
         margin-bottom: 16px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #123E73 0%, #1A549A 100%);
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(18, 62, 115, .18);
     }
-    .doc-encabezado h2 {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 500;
-        color: var(--correos-azul-oscuro, #123E73);
-    }
-    .doc-encabezado h2 small {
-        display: block;
-        margin-top: 2px;
+    .doc-cab h2 { margin: 0; font-size: 22px; font-weight: 700; color: #fff; }
+    .doc-cab h2 i { color: var(--correos-amarillo, #FECB34); margin-right: 8px; }
+    .doc-cab p { margin: 4px 0 0; font-size: 13px; color: rgba(255, 255, 255, .8); }
+    .doc-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+    .doc-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 38px;
+        padding: 0 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, .45);
+        background: rgba(255, 255, 255, .10);
+        color: #fff;
         font-size: 13px;
-        color: #6b7686;
+        font-weight: 600;
+        white-space: nowrap;
     }
-    .doc-encabezado .doc-botones {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .doc-encabezado .doc-botones .btn {
-        margin: 0;
-    }
-    .doc-encabezado .dropdown-menu {
-        max-height: 60vh;
-        overflow-y: auto;
-    }
+    .doc-btn:hover, .doc-btn:focus { background: rgba(255, 255, 255, .2); color: #fff; text-decoration: none; }
+    .doc-btn.amarillo { border-color: var(--correos-amarillo, #FECB34); background: var(--correos-amarillo, #FECB34); color: #123E73; }
+    .doc-btn.amarillo:hover, .doc-btn.amarillo:focus { background: #ffd65c; color: #123E73; }
+    .doc-cab .dropdown-menu { max-height: 60vh; overflow-y: auto; }
 
-    /* ===== tarjetas por tipo ===== */
+    /* ===== tarjetas por tipo (filtran la tabla) ===== */
     .doc-tipos {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-        gap: 12px;
-        margin-bottom: 16px;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
     }
     .doc-tipo-card {
         position: relative;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         padding: 12px 14px;
         background: #fff;
         border: 1px solid var(--correos-borde, #DCE3EC);
-        border-left: 4px solid var(--correos-azul, #1A549A);
-        border-radius: 8px;
+        border-radius: 12px;
         cursor: pointer;
-        transition: box-shadow .15s, border-color .15s, transform .15s;
+        transition: box-shadow .15s, border-color .15s;
         user-select: none;
     }
     .doc-tipo-card:hover,
     .doc-tipo-card:focus {
         outline: none;
-        box-shadow: 0 3px 10px rgba(18, 62, 115, .12);
-        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(18, 62, 115, .12);
     }
     .doc-tipo-card.activa {
-        border-color: var(--correos-amarillo, #FECB34);
-        border-left-color: var(--correos-amarillo, #FECB34);
-        background: var(--correos-amarillo-suave, #FFF7DD);
+        border-color: var(--correos-azul, #1A549A);
+        background: var(--correos-azul-suave, #EAF1F9);
+        box-shadow: inset 0 0 0 1px var(--correos-azul, #1A549A);
     }
+    .doc-tipo-card.vacia { opacity: .55; }
     .doc-tipo-icono {
-        flex: 0 0 40px;
-        height: 40px;
-        border-radius: 50%;
+        flex: 0 0 34px;
+        height: 34px;
+        border-radius: 9px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 15px;
         color: var(--correos-azul, #1A549A);
         background: var(--correos-azul-suave, #EAF1F9);
     }
     .doc-tipo-card.activa .doc-tipo-icono {
-        background: var(--correos-amarillo, #FECB34);
-        color: var(--correos-azul-oscuro, #123E73);
+        background: var(--correos-azul, #1A549A);
+        color: #fff;
     }
     .doc-tipo-texto {
         flex: 1 1 auto;
@@ -310,7 +322,7 @@ foreach ($mistipos as $t) {
     }
     .doc-tipo-cantidad {
         display: block;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         line-height: 1.1;
         color: var(--correos-azul-oscuro, #123E73);
@@ -319,11 +331,16 @@ foreach ($mistipos as $t) {
         position: absolute;
         top: 6px;
         right: 8px;
+        padding: 1px 7px;
+        border-radius: 6px;
         font-size: 11px;
-        color: var(--correos-azul, #1A549A);
+        font-weight: 600;
+        color: #fff;
+        background: var(--correos-azul, #1A549A);
         opacity: 0;
         transition: opacity .15s;
     }
+    .doc-tipo-nuevo:hover { color: #fff; background: #123E73; text-decoration: none; }
     .doc-tipo-card:hover .doc-tipo-nuevo,
     .doc-tipo-card:focus .doc-tipo-nuevo {
         opacity: 1;
@@ -337,10 +354,47 @@ foreach ($mistipos as $t) {
     /* ===== tabla ===== */
     .doc-tabla {
         background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(18, 62, 115, .10);
-        padding: 4px;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(18, 62, 115, .06);
+        overflow: hidden;
     }
+    .doc-tabla-cab {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 14px;
+        padding: 12px 16px;
+        border-bottom: 1px solid #E9EDF2;
+    }
+    .doc-tabla-cab h3 { margin: 0; font-size: 15px; font-weight: 700; color: #1f2d3d; }
+    .doc-tabla-cab .doc-ayuda { font-size: 12px; color: #6b7686; }
+    .doc-filtro-activo {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 14px;
+        background: var(--correos-azul-suave, #EAF1F9);
+        color: var(--correos-azul, #1A549A);
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .doc-quitar {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 30px;
+        padding: 0 12px;
+        border-radius: 8px;
+        border: 1px solid var(--correos-borde, #DCE3EC);
+        color: var(--correos-azul, #1A549A);
+        font-size: 12.5px;
+        font-weight: 600;
+    }
+    .doc-quitar:hover { background: var(--correos-azul-suave, #EAF1F9); text-decoration: none; }
+    .doc-tabla-cuerpo { padding: 4px; }
     #jqxgrid {
         border: 0;
     }
@@ -407,10 +461,18 @@ foreach ($mistipos as $t) {
     .doc-leyenda {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 6px 18px;
-        margin-top: 10px;
+        padding: 10px 16px;
+        border-top: 1px solid #E9EDF2;
+        background: #F8FAFC;
         font-size: 12px;
         color: #6b7686;
+    }
+    .doc-leyenda b { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+    @media (max-width: 767px) {
+        .doc-cab { padding: 16px; }
+        .doc-tipos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     .doc-leyenda span .md {
         font-size: 18px;
@@ -421,15 +483,15 @@ foreach ($mistipos as $t) {
 
 <input type="hidden" value="<?php echo $user->id ?>" id="user"/>
 
-<div class="doc-encabezado">
-    <h2>Mis documentos
-        <small><?php echo number_format($total_documentos, 0, ',', '.'); ?> documentos generados</small>
-    </h2>
+<div class="doc-cab">
+    <div>
+        <h2><i class="fa fa-file-text"></i>Mis documentos</h2>
+        <p><?php echo number_format($total_documentos, 0, ',', '.'); ?> documentos generados por ti. Elige un tipo para filtrar la tabla o genera uno nuevo.</p>
+    </div>
     <div class="doc-botones">
-        <a class="btn btn-sm btn-default-bright" href="javascript:;" id="quitarFiltro"><i class="fa fa-filter"></i> Quitar filtros</a>
-        <a class="btn btn-sm btn-primary" href="javascript:;" id="abrirReporte"><i class="fa fa-file-pdf-o"></i> Reporte PDF</a>
+        <a class="doc-btn" href="javascript:;" id="abrirReporte"><i class="fa fa-file-pdf-o"></i> Reporte PDF</a>
         <div class="btn-group">
-            <button data-toggle="dropdown" class="btn ink-reaction btn-sm btn-accent dropdown-toggle" type="button" aria-expanded="false">
+            <button data-toggle="dropdown" class="doc-btn amarillo dropdown-toggle" type="button" aria-expanded="false">
                 <i class="fa fa-plus"></i> Generar documento <i class="fa fa-caret-down"></i>
             </button>
             <ul role="menu" class="dropdown-menu dropdown-menu-right">
@@ -443,8 +505,15 @@ foreach ($mistipos as $t) {
 </div>
 
 <div class="doc-tipos">
+    <div class="doc-tipo-card doc-tipo-todos activa" tabindex="0" role="button" data-tipo="" data-id="0" title="Ver todos los documentos">
+        <div class="doc-tipo-icono"><i class="fa fa-th-large"></i></div>
+        <div class="doc-tipo-texto">
+            <span class="doc-tipo-cantidad"><?php echo number_format($total_documentos, 0, ',', '.'); ?></span>
+            <span class="doc-tipo-nombre">Todos</span>
+        </div>
+    </div>
     <?php foreach ($mistipos as $t): ?>
-        <div class="doc-tipo-card" tabindex="0" role="button" data-tipo="<?php echo HTML::chars($t['tipo']); ?>" data-id="<?php echo (int) $t['id']; ?>"
+        <div class="doc-tipo-card <?php echo (int) $t['cantidad'] ? '' : 'vacia'; ?>" tabindex="0" role="button" data-tipo="<?php echo HTML::chars($t['tipo']); ?>" data-id="<?php echo (int) $t['id']; ?>"
              title="Ver solo <?php echo HTML::chars($t['plural']); ?>">
             <div class="doc-tipo-icono"><i class="fa <?php echo $icono_de($t['tipo']); ?>"></i></div>
             <div class="doc-tipo-texto">
@@ -458,7 +527,25 @@ foreach ($mistipos as $t) {
 </div>
 
 <div class="doc-tabla">
-    <div id="jqxgrid"></div>
+    <div class="doc-tabla-cab">
+        <h3>Documentos generados</h3>
+        <span class="doc-ayuda">Puedes filtrar escribiendo bajo cada columna u ordenar con un clic en el título.</span>
+        <span class="doc-filtro-activo" id="doc-filtro-activo"><i class="fa fa-filter"></i> <span></span></span>
+        <a class="doc-quitar" href="javascript:;" id="quitarFiltro"><i class="fa fa-times"></i> Quitar filtros</a>
+    </div>
+    <div class="doc-tabla-cuerpo">
+        <div id="jqxgrid"></div>
+    </div>
+    <div class="doc-leyenda">
+        <b>Acciones:</b>
+        <span><i class="md md-play-circle-outline text-warning"></i>Derivar hoja de ruta</span>
+        <span><i class="md md-class text-accent-dark"></i>Asignar hoja de ruta</span>
+        <span><i class="md md-verified-user text-success"></i>Ver seguimiento</span>
+        <span><i class="md md-print text-primary"></i>Imprimir hoja de ruta</span>
+        <span><i class="md md-mode-edit text-primary-dark"></i>Editar documento</span>
+        <span><i class="fa fa-file-word-o text-primary-dark"></i>Plantilla Word</span>
+        <span><i class="fa fa-exclamation-triangle" style="color:#d32f2f"></i> Justificación de rechazo</span>
+    </div>
 </div>
 
 <div class="modal fade" id="doc-rechazo-modal" tabindex="-1" role="dialog" aria-labelledby="doc-rechazo-titulo">
@@ -520,12 +607,3 @@ foreach ($mistipos as $t) {
     </div>
 </div>
 
-<div class="doc-leyenda">
-    <span><i class="md md-play-circle-outline text-warning"></i>Derivar hoja de ruta</span>
-    <span><i class="md md-class text-accent-dark"></i>Asignar hoja de ruta</span>
-    <span><i class="md md-verified-user text-success"></i>Ver seguimiento</span>
-    <span><i class="md md-print text-primary"></i>Imprimir hoja de ruta</span>
-    <span><i class="md md-mode-edit text-primary-dark"></i>Editar documento</span>
-    <span><i class="fa fa-file-word-o text-primary-dark"></i>Plantilla Word</span>
-    <span><i class="fa fa-exclamation-triangle" style="color:#d32f2f"></i> Ver justificación de rechazo</span>
-</div>
