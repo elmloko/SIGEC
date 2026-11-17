@@ -498,41 +498,143 @@ class Controller_Bandeja extends Controller_DefaultTemplate
         }
     }
 
+    // ultimo paso oficial (no copia) de una hoja de ruta: dice donde esta ahora y en que estado
+    private function ultimo_paso($nur)
+    {
+        return DB::query(Database::SELECT, 'SELECT s.id, s.derivado_a, s.nombre_receptor, s.cargo_receptor, s.a_oficina,
+                    s.nombre_emisor, s.de_oficina, s.fecha_emision, s.fecha_recepcion, s.estado
+                FROM seguimiento s
+                WHERE s.nur = :nur AND s.oficial > 0
+                ORDER BY s.id DESC LIMIT 1')
+            ->param(':nur', $nur)
+            ->execute()->current();
+    }
+
+    // la agrupacion solo se puede deshacer mientras la principal siga pendiente en la bandeja del usuario
+    private function puede_desagrupar($ultimo)
+    {
+        return $ultimo && (int) $ultimo['derivado_a'] === (int) $this->user->id && (int) $ultimo['estado'] === 2;
+    }
+
     //detalle agrupado
     public function action_agrupado()
     {
-        $nur = Arr::get($_GET, 'hr', '');
-        $hijos = array();
-        $padre = ORM::factory('agrupaciones')->where('padre', '=', $nur)->find_all();
-        foreach ($padre as $p) {
-            //obtenemos los hijos
-            $hijo = ORM::factory('documentos')->where('nur', '=', $p->hijo)->and_where('original', '=', 1)->find();
-            if ($hijo->loaded()) {
-                $hijos[$hijo->nur] = array(
-                    'id_nur' => $hijo->nur,
-                    'nur' => $hijo->nur,
-                    'documento' => $hijo->codigo,
-                    'referencia' => $hijo->referencia,
-                    'destinatario' => $hijo->nombre_destinatario,
-                    'cargo' => $hijo->cargo_destinatario,
-                );
+        $nur = trim(Arr::get($_GET, 'hr', ''));
+        // hojas unidas a la principal, con su documento original y quien/cuando las agrupo
+        $hijos = DB::query(Database::SELECT, 'SELECT a.id AS id_agrupacion, a.hijo AS nur, a.id_seguimiento, a.nombre AS agrupado_por,
+                    a.cargo AS agrupado_cargo, a.fecha AS fecha_agrupado,
+                    d.id AS id_doc, d.codigo, d.cite_original, d.referencia, d.nombre_destinatario, d.cargo_destinatario,
+                    d.nombre_remitente, d.cargo_remitente, d.institucion_remitente, d.fecha_creacion, d.hojas,
+                    s.estado AS estado_seg, s.derivado_a
+                FROM agrupaciones a
+                LEFT JOIN documentos d ON d.nur = a.hijo AND d.original = 1
+                LEFT JOIN seguimiento s ON s.id = a.id_seguimiento
+                WHERE a.padre = :nur
+                ORDER BY a.id')
+            ->param(':nur', $nur)
+            ->execute()->as_array();
+
+        $this->template->title .= ' / Correspondencia Agrupada';
+        $this->template->titulo .= ' Agrupada';
+        $this->template->descripcion = 'Hoja de ruta Agrupado';
+        if (!$hijos) {
+            $this->template->content = '<div class="error"><b>Error:</b> La hoja de ruta <b>' . HTML::chars($nur) . '</b> no tiene hojas agrupadas.</div>';
+            return;
+        }
+        $this->estilos_bandeja();
+        $this->template->styles['static/css/bandeja-acciones.css?v=' . @filemtime(DOCROOT . 'static/css/bandeja-acciones.css')] = 'all';
+
+        $padre = ORM::factory('documentos')->where('nur', '=', $nur)->and_where('original', '=', 1)->find();
+        // documentos de la principal (el original y los que se le anadieron despues)
+        $documentos = DB::query(Database::SELECT, 'SELECT d.id, d.codigo, d.referencia, d.fecha_creacion, d.original, d.hojas, t.tipo
+                FROM documentos d
+                LEFT JOIN tipos t ON t.id = d.id_tipo
+                WHERE d.nur = :nur
+                ORDER BY d.original DESC, d.id')
+            ->param(':nur', $nur)
+            ->execute()->as_array();
+
+        // recorrido de la principal y de cada hoja agrupada
+        $nurs = array($nur);
+        foreach ($hijos as $hj) {
+            $nurs[] = $hj['nur'];
+        }
+        $recorrido = array();
+        $pasos = DB::query(Database::SELECT, 'SELECT s.id, s.nur, s.nombre_emisor, s.de_oficina, s.nombre_receptor,
+                    s.a_oficina, s.fecha_emision, s.fecha_recepcion, s.estado, s.oficial, s.proveido
+                FROM seguimiento s
+                WHERE s.nur IN :nurs
+                ORDER BY s.id')
+            ->param(':nurs', array_unique($nurs))
+            ->execute()->as_array();
+        foreach ($pasos as $p) {
+            $recorrido[$p['nur']][] = $p;
+        }
+        $estados = DB::query(Database::SELECT, 'SELECT id, estado FROM estados')->execute()->as_array('id', 'estado');
+        $ultimo = $this->ultimo_paso($nur);
+
+        $session = Session::instance();
+        $this->template->content = View::factory('bandeja/agrupado')
+            ->set('hijos', $hijos)
+            ->set('padre', $padre)
+            ->set('nur', $nur)
+            ->set('documentos', $documentos)
+            ->set('recorrido', $recorrido)
+            ->set('estados', $estados)
+            ->set('ultimo', $ultimo)
+            ->set('puede_desagrupar', $this->puede_desagrupar($ultimo))
+            ->set('mensaje', $session->get_once('agrupado_mensaje', ''))
+            ->set('error', $session->get_once('agrupado_error', ''));
+    }
+
+    // quita una hoja de la agrupacion y la devuelve a pendientes del usuario
+    public function action_desagrupar()
+    {
+        $session = Session::instance();
+        $padre_nur = trim(Arr::get($_POST, 'padre', ''));
+        $id_agrupacion = (int) Arr::get($_POST, 'id', 0);
+        if ($this->request->method() !== 'POST' || $padre_nur === '' || !$id_agrupacion) {
+            $this->request->redirect('bandeja/pendientes');
+        }
+        $volver = 'bandeja/agrupado/?hr=' . urlencode($padre_nur);
+
+        $agrupacion = ORM::factory('agrupaciones')->where('id', '=', $id_agrupacion)->and_where('padre', '=', $padre_nur)->find();
+        $ultimo = $this->ultimo_paso($padre_nur);
+        if (!$agrupacion->loaded() || !$this->puede_desagrupar($ultimo)) {
+            $session->set('agrupado_error', 'No se puede quitar la hoja: la principal ya no está pendiente en su bandeja.');
+            $this->request->redirect($volver);
+        }
+        $hijo = ORM::factory('seguimiento', $agrupacion->id_seguimiento);
+        if (!$hijo->loaded() || (int) $hijo->estado !== 6 || (int) $hijo->derivado_a !== (int) $this->user->id) {
+            $session->set('agrupado_error', 'La hoja ' . $agrupacion->hijo . ' ya no está agrupada a su nombre.');
+            $this->request->redirect($volver);
+        }
+
+        $db = Database::instance();
+        $db->begin();
+        try {
+            $hijo->estado = 2; // vuelve a pendiente
+            $hijo->save();
+            $nur_hijo = $agrupacion->hijo;
+            $agrupacion->delete();
+            $quedan = ORM::factory('agrupaciones')->where('padre', '=', $padre_nur)->count_all();
+            if ($quedan == 0) {
+                // la principal deja de tener hijos
+                DB::update('seguimiento')->set(array('hijo' => 0))->where('id', '=', $ultimo['id'])->execute();
             }
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollback();
+            Kohana::$log->add(Log::ERROR, 'desagrupar: ' . $e->getMessage());
+            $session->set('agrupado_error', 'No se pudo quitar la hoja de la agrupación.');
+            $this->request->redirect($volver);
         }
-        if (sizeof($hijos) > 0) {
-            $padre = ORM::factory('documentos')->where('nur', '=', $nur)->and_where('original', '=', 1)->find();
-            $this->template->styles = array('media/css/tablas.css' => 'all');
-            $this->template->title .= ' / Correspondencia Agrupada';
-            $this->template->titulo .= ' Agrupada';
-            $this->template->descripcion = 'Hoja de ruta Agrupado';
-            $this->template->content = View::factory('bandeja/agrupado')
-                ->bind('hijos', $hijos)
-                ->bind('padre', $padre);
-        } else {
-            $this->template->title .= ' / Agrupada';
-            $this->template->titulo .= ' Agrupada';
-            $this->template->descripcion = 'Hoja de ruta Agrupado';
-            $this->template->content = '<div class="error"><b>Error:</b> NO agrupado !!! </div>';
+
+        if ($quedan == 0) {
+            $this->request->redirect('bandeja/pendientes');
         }
+        $session->set('agrupado_mensaje', 'La hoja ' . $nur_hijo . ' se quitó del grupo y volvió a sus pendientes.');
+        $this->request->redirect($volver);
     }
 
     public function action_unarchive($id = '')

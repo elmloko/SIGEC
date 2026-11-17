@@ -827,3 +827,204 @@
     border-bottom: 2px solid #C9D2DE;
     border-bottom-left-radius: 6px;
 }
+
+/* ===== detalle de una hoja agrupada (/bandeja/agrupado) ===== */
+.ac-estado.e4 { background: #EAF1F9; color: #1A549A; }
+.ac-estado.e6 { background: #FFF7DD; color: #8a6100; }
+.ac-estado.e11 { background: #EEF2F7; color: #6b7686; text-decoration: line-through; }
+.agd-nur {
+    margin-left: 4px;
+    padding: 1px 10px;
+    border-radius: 8px;
+    background: #FFF7DD;
+    color: #8a6100;
+    font-size: 17px;
+    white-space: nowrap;
+}
+.agd-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+/* donde esta ahora la principal */
+.agd-ubicacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin: 18px -22px 0;
+    padding: 12px 22px;
+    background: #F7F9FC;
+    border-top: 1px solid #EDF1F6;
+}
+.agd-ubic-icono {
+    flex: 0 0 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    background: #EAF1F9;
+    color: #1A549A;
+}
+.agd-ubic-icono.e1 { background: #FDE8E8; color: #B42318; }
+.agd-ubic-icono.e2 { background: #FFF3DC; color: #B26B00; }
+.agd-ubic-icono.e10 { background: #E6F4EC; color: #227547; }
+.agd-ubic-texto {
+    flex: 1 1 260px;
+    min-width: 0;
+    font-size: 13px;
+}
+.agd-ubic-texto small {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #9aa4b2;
+}
+.agd-ubic-texto b {
+    color: #123E73;
+}
+.agd-ubic-texto em {
+    display: block;
+    font-style: normal;
+    font-size: 12px;
+    color: #7a8594;
+}
+/* avisos */
+.agd-alerta {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+.agd-alerta.ok { background: #E6F4EC; border: 1px solid #B9E0C8; color: #1d5e3a; }
+.agd-alerta.error { background: #FDE8E8; border: 1px solid #F3C1C1; color: #8f1d14; }
+/* barra de busqueda y botones de la lista */
+.agd-barra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.agd-buscar {
+    flex: 1 1 220px;
+    margin: 0;
+}
+.agd-barra .ac-btn {
+    height: 36px;
+}
+.ac-btn.agd-copiado,
+.ac-quitar.agd-copiado {
+    border-color: #2E9E5B;
+    background: #E6F4EC;
+    color: #227547;
+}
+.agd-hoja .ac-quitar:hover {
+    background: #EAF1F9;
+    color: #1A549A;
+}
+.agd-form-quitar {
+    display: inline;
+    margin: 0;
+}
+.agd-btn-quitar {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-weight: 600;
+    color: #B42318;
+    cursor: pointer;
+}
+.agd-btn-quitar:hover {
+    text-decoration: underline;
+}
+#agd-nada .fa {
+    margin-right: 4px;
+}
+/* columna lateral */
+.ac-lateral > .ac-card + .ac-card {
+    margin-top: 0;
+}
+a.ag-nodo,
+a.ag-nodo:hover {
+    color: inherit;
+    text-decoration: none;
+}
+a.ag-nodo {
+    transition: border-color .15s, box-shadow .15s;
+}
+a.ag-nodo:hover {
+    border-color: #1A549A;
+    box-shadow: 0 2px 8px rgba(18, 62, 115, .10);
+}
+.agd-ficha {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed #E3E8EF;
+    font-size: 12px;
+}
+.agd-docs {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.agd-docs li + li {
+    border-top: 1px solid #EDF1F6;
+}
+.agd-docs a {
+    display: flex;
+    gap: 10px;
+    padding: 9px 4px;
+    color: inherit;
+    border-radius: 8px;
+}
+.agd-docs a:hover {
+    background: #F7FAFD;
+    text-decoration: none;
+}
+.agd-docs .fa {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    font-size: 16px;
+    color: #1A549A;
+}
+.agd-docs span {
+    min-width: 0;
+    font-size: 12px;
+}
+.agd-docs b {
+    display: block;
+    color: #123E73;
+}
+.agd-docs em {
+    display: block;
+    font-style: normal;
+    color: #7a8594;
+}
+.agd-docs small {
+    display: block;
+    color: #4a5568;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ac-recorrido.agd-recorrido-fijo {
+    display: block;
+    padding: 6px 0 0 2px;
+    border-top: 0;
+}
+@media (max-width: 600px) {
+    .agd-ficha {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .agd-botones,
+    .agd-botones .ac-btn {
+        flex: 1 1 auto;
+    }
+}
