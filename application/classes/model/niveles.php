@@ -7,10 +7,21 @@ class Model_niveles extends ORM{
     const NIVEL_ADMIN = 5;
     // nivel del rol usuario (funcionario; default de users.nivel), unico que ve "Mis indicadores"
     const NIVEL_USUARIO = 2;
+    // jefe de oficina: ve las mismas pestanas que el usuario (y todas las hojas de ruta, ver Acceso)
+    const NIVEL_JEFE = 3;
+
+    /** ¿El nivel usa las pestanas del rol usuario (usuario y jefe de oficina)? */
+    public static function con_pestanas_de_usuario($n)
+    {
+        return in_array((int) $n, array(self::NIVEL_USUARIO, self::NIVEL_JEFE), TRUE);
+    }
 
     public function menus($n){
         $n = (int) $n;
-        $n = (int) $n;
+        // el jefe de oficina usa los menus del usuario (nivelmenu del nivel 2), sin cambiar la base
+        if ($n === self::NIVEL_JEFE) {
+            $n = self::NIVEL_USUARIO;
+        }
         // Reportes (controlador 'reports') solo para el administrador, aunque nivelmenu lo asigne a otros niveles
         if ($n === self::NIVEL_ADMIN) {
             $filtro = "(m.id IN (SELECT id_menu FROM nivelmenu WHERE id_nivel = $n) OR m.controlador = 'reports')";

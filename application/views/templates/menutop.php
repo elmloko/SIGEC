@@ -63,9 +63,9 @@ foreach ($principales as $mid => $m) {
 }
 endif;
 
-// "Mis indicadores": tablero personal (no esta en la base), solo para el rol usuario;
+// "Mis indicadores": tablero personal (no esta en la base), para el rol usuario y el jefe de oficina;
 // va justo encima de Busqueda (si no la tiene, en segundo lugar)
-if ((int) $datos_usuario_logueado->nivel === Model_niveles::NIVEL_USUARIO):
+if (Model_niveles::con_pestanas_de_usuario($datos_usuario_logueado->nivel)):
 $mis_indicadores = (object) array('id' => 'mis-indicadores', 'menu' => 'Mis indicadores', 'controlador' => 'indicadores', 'logo' => 'fa fa-line-chart');
 $posicion = 1;
 foreach (array_values($principales) as $i => $m) {

@@ -13,11 +13,13 @@ class Controller_Export extends Controller {
         $id_segs = array(0);
     }
     $u = (int) $auth->get_user()->id;
+    // jefe de oficina y administrador exportan cualquier paso; el resto solo los que derivo o recibio
+    $solo_suyos = Acceso::condicion_sql($auth->get_user(), 'd') === '' ? '' : "AND (s.derivado_a = $u OR s.derivado_por = $u)";
     $sql="SELECT s.nur, s.a_oficina,s.nombre_receptor,cargo_receptor,s.fecha_emision,s.oficial,d.cite_original, d.referencia,s.proveido FROM seguimiento s
     INNER JOIN nurs_documentos n ON s.nur=n.nur
     INNER JOIN documentos d ON n.id_documento=d.id
     WHERE d.original='1'
-    AND (s.derivado_a = $u OR s.derivado_por = $u)
+    $solo_suyos
     AND  s.id IN (" . implode(', ', $id_segs) . ")";
 
     $modelo=New Model_Hojasruta();

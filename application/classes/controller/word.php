@@ -12,6 +12,12 @@ public function before()
             $session=Session::instance();
             $this->user=$session->get('auth_user');
         parent::before();       
+            // el Word de un documento solo para quien puede verlo (autor, quien interviene en su hoja de ruta,
+            // jefe de oficina o administrador); antes cualquiera lo bajaba cambiando el id en la URL
+            $documento = ORM::factory('documentos', (int) $this->request->param('id'));
+            if ($documento->loaded() && !Acceso::documento($auth->get_user(), $documento)) {
+                throw new HTTP_Exception_403('Acceso restringido');
+            }
         }
         else
         {
