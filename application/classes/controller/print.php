@@ -481,7 +481,11 @@ class Controller_Print extends Controller
                 $pdf->SetY(20);
                 $pdf->Cell(185, 10, 'CARATULA DE AGRUPACION', 1, FALSE, 'C');
                 $pdf->Ln();
-                $image_file = 'media/logos/' . $entidad->logo2;
+                // logo2 de la entidad si existe; si no, el logo comun que usan las demas impresiones
+                $image_file = DOCROOT . 'media/logos/' . $entidad->logo2;
+                if (!$entidad->logo2 || !is_file($image_file)) {
+                    $image_file = DOCROOT . 'media/LOGO 19-2-26.png';
+                }
                 $pdf->Image($image_file, 80, 32, 50, 20, 'png', '', '', FALSE, 200, '', FALSE, FALSE, 1);
                 $pdf->SetY(30);
                 $pdf->Cell(185, 25, '', 'LR', FALSE, 'C');

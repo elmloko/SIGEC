@@ -2320,7 +2320,8 @@ class Controller_Ajax extends Controller
         $id_seguimiento = SqlSafe::value(Arr::get($_POST, 'id_seguimiento', ''));
         $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
         $observacion = SqlSafe::value(Arr::get($_POST, 'observacion', ''));
-        $id_usuario = SqlSafe::value(Arr::get($_POST, 'id_usuario', ''));
+        // la justificacion es siempre del usuario de la sesion (antes venia de $_POST y se podia suplantar)
+        $id_usuario = (int) $this->user->id;
 
         $query = "  INSERT INTO observacion_seguimiento (id_seguimiento, nur, observacion, fecha_observacion, id_usuario, id_estado)
                     VALUES ('$id_seguimiento', '$nur', '$observacion', now(), '$id_usuario', '2');";
@@ -2342,16 +2343,18 @@ class Controller_Ajax extends Controller
         $id_seguimiento_padre = SqlSafe::value(Arr::get($_POST, 'id_seguimiento_padre', ''));
         $nur = SqlSafe::value(Arr::get($_POST, 'nur', ''));
         $observacion = SqlSafe::value(Arr::get($_POST, 'observacion', ''));
-        $id_usuario = SqlSafe::value(Arr::get($_POST, 'id_usuario', ''));
-        $estado = $_POST['estado'];
+        // solo puede rechazar el destinatario real: el usuario de la sesion (antes venia de $_POST y se podia suplantar)
+        $id_usuario = (int) $this->user->id;
 
         // logica para el rechazo de derivaciones
         $info = array();
-        $seg = ORM::factory('seguimiento', array('id' => $id_seguimiento_a_borrar));
+        $rechazado = FALSE;
+        $seg = ORM::factory('seguimiento', array('id' => (int) $id_seguimiento_a_borrar));
 
         if ($seg->loaded()) {
 
-            if (($seg->derivado_a == $id_usuario) && ($seg->estado == '1')) {
+            if (((int) $seg->derivado_a === $id_usuario) && ($seg->estado == '1')) {
+                $rechazado = TRUE;
 
                 $padre = $seg->id_seguimiento; //si tiene seguimiento anterior?
                 $oficial = $seg->oficial;
@@ -2378,12 +2381,18 @@ class Controller_Ajax extends Controller
                         $documento = ORM::factory('documentos')->where('nur', '=', $nur)->and_where('original', '=', 1)->find();
                         $documento->estado = 0;
                         $documento->save();
-                        $info['info'] = '<b>Restaurado! : </b>La hoja de ruta <b>' . $documento->nur . ' </b> fue restaurada, para volver derivar busque el documento <a href="/document/edit/' . $documento->id . '">' . $documento->codigo . '</a> , o haga click <a href="/route/deriv/?hr=' . $documento->nur . '" > aqui </a>.';
+                        $info['info'] = '<b>Restaurado! : </b>La hoja de ruta <b>' . $documento->nur . ' </b> fue restaurada, para volver derivar busque el documento <a href="/documento/edit/' . $documento->id . '">' . $documento->codigo . '</a> , o haga click <a href="/route/deriv/?hr=' . $documento->nur . '" > aqui </a>.';
                     }
                 }
             } else {
                 $error['error'] = '<b>Error!: </b>La hoja de ruta ya fue recibida por el destinatario o usted no lo tenia en su bandeja de salida';
             }
+        }
+
+        if (!$rechazado) {
+            // no se rechazo nada: no se deja una observacion de rechazo huerfana
+            echo false;
+            return;
         }
 
         // GUARDAMOS EL MENSAJE DEL RECHAZO

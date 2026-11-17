@@ -37,6 +37,17 @@ class Controller_User extends Controller_DefaultTemplate
             ->bind('oficina', $oficina);
     }
 
+    // enlaces del menu (tabla submenus) que apuntaban a acciones que ya no existen
+    public function action_data()
+    {
+        $this->request->redirect('user/profile');
+    }
+
+    public function action_documentos()
+    {
+        $this->request->redirect('search/advanced');
+    }
+
     public function action_pass()
     {
         $errors = array();

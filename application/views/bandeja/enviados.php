@@ -120,7 +120,7 @@ $clase_dias = function ($dias) {
                         <?php if ($urgente): ?><span class="bj-etiqueta bj-urgente-tag">Urgente</span><?php endif; ?>
                         <span class="bj-etiqueta <?php echo $s->oficial ? 'bj-oficial' : 'bj-copia-tag'; ?>"><?php echo $s->oficial ? 'Oficial' : 'Copia'; ?></span>
                         <?php if ($s->hijo == 1): ?>
-                            <a href="/correspondence/agrupado/?hr=<?php echo urlencode($s->nur); ?>" class="bj-etiqueta bj-agrupado-tag">Agrupado</a>
+                            <a href="/bandeja/agrupado/?hr=<?php echo urlencode($s->nur); ?>" class="bj-etiqueta bj-agrupado-tag">Agrupado</a>
                         <?php endif; ?>
                         <a href="/route/trace/?hr=<?php echo urlencode($s->nur); ?>" class="bj-nur" title="Ver seguimiento"><?php echo HTML::chars($s->nur); ?></a>
                         <span class="bj-dias <?php echo $clase_dias((int) $s->dias); ?>" title="Días sin que el destinatario la reciba"><?php echo (int) $s->dias == 1 ? '1 día' : (int) $s->dias . ' días'; ?></span>

@@ -120,7 +120,7 @@ $('a.link2').click(function(){
 			</td>
             <td width="50%" colspan="2" valign="top">
 				<div>
-				<h2 class="referencia"><a href="/documento/detalle/<?php echo $s->id_doc?>" style="color:#366FB0;line-height: 22px;  "><?php echo HTML::chars($s->referencia); ?></a></h2>
+				<h2 class="referencia"><a href="/document/detalle/<?php echo (int) $s->id_doc; ?>" style="color:#366FB0;line-height: 22px;  "><?php echo HTML::chars($s->referencia); ?></a></h2>
 				<span class="oficina">Procedencia: <b><?php echo HTML::chars($s->de_oficina);?></b><span><br/>
                                         <span class="remite">Remite: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <?php echo HTML::chars($s->nombre_emisor); ?> | <b><?php echo HTML::chars($s->cargo_emisor); ?></b></span><br/>
 				<span class="accion"><?php echo $s->accion;?></span><br/>                                

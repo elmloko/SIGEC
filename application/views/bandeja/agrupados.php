@@ -90,8 +90,8 @@ $('a.close, #fade, #cancelar').live('click', function(){ //When clicking on the 
         <?php foreach($result as $n):?>
         <tr>
             
-            <td><a href="/seguimiento/?nur=<?php echo $n['hijo'];?>" title="Ver seguimiento del NUR <?php echo $n['hijo'] ?>" ><?php echo $n['hijo'] ?></a>                </td>            
-            <td><a href="/seguimiento/?nur=<?php echo $n['padre'];?>" title="Ver seguimiento del NUR <?php echo $n['padre'] ?>" ><?php echo $n['padre'] ?></a>                </td>
+            <td><a href="/route/trace/?hr=<?php echo urlencode($n['hijo']); ?>" title="Ver seguimiento del NUR <?php echo HTML::chars($n['hijo']); ?>"><?php echo HTML::chars($n['hijo']); ?></a></td>
+            <td><a href="/bandeja/agrupado/?hr=<?php echo urlencode($n['padre']); ?>" title="Ver el grupo de <?php echo HTML::chars($n['padre']); ?>"><?php echo HTML::chars($n['padre']); ?></a></td>
             <td><b><?php echo HTML::chars($n['cite_original']);?></b></td>            
             <td><?php echo HTML::chars($n['referencia']);?></td>                        
             <td><?php echo HTML::chars($n['nombre_destinatario']);?><br/>

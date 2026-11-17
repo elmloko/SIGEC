@@ -60,7 +60,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
     public function action_doa()
     {
         if (!isset($_POST['id_seg'])) {
-            $this->request->redirect('error404');
+            $this->request->redirect('bandeja/pendientes');
         }
         $ids = array_values(array_filter(array_map('intval', (array) $_POST['id_seg'])));
         if (!$ids) {
@@ -129,8 +129,9 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                     (SELECT d.id FROM documentos d WHERE d.nur = s.nur ORDER BY d.id LIMIT 1) AS id_doc
                 FROM seguimiento s
                 LEFT JOIN acciones a ON a.id = s.accion
-                WHERE s.id IN :ids')
+                WHERE s.id IN :ids AND s.derivado_a = :u AND s.estado = 2')
                 ->param(':ids', $ids)
+                ->param(':u', (int) $this->user->id)
                 ->execute()->as_array('id');
         $hojas = array();
         foreach ($ids as $id) {
@@ -146,12 +147,16 @@ class Controller_Bandeja extends Controller_DefaultTemplate
     {
         if (isset($_POST['principal'])) {
 
-            $principal = $_POST['principal'];
-            $padre = ORM::factory('seguimiento', $principal);
+            $principal = (int) $_POST['principal'];
+            // solo se agrupan hojas pendientes en la bandeja del propio usuario
+            $padre = ORM::factory('seguimiento')->where('id', '=', $principal)
+                ->and_where('derivado_a', '=', $this->user->id)->and_where('estado', '=', 2)->find();
             if ($padre->loaded()) {
-                foreach ($_POST['seg'] as $k => $v) {
-                    $hijo = ORM::factory('seguimiento', $v);
-                    if ($padre->nur != $hijo->nur) {
+                $unidas = 0;
+                foreach ((array) Arr::get($_POST, 'seg', array()) as $k => $v) {
+                    $hijo = ORM::factory('seguimiento')->where('id', '=', (int) $v)
+                        ->and_where('derivado_a', '=', $this->user->id)->and_where('estado', '=', 2)->find();
+                    if ($hijo->loaded() && $padre->nur != $hijo->nur) {
                         $agrupar = ORM::factory('agrupaciones');
                         $agrupar->padre = $padre->nur;
                         $agrupar->hijo = $hijo->nur;
@@ -164,16 +169,30 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                         if ($agrupar->id > 0) { //si se agrupo! entonces cambiamos el estado del hijo
                             $hijo->estado = 6;
                             $hijo->save();
+                            $unidas++;
                         }
                     }
                 }
-                //por le decimos al seguimiento del padre que tiene hijos jiji
-                $padre->hijo = 1;
-                $padre->save();
-                $_POST = array();
-                $this->request->redirect('bandeja/agrupado/?hr=' . $padre->nur);
+                if ($unidas > 0) {
+                    // el seguimiento de la principal queda marcado como que tiene hijos
+                    $padre->hijo = 1;
+                    $padre->save();
+                    $_POST = array();
+                    $this->request->redirect('bandeja/agrupado/?hr=' . urlencode($padre->nur));
+                }
             }
         }
+        // nada valido que agrupar (hojas ajenas, ya movidas o sin seleccion)
+        $this->request->redirect('bandeja/pendientes');
+    }
+
+    // seguimiento pendiente (estado 2) en la bandeja del usuario; vacio si es ajeno o ya se movio
+    private function seg_pendiente($id)
+    {
+        return ORM::factory('seguimiento')->where('id', '=', (int) $id)
+            ->and_where('derivado_a', '=', $this->user->id)
+            ->and_where('estado', '=', 2)
+            ->find();
     }
 
     //archivar correspondencia final
@@ -200,7 +219,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                 if ($carpeta->id > 0) { //si se creo la carpeta entonces:
                     $id_carpeta = $carpeta->id;
                     foreach ($_POST['seg'] as $k => $v) {
-                        $seg = ORM::factory('seguimiento', $v);
+                        $seg = $this->seg_pendiente($v);
                         if ($seg->loaded()) {
                             $archivo = ORM::factory('archivados');
                             $archivo->id_user = $this->user->id;
@@ -222,7 +241,7 @@ class Controller_Bandeja extends Controller_DefaultTemplate
                     $this->request->redirect('bandeja/pendientes');
                 }
                 foreach ($_POST['seg'] as $k => $v) {
-                    $seg = ORM::factory('seguimiento', $v);
+                    $seg = $this->seg_pendiente($v);
                     if ($seg->loaded()) {
                         $carpeta = ORM::factory('archivados');
                         $carpeta->id_user = $this->user->id;
@@ -470,12 +489,8 @@ class Controller_Bandeja extends Controller_DefaultTemplate
 
     public function action_recepcion()
     {
-        $oSeg = New Model_Seguimiento();
-        $entrada = $oSeg->estado(1, $this->user->id);
-        $this->template->styles = array('media/css/tablas.css' => 'all');
-        $this->template->title .= '<li><span>Entrada</span></li>';
-        $this->template->content = View::factory('user/recepcionar')
-            ->bind('norecibidos', $entrada);
+        // la vista user/recepcionar ya no existe: lo "por recibir" se atiende en la bandeja de entrada
+        $this->request->redirect('bandeja');
     }
 
     public function action_receive($id = '')
@@ -650,7 +665,8 @@ class Controller_Bandeja extends Controller_DefaultTemplate
             $seguimiento->save();
             $this->request->redirect('/bandeja/pendientes');
         } else {
-            $this->template->content = View::factory('acceso_denegado');
+            // la vista acceso_denegado no existe; se informa sin romper la pagina
+            $this->template->content = '<div class="error"><b>Error:</b> Ese documento no está en su archivo o ya fue desarchivado.</div>';
         }
     }
 
