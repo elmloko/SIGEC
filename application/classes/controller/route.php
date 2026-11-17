@@ -254,7 +254,7 @@ class Controller_route extends Controller_DefaultTemplate {
                     ->bind('agrupado', $agrupado)
                     ->set('derivacion_editable', $this->derivacion_editable($id) !== NULL);
         } else {
-            $this->request->redirect('route/view');
+            $this->request->redirect('document/seguimientos');
         }
     }
 
@@ -655,37 +655,18 @@ class Controller_route extends Controller_DefaultTemplate {
     }
 
     // hojas de ruta derivadas por el usuario, con busqueda, filtros por estado/fecha y paginacion
+    // "Seguimiento de lo que derive" se unio con document/seguimientos (una sola pagina por hoja de ruta)
     public function action_view() {
-        $es_fecha = function ($v) {
-            return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) && strtotime($v) !== FALSE;
-        };
-        $estado = Arr::get($_GET, 'estado', '');
-        $filtros = array(
-            'q' => mb_substr(trim(Arr::get($_GET, 'q', '')), 0, 100),
-            'estado' => array_key_exists((int) $estado, Model_Derivaciones::$estados) && $estado !== '' ? (string) (int) $estado : '',
-            'desde' => $es_fecha(Arr::get($_GET, 'desde', '')) ? Arr::get($_GET, 'desde') : '',
-            'hasta' => $es_fecha(Arr::get($_GET, 'hasta', '')) ? Arr::get($_GET, 'hasta') : '',
-        );
-        $por_pagina = 25;
-        $pagina = max(1, (int) Arr::get($_GET, 'pagina', 1));
-
-        $mDerivaciones = new Model_Derivaciones();
-        $resultado = $mDerivaciones->buscar($this->user->id, $filtros, $pagina, $por_pagina);
-        $por_estado = $mDerivaciones->por_estado($this->user->id, $filtros);
-        $total_paginas = max(1, (int) ceil($resultado['total'] / $por_pagina));
-
-        $this->template->styles = array('static/css/bandeja.css?v=' . @filemtime(DOCROOT . 'static/css/bandeja.css') => 'all');
-        $this->template->titulo .= 'Seguimiento';
-        $this->template->descripcion = 'Hojas de ruta que derivó';
-        $this->template->content = View::factory('hojaruta/ver')
-                ->set('filas', $resultado['filas'])
-                ->set('total', $resultado['total'])
-                ->set('por_estado', $por_estado)
-                ->set('filtros', $filtros)
-                ->set('pagina', min($pagina, $total_paginas))
-                ->set('total_paginas', $total_paginas)
-                ->set('por_pagina', $por_pagina)
-                ->set('estados', Model_Derivaciones::$estados);
+        $p = array('alcance' => 'derivadas');
+        foreach (array('q', 'desde', 'hasta') as $k) {
+            if (trim((string) Arr::get($_GET, $k, '')) !== '') {
+                $p[$k] = trim((string) $_GET[$k]);
+            }
+        }
+        if ((string) Arr::get($_GET, 'estado', '') === '1') {
+            $p['sin_recibir'] = 1;
+        }
+        $this->request->redirect('document/seguimientos?' . http_build_query($p));
     }
 
     /*     * */

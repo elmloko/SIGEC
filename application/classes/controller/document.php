@@ -109,42 +109,74 @@ class Controller_document extends Controller_DefaultTemplate {
     }
 
     // Seguimientos: todas las hojas de ruta que creo el usuario, quien la tiene ahora y desde cuando
+    /**
+     * Mis seguimientos: las hojas de ruta que el usuario creo o derivo, una fila por hoja, con quien la tiene
+     * ahora, desde cuando, su ultimo envio y los envios que aun no le recibieron (se pueden cancelar).
+     * Reune las antiguas "Seguimientos" (creadas) y route/view (lo que derive).
+     */
     public function action_seguimientos() {
+        $es_fecha = function ($v) {
+            return (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) && strtotime($v) !== FALSE;
+        };
         $situaciones = array('curso', 'sin_derivar', 'archivada', 'agrupada', 'concluida');
-        $situacion = (string) Arr::get($_GET, 'situacion', '');
-        if (!in_array($situacion, $situaciones, TRUE)) {
-            $situacion = '';
-        }
-        $q = trim((string) Arr::get($_GET, 'q', ''));
+        $f = array(
+            'alcance' => in_array(Arr::get($_GET, 'alcance'), array('creadas', 'derivadas'), TRUE) ? $_GET['alcance'] : '',
+            'situacion' => in_array(Arr::get($_GET, 'situacion'), $situaciones, TRUE) ? $_GET['situacion'] : '',
+            'sin_recibir' => Arr::get($_GET, 'sin_recibir') == '1' ? 1 : 0,
+            'q' => mb_substr(trim((string) Arr::get($_GET, 'q', '')), 0, 100),
+            'desde' => $es_fecha((string) Arr::get($_GET, 'desde', '')) ? $_GET['desde'] : '',
+            'hasta' => $es_fecha((string) Arr::get($_GET, 'hasta', '')) ? $_GET['hasta'] : '',
+        );
         $por_pagina = 25;
         $pagina = max(1, (int) Arr::get($_GET, 'pagina', 1));
 
+        // contadores: alcance (en todas las situaciones), situacion y "sin recibir" (dentro del alcance elegido)
         $oHr = New Model_Hojasruta();
-        $resumen = $oHr->resumenSeguimientosUsuario($this->user->id, $q);
-        $total = $situacion !== '' ? (isset($resumen[$situacion]) ? $resumen[$situacion] : 0) : array_sum($resumen);
+        $alcances = array('' => 0, 'creadas' => 0, 'derivadas' => 0);
+        $resumen = array_fill_keys($situaciones, 0);
+        $sin_recibir = 0;
+        $total = 0;
+        foreach ($oHr->resumenMisHojas($this->user->id, $f) as $r) {
+            $n = (int) $r['n'];
+            $alcances[''] += $n;
+            $alcances['creadas'] += $r['creada'] ? $n : 0;
+            $alcances['derivadas'] += $r['derivada'] ? $n : 0;
+            $en_alcance = $f['alcance'] === '' || ($f['alcance'] === 'creadas' ? $r['creada'] : $r['derivada']);
+            if (!$en_alcance) {
+                continue;
+            }
+            $sin_recibir += $r['sin_recibir'] ? $n : 0;
+            if (!$f['sin_recibir'] || $r['sin_recibir']) {
+                $resumen[$r['situacion']] += $n;
+                if ($f['situacion'] === '' || $f['situacion'] === $r['situacion']) {
+                    $total += $n;
+                }
+            }
+        }
         $paginas = max(1, (int) ceil($total / $por_pagina));
         $pagina = min($pagina, $paginas);
 
-        $hojas = $oHr->seguimientosUsuario($this->user->id, $situacion, $q, ($pagina - 1) * $por_pagina, $por_pagina);
+        $hojas = $oHr->misHojas($this->user->id, $f, ($pagina - 1) * $por_pagina, $por_pagina);
         $nurs = array();
         foreach ($hojas as $h) {
             $nurs[] = $h['nur'];
         }
-        $poseedores = $oHr->poseedoresActuales($nurs);
 
-        $this->template->title .= ' / Seguimientos';
-        $this->template->titulo .= 'Seguimientos';
-        $this->template->descripcion = 'Hojas de ruta creadas: quién la tiene y desde cuándo';
+        $this->template->title .= ' / Mis seguimientos';
+        $this->template->titulo .= 'Mis seguimientos';
+        $this->template->descripcion = 'Hojas de ruta que creó o derivó: quién la tiene y desde cuándo';
         $this->template->content = View::factory('documentos/seguimientos')
-                ->bind('hojas', $hojas)
-                ->bind('poseedores', $poseedores)
-                ->bind('resumen', $resumen)
-                ->bind('situacion', $situacion)
-                ->bind('q', $q)
-                ->bind('pagina', $pagina)
-                ->bind('paginas', $paginas)
-                ->bind('total', $total)
-                ->bind('user', $this->user);
+                ->set('hojas', $hojas)
+                ->set('poseedores', $oHr->poseedoresActuales($nurs))
+                ->set('envios', $oHr->enviosSinRecibir($this->user->id, $nurs))
+                ->set('resumen', $resumen)
+                ->set('alcances', $alcances)
+                ->set('sin_recibir', $sin_recibir)
+                ->set('f', $f)
+                ->set('pagina', $pagina)
+                ->set('paginas', $paginas)
+                ->set('total', $total)
+                ->set('user', $this->user);
     }
 
     public function action_vista() {

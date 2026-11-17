@@ -222,57 +222,137 @@ RESTA2_FECHAS(s.fecha_recepcion,s.fecha_emision) AS dias_recepcion
     }
 
     /**
-     * Hojas de ruta creadas por el usuario (documento original) con su situacion actual:
-     * curso (alguien la tiene sin recibir o pendiente), sin_derivar, archivada, agrupada o concluida.
+     * "Mis seguimientos": una fila por hoja de ruta en la que el usuario intervino como creador (documento
+     * original) o como emisor (seguimiento.derivado_por), con su situacion actual y su ultimo envio.
+     * Situacion: curso (alguien la tiene sin recibir o pendiente), sin_derivar, archivada, agrupada o concluida.
      * El paso "oficial = 1" es la rama vigente de la hoja de ruta (los pasos ya derivados quedan en 2).
+     * $f: q (texto), desde / hasta (Y-m-d, sobre la ultima actividad).
      */
-    protected function sqlSeguimientosUsuario($q, &$params) {
-        $where = "d.id_user = :id AND d.original = 1 AND d.nur <> ''";
-        if ($q !== '') {
-            $where .= " AND (d.nur LIKE :q OR d.codigo LIKE :q OR d.cite_original LIKE :q OR d.referencia LIKE :q)";
-            $params[':q'] = '%' . $q . '%';
+    protected function sqlMisHojas($id_user, array $f, &$params)
+    {
+        $params[':id'] = (int) $id_user;
+        $where = array();
+        if (!empty($f['q'])) {
+            $where[] = '(m.nur LIKE :q OR d.codigo LIKE :q OR d.cite_original LIKE :q OR d.referencia LIKE :q
+                    OR ms.nombre_receptor LIKE :q OR ms.proveido LIKE :q)';
+            $params[':q'] = '%' . $f['q'] . '%';
         }
-        return "SELECT d.id AS id_documento, d.nur, d.codigo, d.cite_original, d.referencia, d.fecha_creacion,
+        $actividad = "GREATEST(IFNULL(d.fecha_creacion, '1970-01-01'), IFNULL(ms.fecha_emision, '1970-01-01'))";
+        if (!empty($f['desde'])) {
+            $where[] = "$actividad >= :desde";
+            $params[':desde'] = $f['desde'] . ' 00:00:00';
+        }
+        if (!empty($f['hasta'])) {
+            $where[] = "$actividad <= :hasta";
+            $params[':hasta'] = $f['hasta'] . ' 23:59:59';
+        }
+        // m: hojas del usuario (creadas y/o derivadas) con cuantos envios hizo, cuantos siguen sin recibir
+        // y su ultimo envio; doc: el documento original de la hoja (aunque lo haya creado otra persona)
+        return "SELECT m.nur, m.creada, m.envios, m.sin_recibir,
+                    d.id AS id_documento, d.codigo, d.cite_original, d.referencia, d.fecha_creacion,
+                    ms.id AS mi_id, ms.nombre_receptor AS mi_para, ms.cargo_receptor AS mi_cargo, ms.a_oficina AS mi_oficina,
+                    ms.fecha_emision AS mi_fecha, ms.fecha_recepcion AS mi_recepcion, ms.estado AS mi_estado,
+                    ms.oficial AS mi_oficial, ms.proveido AS mi_proveido,
+                    $actividad AS actividad,
                     CASE
-                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur AND s.oficial = 1 AND s.estado IN (1, 2)) THEN 'curso'
-                        WHEN NOT EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur) THEN 'sin_derivar'
-                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur AND s.oficial = 1 AND s.estado = 10) THEN 'archivada'
-                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = d.nur AND s.oficial = 1 AND s.estado = 6) THEN 'agrupada'
+                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = m.nur AND s.oficial = 1 AND s.estado IN (1, 2)) THEN 'curso'
+                        WHEN NOT EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = m.nur) THEN 'sin_derivar'
+                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = m.nur AND s.oficial = 1 AND s.estado = 10) THEN 'archivada'
+                        WHEN EXISTS (SELECT 1 FROM seguimiento s WHERE s.nur = m.nur AND s.oficial = 1 AND s.estado = 6) THEN 'agrupada'
                         ELSE 'concluida'
                     END AS situacion
-                FROM documentos d USE INDEX (INDEX_ID_USER__FECHA_CREACION)
-                WHERE $where";
+                FROM (
+                    SELECT g.*, IFNULL(g.id_doc, (SELECT MIN(d2.id) FROM documentos d2 WHERE d2.nur = g.nur AND d2.original = 1)) AS doc
+                    FROM (
+                        SELECT x.nur, MAX(x.creada) AS creada, SUM(x.envio) AS envios, SUM(x.abierto) AS sin_recibir,
+                               MAX(x.id_seg) AS ultimo_id, MIN(x.id_doc) AS id_doc
+                        FROM (
+                            SELECT d.nur, 1 AS creada, 0 AS envio, 0 AS abierto, NULL AS id_seg, d.id AS id_doc
+                                FROM documentos d USE INDEX (INDEX_ID_USER__FECHA_CREACION)
+                                WHERE d.id_user = :id AND d.original = 1 AND d.nur <> ''
+                            UNION ALL
+                            SELECT s.nur, 0, 1, IF(s.estado = 1, 1, 0), s.id, NULL
+                                FROM seguimiento s WHERE s.derivado_por = :id
+                        ) x
+                        GROUP BY x.nur
+                    ) g
+                ) m
+                LEFT JOIN documentos d ON d.id = m.doc
+                LEFT JOIN seguimiento ms ON ms.id = m.ultimo_id"
+                . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
     }
 
-    /** Cantidad de hojas de ruta del usuario por situacion: array('curso' => n, ...). */
-    public function resumenSeguimientosUsuario($id_user, $q = '') {
-        $params = array(':id' => (int) $id_user);
-        $sql = "SELECT x.situacion, COUNT(*) AS n FROM (" . $this->sqlSeguimientosUsuario($q, $params) . ") x GROUP BY x.situacion";
+    private function ejecutarConParams($sql, array $params)
+    {
         $query = db::query(Database::SELECT, $sql);
         foreach ($params as $k => $v) {
             $query->param($k, $v);
         }
-        $resumen = array();
-        foreach ($query->execute() as $r) {
-            $resumen[$r['situacion']] = (int) $r['n'];
-        }
-        return $resumen;
+        return $query->execute();
     }
 
-    /** Una pagina de hojas de ruta del usuario (las mas recientes primero), opcionalmente de una situacion. */
-    public function seguimientosUsuario($id_user, $situacion, $q, $offset, $limite) {
-        $params = array(':id' => (int) $id_user);
-        $sql = "SELECT x.* FROM (" . $this->sqlSeguimientosUsuario($q, $params) . ") x";
-        if ($situacion !== '') {
-            $sql .= " WHERE x.situacion = :situacion";
-            $params[':situacion'] = $situacion;
+    /** Condiciones sobre la fila ya calculada (alias y): alcance, situacion y "sin recibir". */
+    private function filtroMisHojas(array $f, &$params)
+    {
+        $where = array();
+        if (isset($f['alcance']) && $f['alcance'] === 'creadas') {
+            $where[] = 'y.creada > 0';
+        } elseif (isset($f['alcance']) && $f['alcance'] === 'derivadas') {
+            $where[] = 'y.envios > 0';
         }
-        $sql .= " ORDER BY x.fecha_creacion DESC LIMIT " . (int) $offset . ", " . (int) $limite;
-        $query = db::query(Database::SELECT, $sql);
-        foreach ($params as $k => $v) {
-            $query->param($k, $v);
+        if (!empty($f['sin_recibir'])) {
+            $where[] = 'y.sin_recibir > 0';
         }
-        return $query->execute()->as_array();
+        if (!empty($f['situacion'])) {
+            $where[] = 'y.situacion = :situacion';
+            $params[':situacion'] = $f['situacion'];
+        }
+        return $where ? ' WHERE ' . implode(' AND ', $where) : '';
+    }
+
+    /**
+     * Conteo agrupado de "Mis seguimientos" (con q y fechas, sin los demas filtros), para los contadores:
+     * filas array(situacion, creada 0/1, derivada 0/1, sin_recibir 0/1, n).
+     */
+    public function resumenMisHojas($id_user, array $f)
+    {
+        $params = array();
+        $sql = "SELECT y.situacion, IF(y.creada > 0, 1, 0) AS creada, IF(y.envios > 0, 1, 0) AS derivada,
+                    IF(y.sin_recibir > 0, 1, 0) AS sin_recibir, COUNT(*) AS n
+                FROM (" . $this->sqlMisHojas($id_user, $f, $params) . ") y
+                GROUP BY 1, 2, 3, 4";
+        return $this->ejecutarConParams($sql, $params)->as_array();
+    }
+
+    /** Una pagina de "Mis seguimientos" (la actividad mas reciente primero). */
+    public function misHojas($id_user, array $f, $offset, $limite)
+    {
+        $params = array();
+        $sql = "SELECT y.* FROM (" . $this->sqlMisHojas($id_user, $f, $params) . ") y"
+                . $this->filtroMisHojas($f, $params)
+                . " ORDER BY y.actividad DESC, y.nur DESC LIMIT " . (int) $offset . ", " . (int) $limite;
+        return $this->ejecutarConParams($sql, $params)->as_array();
+    }
+
+    /** Envios del usuario que aun no fueron recibidos (se pueden cancelar), por hoja de ruta. */
+    public function enviosSinRecibir($id_user, array $nurs)
+    {
+        if (!$nurs) {
+            return array();
+        }
+        $filas = DB::query(Database::SELECT, 'SELECT s.id, s.nur, s.nombre_receptor, s.cargo_receptor, s.a_oficina,
+                    s.fecha_emision, s.oficial
+                FROM seguimiento s
+                WHERE s.derivado_por = :u AND s.estado = 1 AND s.nur IN :nurs
+                ORDER BY s.id')
+                ->param(':u', (int) $id_user)
+                ->param(':nurs', array_values(array_unique($nurs)))
+                ->execute();
+        $envios = array();
+        foreach ($filas as $f) {
+            $envios[$f['nur']][] = $f;
+        }
+        return $envios;
     }
 
     /**

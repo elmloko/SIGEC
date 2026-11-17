@@ -85,11 +85,21 @@ $principales = array_slice($principales, 0, $posicion, TRUE) + array('mis-indica
 $menu['mis-indicadores'] = array(0 => array('submenu' => 'Mis indicadores', 'accion' => ''));
 endif;
 
-// "Seguimientos": hojas de ruta creadas por el usuario y donde estan ahora (no esta en la base);
+// "Mis seguimientos": hojas de ruta que el usuario creo o derivo y donde estan ahora (no esta en la base);
 // va al final de la carpeta Documentos
+// Hojas de Ruta > "Seguimiento" (route/trace sin numero) solo redirige a Mis seguimientos: se quita para no duplicarla
 foreach ($principales as $mid => $m) {
     if (trim($m->controlador, '/') === 'document') {
-        $menu[$mid][1000000] = array('submenu' => 'Seguimientos', 'accion' => 'seguimientos');
+        $menu[$mid][1000000] = array('submenu' => 'Mis seguimientos', 'accion' => 'seguimientos');
+    }
+    if (trim($m->controlador, '/') === 'route') {
+        foreach ($menu[$mid] as $sid => $v) {
+            if (trim((string) $v['accion'], '/') === 'trace') {
+                unset($menu[$mid][$sid]);
+            }
+        }
+        // sigue como carpeta aunque le quede solo "Imprimir" (si no, el enlace iria a /route)
+        $siempre_carpeta[$mid] = TRUE;
     }
 }
 
