@@ -167,7 +167,8 @@ class Controller_Admin_User extends Controller_AdminTemplate
                     $datos[$k] = trim($_POST[$k]);
                 }
             }
-            $datos['username'] = strtolower($datos['username']);
+            // mb_: strtolower no pasa la Ñ a minuscula
+            $datos['username'] = mb_strtolower($datos['username'], 'UTF-8');
             $datos['email'] = strtolower($datos['email']);
             $datos['mosca'] = strtoupper($datos['mosca']);
             $datos['superior'] = (int) $datos['superior'];
@@ -180,8 +181,9 @@ class Controller_Admin_User extends Controller_AdminTemplate
             if ($datos['cargo'] === '') {
                 $error['cargo'] = 'Escriba el cargo.';
             }
-            if (!preg_match('/^[a-z0-9._-]{3,50}$/', $datos['username'])) {
-                $error['username'] = 'El usuario solo puede tener letras minúsculas, números, punto, guion o guion bajo (mínimo 3).';
+            // se admite la ñ; la columna users.username es varchar(32)
+            if (!preg_match('/^[a-zñ0-9._-]{3,32}$/u', $datos['username'])) {
+                $error['username'] = 'El usuario solo puede tener letras minúsculas (incluida la ñ), números, punto, guion o guion bajo (de 3 a 32).';
             } elseif (ORM::factory('users')->where('username', '=', $datos['username'])->where('id', '<>', $u->id)->find()->loaded()) {
                 $error['username'] = 'Ya existe otra persona con el usuario "' . $datos['username'] . '".';
             }
