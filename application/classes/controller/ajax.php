@@ -33,9 +33,9 @@ class Controller_Ajax extends Controller
             parent::before();
             // datos de los reportes (pendientes y documentos de cualquier usuario u oficina, bitacora):
             // solo para el administrador, igual que las pantallas de reportes que los usan
-            if (in_array(strtolower($this->request->action()), self::$solo_admin, TRUE) && !Acceso::es_admin($this->user)) {
+            if (in_array(strtolower($this->request->action()), self::$solo_admin, TRUE) && !Acceso::permiso($this->user, 'ver_reportes')) {
                 http_response_code(403);
-                echo json_encode(array('error' => 'Solo el administrador puede consultar estos datos.'));
+                echo json_encode(array('error' => 'Su rol no tiene acceso a los reportes del sistema.'));
                 exit;
             }
         } else {

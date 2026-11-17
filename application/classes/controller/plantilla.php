@@ -29,7 +29,7 @@ class Controller_plantilla extends Controller {
      */
     private function puede_ver($documento) {
         // misma regla que document/detalle (ver classes/acceso.php)
-        return Acceso::documento($this->user, $documento);
+        return Acceso::descarga_documento($this->user, $documento);
     }
 
 //documento a excel para impresion

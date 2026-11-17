@@ -8,7 +8,7 @@ class Controller_Print extends Controller
     // solo imprime quien interviene en la hoja de ruta; si no, se le lleva al seguimiento, que muestra "acceso restringido"
     private function exigir_acceso($nur)
     {
-        if (!Acceso::hoja_ruta(Auth::instance()->get_user(), $nur)) {
+        if (!Acceso::descarga_hoja_ruta(Auth::instance()->get_user(), $nur)) {
             $this->request->redirect('route/trace/?hr=' . urlencode($nur));
         }
     }

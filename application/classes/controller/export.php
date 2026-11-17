@@ -12,8 +12,12 @@ class Controller_Export extends Controller {
     if (!$id_segs) {
         $id_segs = array(0);
     }
+    // permiso del rol (Configuraciones > Roles y permisos)
+    if (!Acceso::permiso($auth->get_user(), 'exportar_excel')) {
+        throw new HTTP_Exception_403('Su rol no tiene permiso para exportar a Excel.');
+    }
     $u = (int) $auth->get_user()->id;
-    // jefe de oficina y administrador exportan cualquier paso; el resto solo los que derivo o recibio
+    // con "ver todo" se exporta cualquier paso; si no, solo los que derivo o recibio
     $solo_suyos = Acceso::condicion_sql($auth->get_user(), 'd') === '' ? '' : "AND (s.derivado_a = $u OR s.derivado_por = $u)";
     $sql="SELECT s.nur, s.a_oficina,s.nombre_receptor,cargo_receptor,s.fecha_emision,s.oficial,d.cite_original, d.referencia,s.proveido FROM seguimiento s
     INNER JOIN nurs_documentos n ON s.nur=n.nur

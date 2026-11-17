@@ -47,6 +47,11 @@ foreach ($principales as $mid => $m) {
         }
     }
 }
+// Roles y permisos (admin/roles): no esta en la base, va siempre en Configuraciones
+$configuracion['roles-permisos'] = array('submenu' => 'Roles y permisos', 'accion' => 'roles', 'href' => '/admin/roles');
+if ($despues_de === NULL) {
+    $despues_de = key($principales);
+}
 if ($configuracion) {
     $config = (object) array('id' => 'configuraciones', 'menu' => 'Configuraciones', 'controlador' => '', 'logo' => 'fa fa-cogs');
     $siempre_carpeta['configuraciones'] = TRUE;
@@ -63,9 +68,9 @@ foreach ($principales as $mid => $m) {
 }
 endif;
 
-// "Mis indicadores": tablero personal (no esta en la base), para el rol usuario y el jefe de oficina;
-// va justo encima de Busqueda (si no la tiene, en segundo lugar)
-if (Model_niveles::con_pestanas_de_usuario($datos_usuario_logueado->nivel)):
+// "Mis indicadores": tablero personal (no esta en la base), para los roles con ese permiso
+// (Configuraciones > Roles y permisos); va justo encima de Busqueda (si no la tiene, en segundo lugar)
+if (Acceso::permiso($datos_usuario_logueado, 'mis_indicadores')):
 $mis_indicadores = (object) array('id' => 'mis-indicadores', 'menu' => 'Mis indicadores', 'controlador' => 'indicadores', 'logo' => 'fa fa-line-chart');
 $posicion = 1;
 foreach (array_values($principales) as $i => $m) {

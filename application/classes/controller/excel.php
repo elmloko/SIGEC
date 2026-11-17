@@ -12,7 +12,7 @@ public function before()
             $this->user = $auth->get_user();
             parent::before();
             // las acciones reciben el id de un documento: solo si el usuario interviene en su hoja de ruta
-            if (!Acceso::documento($this->user, ORM::factory('documentos', (int) $this->request->param('id')))) {
+            if (!Acceso::descarga_documento($this->user, ORM::factory('documentos', (int) $this->request->param('id')))) {
                 throw new HTTP_Exception_403('No tiene acceso a este documento');
             }
         }

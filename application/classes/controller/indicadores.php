@@ -3,7 +3,7 @@
 defined('SYSPATH') or die('Acceso denegado');
 
 /**
- * "Mis indicadores": tablero personal del rol usuario y del jefe de oficina (Model_niveles::con_pestanas_de_usuario).
+ * "Mis indicadores": tablero personal, para los roles con el permiso "mis_indicadores" (Permisos).
  * Siempre muestra los datos del usuario logueado; no acepta otro usuario por parametro.
  * Reutiliza el modelo y la vista del tablero por persona del Centro de indicadores (reports/persona).
  */
@@ -14,9 +14,9 @@ class Controller_Indicadores extends Controller_DefaultTemplate {
 
     public function before() {
         parent::before();
-        // rol usuario y jefe de oficina; el administrador tiene el Centro de indicadores (reports/tablero)
-        if (!Model_niveles::con_pestanas_de_usuario($this->user->nivel)) {
-            $this->request->redirect((int) $this->user->nivel === Model_niveles::NIVEL_ADMIN ? 'reports/tablero' : 'dashboard');
+        // roles con el permiso "mis_indicadores"; quien tiene reportes va al Centro de indicadores (reports/tablero)
+        if (!Acceso::permiso($this->user, 'mis_indicadores')) {
+            $this->request->redirect(Acceso::permiso($this->user, 'ver_reportes') ? 'reports/tablero' : 'dashboard');
         }
     }
 

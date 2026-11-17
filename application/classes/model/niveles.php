@@ -3,27 +3,16 @@ defined('SYSPATH') or die ('no tiene acceso');
 //descripcion del modelo productos
 class Model_niveles extends ORM{
     protected $_table_names_plural = false;    
-    // nivel del rol administrador (unico que ve el menu de Reportes)
     const NIVEL_ADMIN = 5;
-    // nivel del rol usuario (funcionario; default de users.nivel), unico que ve "Mis indicadores"
+    // nivel del rol usuario (funcionario; default de users.nivel)
     const NIVEL_USUARIO = 2;
-    // jefe de oficina: ve las mismas pestanas que el usuario (y todas las hojas de ruta, ver Acceso)
     const NIVEL_JEFE = 3;
 
-    /** ¿El nivel usa las pestanas del rol usuario (usuario y jefe de oficina)? */
-    public static function con_pestanas_de_usuario($n)
-    {
-        return in_array((int) $n, array(self::NIVEL_USUARIO, self::NIVEL_JEFE), TRUE);
-    }
-
+    // pestanas de cada nivel: tabla nivelmenu (se edita en Configuraciones > Roles y permisos)
     public function menus($n){
         $n = (int) $n;
-        // el jefe de oficina usa los menus del usuario (nivelmenu del nivel 2), sin cambiar la base
-        if ($n === self::NIVEL_JEFE) {
-            $n = self::NIVEL_USUARIO;
-        }
-        // Reportes (controlador 'reports') solo para el administrador, aunque nivelmenu lo asigne a otros niveles
-        if ($n === self::NIVEL_ADMIN) {
+        // la pestana Reportes (controlador 'reports') depende del permiso "ver_reportes" del rol, no de nivelmenu
+        if (Permisos::tiene($n, 'ver_reportes')) {
             $filtro = "(m.id IN (SELECT id_menu FROM nivelmenu WHERE id_nivel = $n) OR m.controlador = 'reports')";
         } else {
             $filtro = "m.id IN (SELECT id_menu FROM nivelmenu WHERE id_nivel = $n) AND m.controlador <> 'reports'";

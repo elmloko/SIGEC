@@ -10,8 +10,8 @@ class Controller_Reports extends Controller_DefaultTemplate {
     public function before() {
 
         parent::before();
-        // los reportes son solo para el administrador; al resto se lo devuelve a su inicio
-        if ((int) $this->user->nivel !== Model_niveles::NIVEL_ADMIN) {
+        // los reportes son para los roles con el permiso "ver_reportes"; al resto se lo devuelve a su inicio
+        if (!Acceso::permiso($this->user, 'ver_reportes')) {
             $this->request->redirect('dashboard');
         }
     }

@@ -186,7 +186,8 @@ class Controller_document extends Controller_DefaultTemplate {
             $ok = Acceso::documento($this->user, $documento);
             $como_admin = $ok && Acceso::ve_todo_por_rol($this->user)
                     && (int) $documento->id_user !== (int) $this->user->id
-                    && !Acceso::participa($this->user, $documento->nur);
+                    && !Acceso::sin_restriccion($this->user)
+                    && !Acceso::interviene($this->user, $documento->nur);
             $this->template->title .= ' / ' . $documento->codigo;
             $this->template->titulo .=$documento->codigo;
             $this->template->descripcion .= ' Descripcion del documento - ' . $documento->codigo;

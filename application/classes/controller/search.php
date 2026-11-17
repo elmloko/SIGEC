@@ -217,6 +217,10 @@ class Controller_Search extends Controller_DefaultTemplate {
                 // impresion) los de hojas de ruta en las que el usuario interviene: cada fila trae "puede_ver"
                 $solo_suyos = Acceso::condicion_sql($this->user, 'd');
                 $where = $criterios;
+                // sin el permiso "borradores_ajenos" no se listan los documentos ajenos aun no derivados
+                if ($solo_suyos !== '' && !Acceso::permiso($this->user, 'borradores_ajenos')) {
+                    $where .= " AND (NOT (d.estado = 0 AND d.original = 1) OR $solo_suyos)";
+                }
                 $oDocumento = New Model_Documentos();
                 $count = $oDocumento->contar2($where);
                 $count = (int) $count[0]['count'];

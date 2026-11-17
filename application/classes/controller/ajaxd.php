@@ -22,9 +22,9 @@ class Controller_Ajaxd extends Controller
             parent::before();
             // mismas acciones de reportes que en Controller_Ajax: solo el administrador
             $accion = strtolower($this->request->action());
-            if (in_array($accion, Controller_Ajax::$solo_admin, TRUE) && !Acceso::es_admin($this->user)) {
+            if (in_array($accion, Controller_Ajax::$solo_admin, TRUE) && !Acceso::permiso($this->user, 'ver_reportes')) {
                 http_response_code(403);
-                echo json_encode(array('error' => 'Solo el administrador puede consultar estos datos.'));
+                echo json_encode(array('error' => 'Su rol no tiene acceso a los reportes del sistema.'));
                 exit;
             }
             if ($accion === 'seguimiento' && !Acceso::hoja_ruta($this->user, (string) $this->request->param('id'))) {
@@ -39,9 +39,9 @@ class Controller_Ajaxd extends Controller
 
     public function action_documentosjson($user)
     {
-        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        // el id llega en la URL: cada usuario ve solo lo suyo (quien tiene reportes puede ver cualquiera)
         $user = (int) $user;
-        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+        if ($user !== (int) $this->user->id && !Acceso::permiso($this->user, 'ver_reportes')) {
             $user = (int) $this->user->id;
         }
         // $this->view->disable();
@@ -374,9 +374,9 @@ class Controller_Ajaxd extends Controller
 
     public function action_ventanillajson($user)
     {
-        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        // el id llega en la URL: cada usuario ve solo lo suyo (quien tiene reportes puede ver cualquiera)
         $user = (int) $user;
-        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+        if ($user !== (int) $this->user->id && !Acceso::permiso($this->user, 'ver_reportes')) {
             $user = (int) $this->user->id;
         }
         // $this->view->disable();
@@ -579,9 +579,9 @@ class Controller_Ajaxd extends Controller
 
     public function action_ventanillajsonp($user)
     {
-        // el id llega en la URL: cada usuario ve solo lo suyo (el administrador puede ver cualquiera)
+        // el id llega en la URL: cada usuario ve solo lo suyo (quien tiene reportes puede ver cualquiera)
         $user = (int) $user;
-        if ($user !== (int) $this->user->id && (int) $this->user->nivel !== 5) {
+        if ($user !== (int) $this->user->id && !Acceso::permiso($this->user, 'ver_reportes')) {
             $user = (int) $this->user->id;
         }
         // $this->view->disable();
